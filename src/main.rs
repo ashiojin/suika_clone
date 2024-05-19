@@ -1,10 +1,18 @@
-use bevy::{prelude::*, sprite::{MaterialMesh2dBundle, Mesh2dHandle}};
+use bevy::{
+    prelude::*,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Material2d}
+};
 use bevy_xpbd_2d::prelude::*;
+use itertools::Itertools;
 
 const GRAVITY_SCALE: f32 = 9.81 * 100.;
 
 fn main() {
+    #[cfg(target_family = "windows")]
+    std::env::set_var("RUST_BACKTRACE", "1"); // Can't read env values when running on WSL
+
     let mut app = App::new();
+
     app.add_plugins((
         DefaultPlugins,
         PhysicsPlugins::default(),
@@ -12,6 +20,10 @@ fn main() {
     ));
 
     app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
+
+    app.add_event::<BallEvent>();
+    app.add_event::<PlayerActionEvent>();
+    app.add_event::<BallSpawnEvent>();
 
     app.add_systems(Startup, (
         setup_camera,
@@ -21,12 +33,17 @@ fn main() {
     ));
 
     app.add_systems(Update, (
-        report_collisions_of_balls,
+        check_ball_collisions,
+        action_player,
+        combine_balls_touched
+            .after(check_ball_collisions),
+        spawn_ball
+            .after(action_player)
+            .after(combine_balls_touched),
     ));
 
     app.add_systems(FixedUpdate, (
-        move_player,
-        spawn_ball,
+        read_keyboard,
     ));
 
     app.run();
@@ -37,6 +54,8 @@ fn main() {
 struct Player {
     speed: f32,
     next_ball_level: BallLevel,
+    cooltime_remained: f32,
+    cooltime: f32,
 }
 
 impl Default for Player {
@@ -44,15 +63,18 @@ impl Default for Player {
         Self {
             speed: 1.5,
             next_ball_level: default(),
+            cooltime_remained: 1.0,
+            cooltime: 1.0,
         }
     }
 }
 impl Player {
-    fn change_next_ball_level(&mut self, /* randam generator here? */) {
+    fn after_drop(&mut self, /* randam generator here? */) {
         let now = self.next_ball_level;
         self.next_ball_level = BallLevel::new(
             ((now.0 + 1731) % 101) % 4usize + BALL_LEVEL_MIN
             );
+        self.cooltime_remained = self.cooltime;
     }
 }
 
@@ -223,21 +245,130 @@ fn setup_wall(
 
 }
 
-fn report_collisions_of_balls(
+#[derive(Event, Clone, Copy, PartialEq, Debug)]
+enum BallEvent {
+    TouchSameLevel(Entity, Entity),
+}
+
+#[derive(Event, Clone, Copy, PartialEq, Debug)]
+enum BallSpawnEvent {
+    Drop(Vec2, BallLevel),
+    Combine(Vec2, BallLevel),
+}
+impl BallSpawnEvent {
+    fn get_position(&self) -> Vec2 {
+        use BallSpawnEvent::*;
+        match self {
+            Drop(v, _) => *v,
+            Combine(v, _) => *v,
+        }
+    }
+    fn get_level(&self) -> BallLevel {
+        use BallSpawnEvent::*;
+        match self {
+            Drop(_, l) => *l,
+            Combine(_, l) => *l,
+        }
+    }
+}
+
+fn check_ball_collisions(
     mut ev_colls: EventReader<Collision>,
+    mut ev_ball: EventWriter<BallEvent>,
     q_balls: Query<(Entity, &Ball)>,
 ) {
+    let mut touches = vec![];
     for Collision(contacts) in ev_colls.read() {
         let b1 = q_balls.get(contacts.entity1);
         let b2 = q_balls.get(contacts.entity2);
         if let (Ok(b1), Ok(b2)) = (b1, b2) {
             if b1.1.level == b2.1.level {
-                info!(
-                    "{:?} and {:?} are colliding",
-                    b1,
-                    b2,
-                );
+                touches.push((
+                        std::cmp::min(b1.0, b2.0),
+                        std::cmp::max(b1.0, b2.0),
+                        ));
             }
+        }
+    }
+
+    // check whether 3 balls are colliding in same frame.
+    let touches = touches.into_iter()
+        .sorted_by(|l, r| Ord::cmp(&l.0, &r.0))
+        .coalesce(|l, r|
+            if l.0 == r.0 {
+                Ok(l)
+            } else {
+                Err((l, r))
+            }
+        );
+
+    for touch in touches {
+        ev_ball.send(BallEvent::TouchSameLevel(touch.0, touch.1));
+    }
+}
+
+fn combine_balls_touched(
+    mut commands: Commands,
+    mut ev_ball: EventReader<BallEvent>,
+    mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
+
+    q_ball: Query<(Entity, &Transform, &Ball)>,
+) {
+    for ev in ev_ball.read() {
+        match ev {
+            BallEvent::TouchSameLevel(e1, e2) => {
+                let b1 = q_ball.get(*e1);
+                let b2 = q_ball.get(*e2);
+                commands.entity(*e1).despawn_recursive();
+                commands.entity(*e2).despawn_recursive();
+
+                if let (Ok((_, t1, b1)), Ok((_, t2, _))) = (b1, b2) {
+                    let pos = (t1.translation.xy() + t2.translation.xy()) / 2.;
+                    let cur_lv = b1.level.0;
+
+                    if cur_lv == BALL_LEVEL_MAX {
+                        ev_ball_spawn.send(
+                            BallSpawnEvent::Combine(pos, BallLevel(BALL_LEVEL_MIN)));
+                    } else {
+                        ev_ball_spawn.send(
+                            BallSpawnEvent::Combine(pos, BallLevel(cur_lv + 1)));
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+
+#[derive(Event, Debug, Clone, Copy, PartialEq)]
+enum PlayerActionEvent {
+    TryDrop,
+    TryMove(f32), // [-1, 1]
+}
+
+fn read_keyboard(
+    q_player: Query<&Player>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+
+    mut ev_player_act: EventWriter<PlayerActionEvent>,
+) {
+    if q_player.get_single().is_ok() {
+        let mut lr = 0.;
+        if keyboard.pressed(KeyCode::ArrowLeft) {
+            lr += -1.;
+        }
+        if keyboard.pressed(KeyCode::ArrowRight) {
+            lr += 1.;
+        }
+
+        if keyboard.just_pressed(KeyCode::Space) {
+            ev_player_act.send(PlayerActionEvent::TryDrop);
+        }
+
+        if lr != 0. {
+            ev_player_act.send(PlayerActionEvent::TryMove(lr));
         }
     }
 }
@@ -267,22 +398,56 @@ fn spawn_player(
     ));
 }
 
-fn move_player(
-    mut q_player: Query<(&mut Transform, &Player)>,
-    keyboard: Res<ButtonInput<KeyCode>>,
+fn action_player(
+    mut q_player: Query<(&mut Transform, &mut Player)>,
+    mut ev_player_act: EventReader<PlayerActionEvent>,
+    mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
+
+    time: Res<Time>,
 ) {
-    if let Ok((mut trans, player)) = q_player.get_single_mut() {
-        let mut lr = 0.;
-        if keyboard.pressed(KeyCode::ArrowLeft) {
-            lr += -player.speed;
-        }
-        if keyboard.pressed(KeyCode::ArrowRight) {
-            lr += player.speed;
-        }
+    if let Ok((mut trans, mut player)) = q_player.get_single_mut() {
+        player.cooltime_remained -= time.elapsed_seconds();
+        player.cooltime_remained = if player.cooltime_remained < 0. {
+            0.
+        } else {
+            player.cooltime_remained
+        };
 
-        // TODO: Check x renge
+        for ev in ev_player_act.read() {
+            match ev {
+                PlayerActionEvent::TryDrop => {
+                    if player.cooltime_remained <= 0. {
+                        let pos = trans.translation.xy();
+                        let lv = player.next_ball_level;
 
-        trans.translation.x += lr;
+                        ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
+
+                        player.after_drop();
+                    }
+                },
+                PlayerActionEvent::TryMove(lr) => {
+                    trans.translation.x += lr * player.speed;
+                },
+            }
+        }
+    }
+}
+#[derive(Bundle)]
+struct BallBundle<M: Material2d> {
+    ball: Ball,
+    rigit_body: RigidBody,
+    collider: Collider,
+    mat_mesh2_bundle: MaterialMesh2dBundle<M>
+}
+
+impl<M: Material2d> Default for BallBundle<M> {
+    fn default() -> Self {
+        Self {
+            ball: default(),
+            rigit_body: RigidBody::Dynamic,
+            collider: Collider::circle(1.),
+            mat_mesh2_bundle: default(),
+        }
     }
 }
 
@@ -291,32 +456,25 @@ fn spawn_ball(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 
-    mut q_player: Query<(&Transform, &mut Player)>,
-    keyboard: Res<ButtonInput<KeyCode>>,
+    mut ev_ball_spawn: EventReader<BallSpawnEvent>,
 ) {
-    if keyboard.just_pressed(KeyCode::Space) {
-        if let Ok((trans, mut player)) = q_player.get_single_mut() {
-            let ball_material = materials.add(Color::BLUE);
-            let ball = Ball::new(player.next_ball_level);
-            let ball_r = ball.get_r();
-            let player_xy = trans.translation.xy();
-            commands.spawn((
-                ball,
-                RigidBody::Dynamic,
-                Collider::circle(ball_r),
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(Circle::new(ball_r)).into(),
-                    transform: Transform::from_translation(
-                         player_xy.extend(Z_BALL)
-                    ),
-                    material: ball_material.clone(),
-                    ..default()
-                },
-            ));
-
-            player.change_next_ball_level();
-        }
+    for ev in ev_ball_spawn.read() {
+        let ball_material = materials.add(Color::BLUE); // TODO: material
+        let ball = Ball::new(ev.get_level());
+        let ball_r = ball.get_r();
+        let player_xy = ev.get_position();
+        commands.spawn((
+            ball,
+            RigidBody::Dynamic,
+            Collider::circle(ball_r),
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Circle::new(ball_r)).into(),
+                transform: Transform::from_translation(
+                     player_xy.extend(Z_BALL)
+                ),
+                material: ball_material.clone(),
+                ..default()
+            },
+        ));
     }
 }
-
-
