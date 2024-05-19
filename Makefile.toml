@@ -1,0 +1,39 @@
+[tasks.default]
+clear = true
+command = "echo"
+args = [
+    "\n",
+    "************************\n",
+    "USAGE:\n",
+    " build: Build the project.\n",
+    " run: Run the windows-exe file after building it.\n",
+    "************************\n",
+]
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+
+[tasks.run]
+run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
+
+[tasks.prepare-to-run]
+command = "cp"
+args = ["target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "./"]
+dependencies = ["build"]
+
+[tasks.run-exe]
+command = "./suika_clone.exe"
+
+[tasks.post-run]
+command = "rm"
+args = ["./suika_clone.exe"]
+
+[tasks.build-web]
+command = "cargo"
+args = ["build", "--target", "wasm32-unknown-unknown"]
+
+[tasks.run-web]
+command = "cargo"
+args = ["run", "--target", "wasm32-unknown-unknown"]
+
