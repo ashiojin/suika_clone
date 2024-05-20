@@ -1,9 +1,13 @@
 use bevy::{
     prelude::*,
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Material2d}
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Material2d},
+    reflect::Reflect,
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
+
+use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
+use clap::Parser;
 
 const GRAVITY_SCALE: f32 = 9.81 * 100.;
 
@@ -11,15 +15,32 @@ fn main() {
     #[cfg(target_family = "windows")]
     std::env::set_var("RUST_BACKTRACE", "1"); // Can't read env values when running on WSL
 
+
+
     let mut app = App::new();
 
     app.add_plugins((
         DefaultPlugins,
         PhysicsPlugins::default(),
+
         PhysicsDebugPlugin::default(),
+
+        ConsolePlugin,
     ));
 
+    // Setup for bevy_console
+    app.insert_resource(ConsoleConfiguration {
+        keys: vec![
+            KeyCode::F1,
+        ],
+        ..default()
+    });
+    app.add_console_command::<PrintConfigCommand, _>(command_print_config);
+    app.add_console_command::<RpmkCommand, _>(command_rpmk);
+    app.add_console_command::<RpkpCommand, _>(command_rpkp);
+
     app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
+    app.insert_resource(Config::default());
 
     app.add_event::<BallEvent>();
     app.add_event::<PlayerActionEvent>();
@@ -33,6 +54,10 @@ fn main() {
     ));
 
     app.add_systems(Update, (
+        owner_set_to_repulsive,
+        make_repulsive,
+
+        limit_velocity_of_ball.after(make_repulsive),
         check_ball_collisions,
         action_player,
         combine_balls_touched
@@ -89,12 +114,12 @@ const R_FOR_BALL_LEVEL: [f32; BALL_LEVEL_MAX-BALL_LEVEL_MIN]
     = [
         020. * 0.5,
         040. * 0.5,
+        060. * 0.5,
         080. * 0.5,
-        120. * 0.5,
-        200. * 0.5,
-        240. * 0.5,
-        300. * 0.5,
-        360. * 0.5,
+        100. * 0.5,
+        140. * 0.5,
+        180. * 0.5,
+        220. * 0.5,
     ];
 impl Default for BallLevel {
     fn default() -> Self {
@@ -143,7 +168,7 @@ impl Ball {
 //   <~~~~> : width
 const WALL_WIDTH: f32 = 400.0;
 const WALL_HEIGHT: f32 = 500.0;
-const WALL_THICKNESS: f32 = 6.0;
+const WALL_THICKNESS: f32 = 50.0;
 
 const BOTTOM_SIZE: Vec2 = Vec2::new(WALL_WIDTH + 2.*WALL_THICKNESS, WALL_THICKNESS);
 const SIDE_SIZE: Vec2 = Vec2::new(WALL_THICKNESS, WALL_HEIGHT);
@@ -177,7 +202,6 @@ fn setup_wall(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-
     let outer_l_t = WALL_OUTER_LEFT_TOP;
     let bottom_l_t = Vec2::new(0., -WALL_HEIGHT) + outer_l_t;
     let left_wall_l_t = outer_l_t;
@@ -268,6 +292,25 @@ impl BallSpawnEvent {
         match self {
             Drop(_, l) => *l,
             Combine(_, l) => *l,
+        }
+    }
+}
+
+#[inline]
+fn damping(x: f32) -> f32 {
+    let k = 0.00025;
+    let c = 1.0 / k;
+
+    c - (1.0 / (k * std::f32::consts::E.powf(k * x)))
+}
+
+fn limit_velocity_of_ball(
+    mut q_ball: Query<(Entity, &mut LinearVelocity), With<Ball>>,
+) {
+    for (_, mut vel) in q_ball.iter_mut() {
+        let l = vel.length();
+        if l > 0.1 {
+            *vel = ((damping(l) / l) * vel.0).into();
         }
     }
 }
@@ -437,6 +480,7 @@ struct BallBundle<M: Material2d> {
     ball: Ball,
     rigit_body: RigidBody,
     collider: Collider,
+    restitution: Restitution,
     mat_mesh2_bundle: MaterialMesh2dBundle<M>
 }
 
@@ -446,10 +490,20 @@ impl<M: Material2d> Default for BallBundle<M> {
             ball: default(),
             rigit_body: RigidBody::Dynamic,
             collider: Collider::circle(1.),
+            restitution: Restitution::new(0.01),
             mat_mesh2_bundle: default(),
         }
     }
 }
+
+#[derive(Component, Debug)]
+struct Repulsive {
+    p : f32,
+    t : f32,
+}
+
+#[derive(Component, Debug)]
+struct RepulsiveOwner(Entity);
 
 fn spawn_ball(
     mut commands: Commands,
@@ -475,6 +529,142 @@ fn spawn_ball(
                 material: ball_material.clone(),
                 ..default()
             },
-        ));
+        )).with_children(|b| {
+            b.spawn((
+                Sensor,
+                Repulsive { p: 1.0, t: 10.0 },
+                Collider::circle(ball_r + 10.0),
+            ));
+        });
+    }
+}
+
+fn owner_set_to_repulsive(
+    mut commands: Commands,
+    q_repulsive: Query<(Entity, &Parent), Added<Repulsive>>,
+){
+    for (e, parent) in q_repulsive.iter() {
+        commands.entity(parent.get())
+            .try_insert(RepulsiveOwner(e));
+    }
+}
+
+fn make_repulsive(
+    mut ev_colls: EventReader<Collision>,
+    mut q_balls: Query<(&mut LinearVelocity, &ColliderMassProperties, &RepulsiveOwner), With<Ball>>,
+    q_repls: Query<(&Position, &Rotation, &Repulsive), Without<Ball>>,
+    time: Res<Time>,
+    config: Res<Config>,
+) {
+    for Collision(contact) in ev_colls.read() {
+        let e1 = q_repls.get(contact.entity1);
+        let e2 = q_repls.get(contact.entity2);
+
+        if let (Err(_), Err(_)) = (e1, e2) {
+            continue;
+        } else if let (Ok(_), Ok(_)) = (e1, e2) {
+            continue;
+        } else {
+            let (is_sensor_1,
+                 (_repls_pos, repls_rot, Repulsive { p, t }),
+                 repls_entity,
+                 ball_entity) = if let Ok(e1) = e1 {
+                (true, e1, contact.entity1, contact.entity2)
+            } else {
+                (false, e2.unwrap(), contact.entity2, contact.entity1)
+            };
+            if let Ok((mut ball_vel, mass, RepulsiveOwner(rep_e))) = q_balls.get_mut(ball_entity) {
+                if *rep_e == repls_entity {
+                    warn!("Oh! {:?}", *rep_e);
+                }
+                if let Some(max) = contact.manifolds.iter()
+                    .filter_map(|x| x.contacts.iter()
+                         .max_by(|l,r|
+                             l.penetration.partial_cmp(&r.penetration)
+                                .expect("Failed to `penetration` cmpare")))
+                    .max_by(|l, r| l.penetration.partial_cmp(&r.penetration)
+                        .expect("Failed to `penetration` cmpare"))
+                {
+                    let normal = if is_sensor_1 {
+                        max.normal1
+                    } else {
+                        max.normal2
+                    };
+
+                    let mut k = max.penetration / t;
+                    k = k.powf(config.repls_kp).clamp(0., 1.);
+                    if k.is_nan() {
+                        k = 0.;
+                    }
+
+                    let inv_m = config.repls_mk / mass.mass.0;
+
+                    let magn = inv_m * k * *p;
+
+                    let v = repls_rot.rotate(normal).normalize_or_zero();
+                    ball_vel.0 += (magn * time.elapsed_seconds()) * v;
+                }
+            }
+        }
+    }
+}
+
+
+#[derive(Resource, Debug)]
+#[derive(Reflect)]
+struct Config {
+    repls_mk: f32,
+    repls_kp: f32,
+}
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            repls_mk: 10.0,
+            repls_kp: 1.0,
+        }
+    }
+}
+
+#[derive(Parser, ConsoleCommand)]
+#[command(name = "print_config")]
+struct PrintConfigCommand {
+}
+fn command_print_config(
+    mut log: ConsoleCommand<PrintConfigCommand>,
+    config: Res<Config>,
+) {
+    if let Some(Ok(_)) = log.take() {
+        reply!(log, "{:?}", *config);
+    }
+}
+
+#[derive(Parser, ConsoleCommand)]
+#[command(name = "rpmk")]
+struct RpmkCommand {
+    mk: f32,
+}
+fn command_rpmk(
+    mut log: ConsoleCommand<RpmkCommand>,
+
+    mut config: ResMut<Config>,
+    ) {
+    if let Some(Ok(RpmkCommand { mk })) = log.take() {
+        config.repls_mk = mk;
+    }
+}
+
+
+#[derive(Parser, ConsoleCommand)]
+#[command(name = "rpkp")]
+struct RpkpCommand {
+    kp: f32,
+}
+fn command_rpkp(
+    mut log: ConsoleCommand<RpkpCommand>,
+
+    mut config: ResMut<Config>,
+    ) {
+    if let Some(Ok(RpkpCommand { kp })) = log.take() {
+        config.repls_kp = kp;
     }
 }
