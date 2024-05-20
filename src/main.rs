@@ -10,6 +10,7 @@ use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguratio
 use clap::Parser;
 
 const GRAVITY_SCALE: f32 = 9.81 * 100.;
+const XPBD_SUBSTEP: u32 = 24;
 
 fn main() {
     #[cfg(target_family = "windows")]
@@ -40,6 +41,7 @@ fn main() {
     app.add_console_command::<RpkpCommand, _>(command_rpkp);
 
     app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
+    app.insert_resource(SubstepCount(XPBD_SUBSTEP));
     app.insert_resource(Config::default());
 
     app.add_event::<BallEvent>();
@@ -109,17 +111,22 @@ struct Wall;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct BallLevel(usize);
 const BALL_LEVEL_MIN:usize = 1;
-const BALL_LEVEL_MAX:usize = 9;
-const R_FOR_BALL_LEVEL: [f32; BALL_LEVEL_MAX-BALL_LEVEL_MIN]
+const BALL_LEVEL_MAX:usize = 11;
+const R_FOR_BALL_LEVEL: [f32; BALL_LEVEL_MAX-BALL_LEVEL_MIN + 1]
     = [
         020. * 0.5,
+        030. * 0.5,
+        035. * 0.5,
         040. * 0.5,
+        050. * 0.5,
+
         060. * 0.5,
         080. * 0.5,
         100. * 0.5,
-        140. * 0.5,
-        180. * 0.5,
-        220. * 0.5,
+        130. * 0.5,
+        160. * 0.5,
+
+        200. * 0.5,
     ];
 impl Default for BallLevel {
     fn default() -> Self {
@@ -567,16 +574,13 @@ fn make_repulsive(
         } else {
             let (is_sensor_1,
                  (_repls_pos, repls_rot, Repulsive { p, t }),
-                 repls_entity,
+                 _repls_entity,
                  ball_entity) = if let Ok(e1) = e1 {
                 (true, e1, contact.entity1, contact.entity2)
             } else {
                 (false, e2.unwrap(), contact.entity2, contact.entity1)
             };
-            if let Ok((mut ball_vel, mass, RepulsiveOwner(rep_e))) = q_balls.get_mut(ball_entity) {
-                if *rep_e == repls_entity {
-                    warn!("Oh! {:?}", *rep_e);
-                }
+            if let Ok((mut ball_vel, mass, RepulsiveOwner(_rep_e))) = q_balls.get_mut(ball_entity) {
                 if let Some(max) = contact.manifolds.iter()
                     .filter_map(|x| x.contacts.iter()
                          .max_by(|l,r|
@@ -620,7 +624,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             repls_mk: 10.0,
-            repls_kp: 1.0,
+            repls_kp: 0.9,
         }
     }
 }
