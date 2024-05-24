@@ -37,10 +37,6 @@ fn main() {
         ..default()
     });
     app.add_console_command::<PrintConfigCommand, _>(command_print_config);
-    app.add_console_command::<RpmkCommand, _>(command_rpmk);
-    app.add_console_command::<RpspCommand, _>(command_rpsp);
-    app.add_console_command::<RpkpCommand, _>(command_rpkp);
-    app.add_console_command::<RptmCommand, _>(command_rptm);
     app.add_console_command::<GrowCommand, _>(command_grow);
 
     app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
@@ -52,6 +48,9 @@ fn main() {
     app.add_event::<BallSpawnEvent>();
 
     app.add_systems(Startup, (
+        load_assets, // TODO: Need loading state
+
+
         setup_camera,
         setup_wall,
 
@@ -59,11 +58,9 @@ fn main() {
     ));
 
     app.add_systems(Update, (
-        owner_set_to_repulsive,
-        grow_ball_spawned.after(owner_set_to_repulsive),
-        make_repulsive,
+        grow_ball_spawned,
 
-        limit_velocity_of_ball.after(make_repulsive),
+        //limit_velocity_of_ball.after(make_repulsive),
         check_ball_collisions,
         action_player,
         combine_balls_touched
@@ -71,6 +68,8 @@ fn main() {
         spawn_ball
             .after(action_player)
             .after(combine_balls_touched),
+        limit_velocity_of_ball, // TODO: exec after velocities are caluculated
+        update_player_view,
     ));
 
     app.add_systems(FixedUpdate, (
@@ -80,32 +79,51 @@ fn main() {
     app.run();
 }
 
+#[derive(Resource, Debug)]
+struct MyAssets {
+    h_ball: Handle<Image>,
+}
+
 
 #[derive(Component, Debug)]
 struct Player {
     speed: f32,
     next_ball_level: BallLevel,
-    cooltime_remained: f32,
-    cooltime: f32,
+
+    timer_cooltime: Timer,
+
+    hand_offset: Vec2,
 }
+
+const PLAYER_SPEED: f32 = 3.0;
+const PLAYER_DROP_COOLTIME: f32 = 1.0;
 
 impl Default for Player {
     fn default() -> Self {
         Self {
-            speed: 1.5,
+            speed: PLAYER_SPEED,
             next_ball_level: default(),
-            cooltime_remained: 1.0,
-            cooltime: 1.0,
+
+            timer_cooltime: Timer::from_seconds(PLAYER_DROP_COOLTIME, TimerMode::Once),
+            hand_offset: Vec2::ZERO,
         }
     }
 }
 impl Player {
-    fn after_drop(&mut self, /* randam generator here? */) {
+    fn new(speed: f32, sec_cooltime: f32, hand_offset: Vec2, first_ball_level: BallLevel) -> Self {
+        Self {
+            speed,
+            next_ball_level: first_ball_level,
+            timer_cooltime: Timer::from_seconds(sec_cooltime, TimerMode::Once),
+            hand_offset,
+        }
+    }
+    fn set_next_ball_level(&mut self, /* randam generator here? */) {
         let now = self.next_ball_level;
         self.next_ball_level = BallLevel::new(
             ((now.0 + 1731) % 101) % 4usize + BALL_LEVEL_MIN
+
             );
-        self.cooltime_remained = self.cooltime;
     }
 }
 
@@ -118,11 +136,11 @@ const BALL_LEVEL_MIN:usize = 1;
 const BALL_LEVEL_MAX:usize = 11;
 struct BallLevelSetting {
     radius: f32,
-    color: Color,
+    _color: Color,
 }
 impl BallLevelSetting {
     const fn new(radius: f32, color: Color) -> Self {
-        Self { radius, color }
+        Self { radius, _color: color }
     }
 }
 const fn color(lv: BallLevel) -> Color {
@@ -165,8 +183,8 @@ impl BallLevel {
     fn get_r(&self) -> f32 {
         self.get_settings().radius
     }
-    fn get_color(&self) -> Color {
-        self.get_settings().color
+    fn _get_color(&self) -> Color {
+        self.get_settings()._color
     }
 
     fn get_growstart_r(&self) -> f32 {
@@ -175,7 +193,7 @@ impl BallLevel {
         //   |  ***                      
         //   |  *  **  y+r      r: min(ball radius)
         //   y  *    **         y: combined ball radius
-        //   |  *      **       x: max radius of new free space
+        //   |  *      **       x: max radius of new free space <- this!
         //   |  *        **              
         //   |  *   x+r    **            
         //   =  *------------*           
@@ -241,9 +259,19 @@ const PLAYER_Y: f32 = WALL_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
 const Z_BACK: f32 = -1.;
 const Z_PLAYER: f32 = 0.;
 const Z_BALL: f32 = 1.;
+const Z_BALL_D_BY_LEVEL: f32 = 0.01;
 const Z_WALL: f32 = 2.;
 
-
+fn load_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    commands.insert_resource(
+        MyAssets {
+            h_ball: asset_server.load("ball_01.png"),
+        }
+    );
+}
 
 fn setup_camera(
     mut commands: Commands,
@@ -470,7 +498,7 @@ fn spawn_player(
     let player_y = PLAYER_Y;
 
     commands.spawn((
-        Player::default(),
+        Player::new(PLAYER_SPEED, PLAYER_DROP_COOLTIME, Vec2::new(0., -20.0), BallLevel::new(1)),
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(player_tri)),
             material: materials.add(Color::GREEN),
@@ -489,23 +517,19 @@ fn action_player(
     time: Res<Time>,
 ) {
     if let Ok((mut trans, mut player)) = q_player.get_single_mut() {
-        player.cooltime_remained -= time.elapsed_seconds();
-        player.cooltime_remained = if player.cooltime_remained < 0. {
-            0.
-        } else {
-            player.cooltime_remained
-        };
+        player.timer_cooltime.tick(time.delta());
 
         for ev in ev_player_act.read() {
             match ev {
                 PlayerActionEvent::TryDrop => {
-                    if player.cooltime_remained <= 0. {
-                        let pos = trans.translation.xy();
+                    if player.timer_cooltime.finished() {
+                        let pos = trans.translation.xy() + player.hand_offset;
                         let lv = player.next_ball_level;
 
                         ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
 
-                        player.after_drop();
+                        player.set_next_ball_level();
+                        player.timer_cooltime.reset();
                     }
                 },
                 PlayerActionEvent::TryMove(lr) => {
@@ -515,6 +539,45 @@ fn action_player(
         }
     }
 }
+
+#[derive(Component, Debug)]
+struct FakeBall;
+
+fn update_player_view(
+    q_player: Query<(Entity, &Player)>,
+
+    q_fakeball: Query<Entity, With<FakeBall>>,
+
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    my_assets: Res<MyAssets>,
+) {
+    if let Ok((plyer_entity, player)) = q_player.get_single() {
+        let fakeball = q_fakeball.get_single();
+
+        if player.timer_cooltime.finished() {
+            // need fake ball
+            if fakeball.is_err() {
+                commands.entity(plyer_entity)
+                    .with_children(|b| {
+                        let ball_view = create_ball_view(&mut meshes, &mut materials, &player.next_ball_level, player.hand_offset, &my_assets);
+                        b.spawn((
+                            FakeBall,
+                            ball_view,
+                        ));
+                    });
+            }
+        } else {
+            // don't need fake ball
+            if let Ok(fakeball) = fakeball {
+                commands.entity(fakeball).despawn_recursive();
+            }
+        }
+    }
+}
+
+
 #[derive(Bundle)]
 struct BallBundle<M: Material2d> {
     ball: Ball,
@@ -536,14 +599,6 @@ impl<M: Material2d> Default for BallBundle<M> {
     }
 }
 
-#[derive(Component, Debug)]
-struct Repulsive {
-    p : f32,
-    t : f32,
-}
-
-#[derive(Component, Debug)]
-struct RepulsiveOwner(Entity);
 
 #[derive(Component, Debug, Clone, Copy)]
 struct BallGrowing {
@@ -557,66 +612,60 @@ impl BallGrowing {
 }
 
 
+fn create_ball_view(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+
+    level: &BallLevel,
+    pos: Vec2,
+
+    my_assets: &Res<MyAssets>,
+) -> impl Bundle {
+    let ball_material = materials.add(my_assets.h_ball.clone());
+    let ball_r = level.get_r();
+    MaterialMesh2dBundle {
+        mesh: meshes.add(Rectangle::new(ball_r*2., ball_r*2.)).into(),
+        transform: Transform::from_translation(
+             pos.extend(Z_BALL + Z_BALL_D_BY_LEVEL * level.0 as f32)
+        ),
+        material: ball_material,
+        ..default()
+    }
+}
+
 fn spawn_ball(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 
     mut ev_ball_spawn: EventReader<BallSpawnEvent>,
+    my_assets: Res<MyAssets>,
     config: Res<Config>,
 ) {
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;
         match *ev {
             Drop(pos, level) => {
-                let ball = Ball::new(level);
-                let ball_material = materials.add(level.get_color()); // TODO: material
-                let ball_r = level.get_r();
+                let ball_view = create_ball_view(&mut meshes, &mut materials, &level, pos, &my_assets);
                 commands.spawn((
-                    ball,
+                    Ball::new(level),
                     RigidBody::Dynamic,
-                    Collider::circle(ball_r),
-                    MaterialMesh2dBundle {
-                        mesh: meshes.add(Circle::new(ball_r)).into(),
-                        transform: Transform::from_translation(
-                             pos.extend(Z_BALL)
-                        ),
-                        material: ball_material.clone(),
-                        ..default()
-                    },
+                    Collider::circle(level.get_r()),
+                    ball_view,
                 ));
             },
             Combine(pos, level) => {
-                let ball = Ball::new(level);
-                let ball_material = materials.add(level.get_color()); // TODO: material
                 let ball_r_start = level.get_growstart_r();
-                let ball_r = level.get_r();
+                let ball_view = create_ball_view(&mut meshes, &mut materials, &level, pos, &my_assets);
                 commands.spawn((
-                    ball,
+                    Ball::new(level),
                     RigidBody::Dynamic,
                     Collider::circle(ball_r_start),
                     BallGrowing::new(config.grow_time),
-                    MaterialMesh2dBundle {
-                        mesh: meshes.add(Circle::new(ball_r)).into(),
-                        transform: Transform::from_translation(
-                             pos.extend(Z_BALL)
-                        ),
-                        material: ball_material.clone(),
-                        ..default()
-                    },
+                    ball_view,
                 ));
             }
         }
-    }
-}
-
-fn owner_set_to_repulsive(
-    mut commands: Commands,
-    q_repulsive: Query<(Entity, &Parent), Added<Repulsive>>,
-){
-    for (e, parent) in q_repulsive.iter() {
-        commands.entity(parent.get())
-            .try_insert(RepulsiveOwner(e));
     }
 }
 
@@ -630,96 +679,26 @@ fn grow_ball_spawned(
 
         if spacer.sec > spacer.sec_max {
             commands.entity(entity)
-                .insert(Collider::circle(ball.get_level().get_r()))
+                .try_insert(Collider::circle(ball.get_level().get_r()))
                 .remove::<BallGrowing>();
         } else {
             let r_to = ball.get_level().get_r();
             let r_from = ball.get_level().get_growstart_r();
             let r = (spacer.sec / spacer.sec_max) * (r_to - r_from) + r_from;
             commands.entity(entity)
-                .insert(Collider::circle(r));
+                .try_insert(Collider::circle(r));
         }
     }
 }
-
-
-fn make_repulsive(
-    mut ev_colls: EventReader<Collision>,
-    mut q_balls: Query<(&mut LinearVelocity, &Ball, &ColliderMassProperties, &RepulsiveOwner), With<Ball>>,
-    q_repls: Query<(&Position, &Rotation, &Repulsive), Without<Ball>>,
-    time: Res<Time>,
-    config: Res<Config>,
-) {
-    for Collision(contact) in ev_colls.read() {
-        let e1 = q_repls.get(contact.entity1);
-        let e2 = q_repls.get(contact.entity2);
-
-        if let (Err(_), Err(_)) = (e1, e2) {
-            continue;
-        } else if let (Ok(_), Ok(_)) = (e1, e2) {
-            continue;
-        } else {
-            info!("! {:?}", contact);
-            let (is_sensor_1,
-                 (_repls_pos, repls_rot, Repulsive { p, t }),
-                 _repls_entity,
-                 ball_entity) = if let Ok(e1) = e1 {
-                (true, e1, contact.entity1, contact.entity2)
-            } else {
-                (false, e2.unwrap(), contact.entity2, contact.entity1)
-            };
-            if let Ok((mut ball_vel, ball, mass, RepulsiveOwner(_rep_e))) = q_balls.get_mut(ball_entity) {
-                if let Some(max) = contact.manifolds.iter()
-                    .filter_map(|x| x.contacts.iter()
-                         .max_by(|l,r|
-                             l.penetration.partial_cmp(&r.penetration)
-                                .expect("Failed to `penetration` cmpare")))
-                    .max_by(|l, r| l.penetration.partial_cmp(&r.penetration)
-                        .expect("Failed to `penetration` cmpare"))
-                {
-                    let normal = if is_sensor_1 {
-                        max.normal1
-                    } else {
-                        max.normal2
-                    };
-
-                    let mut k = max.penetration / (ball.get_level().get_r() + t);
-                    k = k.powf(config.rpkp).clamp(0., 1.);
-                    if k.is_nan() {
-                        k = 0.;
-                    }
-
-                    let inv_m = config.rpmk / mass.mass.0;
-
-                    let magn = inv_m * k * *p;
-
-                    let v = repls_rot.rotate(normal).normalize_or_zero();
-                    ball_vel.0 += (magn * time.delta_seconds()) * v;
-                }
-            }
-        }
-    }
-}
-
 
 #[derive(Resource, Debug)]
 #[derive(Reflect)]
 struct Config {
-    rpmk: f32,
-    rpkp: f32,
-    rpsp: f32,
-    rptm: f32,
-
     grow_time: f32,
 }
 impl Default for Config {
     fn default() -> Self {
         Self {
-            rpmk: 10.0,
-            rpkp: 1.0,
-            rpsp: 0.1,
-            rptm: 0.5,
-
             grow_time: 0.2,
         }
     }
@@ -739,69 +718,6 @@ fn command_print_config(
 }
 
 #[derive(Parser, ConsoleCommand)]
-#[command(name = "rpmk")]
-struct RpmkCommand {
-    mk: f32,
-}
-fn command_rpmk(
-    mut log: ConsoleCommand<RpmkCommand>,
-
-    mut config: ResMut<Config>,
-    ) {
-    if let Some(Ok(RpmkCommand { mk })) = log.take() {
-        config.rpmk = mk;
-    }
-}
-
-
-#[derive(Parser, ConsoleCommand)]
-#[command(name = "rpsp")]
-struct RpspCommand {
-    sp: f32,
-}
-fn command_rpsp(
-    mut log: ConsoleCommand<RpspCommand>,
-
-    mut config: ResMut<Config>,
-    ) {
-    if let Some(Ok(RpspCommand { sp })) = log.take() {
-        config.rpsp = sp;
-    }
-}
-
-#[derive(Parser, ConsoleCommand)]
-#[command(name = "rpkp")]
-struct RpkpCommand {
-    kp: f32,
-}
-fn command_rpkp(
-    mut log: ConsoleCommand<RpkpCommand>,
-
-    mut config: ResMut<Config>,
-    ) {
-    if let Some(Ok(RpkpCommand { kp })) = log.take() {
-        config.rpkp = kp;
-    }
-}
-
-
-#[derive(Parser, ConsoleCommand)]
-#[command(name = "rptm")]
-struct RptmCommand {
-    tm: f32,
-}
-fn command_rptm(
-    mut log: ConsoleCommand<RptmCommand>,
-
-    mut config: ResMut<Config>,
-    ) {
-    if let Some(Ok(RptmCommand { tm })) = log.take() {
-        config.rptm = tm;
-    }
-}
-
-
-#[derive(Parser, ConsoleCommand)]
 #[command(name = "grow")]
 struct GrowCommand {
     tm: f32,
@@ -812,6 +728,7 @@ fn command_grow(
     mut config: ResMut<Config>,
     ) {
     if let Some(Ok(GrowCommand { tm })) = log.take() {
-        config.rptm = tm;
+        config.grow_time = tm;
+        reply!(log, "{:?}", *config);
     }
 }
