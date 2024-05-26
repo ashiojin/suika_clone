@@ -12,9 +12,9 @@ use clap::Parser;
 // ToDo Items
 // - (ALWAYS) Refactoring!
 // - [x] Remove Max Level Balls Combined.
-// - [ ] Scoring:
-//   - [ ] Combine Scores.
-//   - [ ] Drop Scores.
+// - [x] Scoring:
+//   - [x] Combine Scores.
+//   - [x] Drop Scores.
 // - [ ] Player position:
 //   - [ ] y-position should be higher than all of balls.
 //   - [ ] x-position should be limited x positon to the inside of the bottle.
@@ -120,8 +120,9 @@ fn main() {
     ));
 
     app.add_systems(OnEnter(GameState::InGame), (
-        setup_wall,
+        setup_bottle,
         spawn_player,
+        spawn_score_view,
     ));
 
     app.add_systems(Update, (
@@ -136,6 +137,7 @@ fn main() {
         update_player_view
             .after(action_player),
         limit_velocity_of_ball, // TODO: should exec after velocities are caluculated
+        score_ball_events,
     ).run_if(in_state(GameState::InGame)));
 
     app.add_systems(FixedUpdate, (
@@ -168,6 +170,8 @@ struct Player {
     timer_cooltime: Timer,
 
     hand_offset: Vec2,
+
+    score: u32,
 }
 
 const PLAYER_SPEED: f32 = 3.0;
@@ -181,6 +185,8 @@ impl Default for Player {
 
             timer_cooltime: Timer::from_seconds(PLAYER_DROP_COOLTIME, TimerMode::Once),
             hand_offset: Vec2::ZERO,
+
+            score: 0,
         }
     }
 }
@@ -191,6 +197,7 @@ impl Player {
             next_ball_level: first_ball_level,
             timer_cooltime: Timer::from_seconds(sec_cooltime, TimerMode::Once),
             hand_offset,
+            ..default()
         }
     }
     fn set_next_ball_level(&mut self, /* randam generator here? */) {
@@ -301,6 +308,27 @@ impl Ball {
     }
 }
 
+// # Screen Layout
+// +: (0.0, 0.0)
+//                                             
+//                      P                      
+//                               SCORE: xx     
+//                *         *                  
+//                *         *                  
+//                *         *    sample+       
+//                *    +    *    |     |       
+//                *         *    | Lv1 |       
+//                *         *    | Lv2 |       
+//                *         *    | ... |       
+//                **bottle***    +-----+       
+//                                             
+//                                             
+//                                             
+const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
+const SCORE_TEXT_WEIGHT: f32 = 30.;
+const SCORE_WIDTH: f32 = 360.; // "Score: 12345" (12) 12 * 30.
+const SCORE_HEIGHT: f32 = 40.;
+
 
 //  A Y+
 //  |
@@ -316,26 +344,34 @@ impl Ball {
 //  +------+   | : thickness
 //
 //   <~~~~> : width
-const WALL_WIDTH: f32 = 400.0;
-const WALL_HEIGHT: f32 = 500.0;
-const WALL_THICKNESS: f32 = 30.0;
+const BOTTLE_WIDTH: f32 = 400.0;
+const BOTTLE_HEIGHT: f32 = 500.0;
+const BOTTLE_THICKNESS: f32 = 30.0;
 
-const BOTTOM_SIZE: Vec2 = Vec2::new(WALL_WIDTH + 2.*WALL_THICKNESS, WALL_THICKNESS);
-const SIDE_SIZE: Vec2 = Vec2::new(WALL_THICKNESS, WALL_HEIGHT);
+const BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_WIDTH + 2.*BOTTLE_THICKNESS, BOTTLE_THICKNESS);
+const SIDE_SIZE: Vec2 = Vec2::new(BOTTLE_THICKNESS, BOTTLE_HEIGHT);
 
 const WALL_OUTER_LEFT_TOP: Vec2 = Vec2::new(
         -1. * BOTTOM_SIZE.x * 0.5,
         -1. * -SIDE_SIZE.y * 0.5,
     );
+const WALL_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
+        BOTTOM_SIZE.x * 0.5,
+        -SIDE_SIZE.y * 0.5,
+    );
 
 const PLAYER_GAP_WALL: f32 = 50.;
 const PLAYER_Y: f32 = WALL_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
 
-const Z_BACK: f32 = -1.;
-const Z_PLAYER: f32 = 0.;
-const Z_BALL: f32 = 1.;
+// Z-Order
+//   These are layers. each layer can freely use +[0.0, 1.0) Z-Order for any purpose.
+const Z_BACK: f32 = -20.;
+const Z_SCORE: f32 = -10.;
+const Z_PLAYER: f32 = 00.;
+const Z_BALL: f32 = 10.;
+const Z_WALL: f32 = 20.;
+
 const Z_BALL_D_BY_LEVEL: f32 = 0.01;
-const Z_WALL: f32 = 2.;
 
 fn load_assets(
     mut commands: Commands,
@@ -463,23 +499,23 @@ fn setup_camera(
 }
 
 
-fn setup_wall(
+fn setup_bottle(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let outer_l_t = WALL_OUTER_LEFT_TOP;
-    let bottom_l_t = Vec2::new(0., -WALL_HEIGHT) + outer_l_t;
-    let left_wall_l_t = outer_l_t;
-    let right_wall_l_t = Vec2::new(WALL_WIDTH + WALL_THICKNESS, 0.) + outer_l_t;
+    let bottom_l_t = Vec2::new(0., -BOTTLE_HEIGHT) + outer_l_t;
+    let left_bottle_l_t = outer_l_t;
+    let right_bottle_l_t = Vec2::new(BOTTLE_WIDTH + BOTTLE_THICKNESS, 0.) + outer_l_t;
 
     fn inv_y(v: Vec2) -> Vec2 { Vec2::new(v.x, -v.y) }
     let bottom_c = bottom_l_t + 0.5 * inv_y(BOTTOM_SIZE);
-    let left_wall_c = left_wall_l_t + 0.5 * inv_y(SIDE_SIZE);
-    let right_wall_c = right_wall_l_t + 0.5 * inv_y(SIDE_SIZE);
+    let left_bottle_c = left_bottle_l_t + 0.5 * inv_y(SIDE_SIZE);
+    let right_bottle_c = right_bottle_l_t + 0.5 * inv_y(SIDE_SIZE);
 
-    let wall_color = Color::RED;
-    let wall_material = materials.add(wall_color);
+    let bottle_color = Color::RED;
+    let bottle_material = materials.add(bottle_color);
 
     // Bottom
     commands.spawn((
@@ -489,33 +525,33 @@ fn setup_wall(
         MaterialMesh2dBundle {
             mesh: meshes.add(Rectangle::from_size(BOTTOM_SIZE)).into(),
             transform: Transform::from_translation(bottom_c.extend(Z_WALL)),
-            material: wall_material.clone(),
+            material: bottle_material.clone(),
             ..default()
         },
     ));
 
-    // Left wall
+    // Left bottle
     commands.spawn((
         Wall,
         RigidBody::Static,
         Collider::rectangle(SIDE_SIZE.x, SIDE_SIZE.y),
         MaterialMesh2dBundle {
             mesh: meshes.add(Rectangle::from_size(SIDE_SIZE)).into(),
-            transform: Transform::from_translation(left_wall_c.extend(Z_WALL)),
-            material: wall_material.clone(),
+            transform: Transform::from_translation(left_bottle_c.extend(Z_WALL)),
+            material: bottle_material.clone(),
             ..default()
         },
     ));
 
-    // Right wall
+    // Right bottle
     commands.spawn((
         Wall,
         RigidBody::Static,
         Collider::rectangle(SIDE_SIZE.x, SIDE_SIZE.y),
         MaterialMesh2dBundle {
             mesh: meshes.add(Rectangle::from_size(SIDE_SIZE)).into(),
-            transform: Transform::from_translation(right_wall_c.extend(Z_WALL)),
-            material: wall_material.clone(),
+            transform: Transform::from_translation(right_bottle_c.extend(Z_WALL)),
+            material: bottle_material.clone(),
             ..default()
         },
     ));
@@ -632,6 +668,27 @@ fn combine_balls_touched(
     }
 }
 
+fn score_ball_events(
+    mut q_player: Query<&mut Player>,
+    mut ev_ball: EventReader<BallSpawnEvent>,
+) {
+    if let Ok(mut player) = q_player.get_single_mut() {
+        let score: u32 = ev_ball.read()
+            .map(|ev| match ev {
+                BallSpawnEvent::Drop(_, level) => {
+                    //level.0 as u32 * 1
+                    0
+                },
+                BallSpawnEvent::Combine(_, level) => {
+                    let level_combined = level.map(|l| l.0-1).unwrap_or(BALL_LEVEL_MAX);
+                    level_combined.pow(2) as u32 * 5
+                },
+            })
+            .sum();
+        player.score += score;
+    }
+}
+
 
 
 #[derive(Event, Debug, Clone, Copy, PartialEq)]
@@ -724,10 +781,61 @@ fn action_player(
 #[derive(Component, Debug)]
 struct FakeBall;
 
+#[derive(Component, Debug)]
+struct ScoreView;
+
+#[derive(Component, Debug)]
+struct ScoreText;
+
+fn spawn_score_view(
+    mut commands: Commands,
+    my_assets: Res<MyAssets>,
+) {
+    let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
+    let bottom_rt = Vec2::new(
+        WALL_OUTER_RIGHT_BOTTOM.x,
+        WALL_OUTER_LEFT_TOP.y,
+    );
+    let score_lt =
+        bottom_rt + Vec2::new(BOTTOLE_MARGIN_RIGHT, 0.)
+            + (Vec2::new(score_size.x, -score_size.y) / 2.);
+    commands
+        .spawn((
+            ScoreView,
+            SpriteBundle { // as frame
+                sprite: Sprite {
+                    color: Color::BLACK,
+                    custom_size: Some(score_size),
+                    ..default()
+                },
+                transform: Transform::from_translation(
+                               score_lt.extend(Z_SCORE)),
+                ..default()
+            },
+        ))
+        .with_children(|b| {
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: SCORE_TEXT_WEIGHT,
+                color: Color::WHITE,
+            };
+            b.spawn((
+                ScoreText,
+                Text2dBundle {
+                    text: Text::from_section("", text_style.clone()),
+                    transform: Transform::from_translation(Vec3::Z * 0.01),
+                    ..default()
+                },
+            ));
+        });
+}
+
 fn update_player_view(
     q_player: Query<(Entity, &Player)>,
 
     q_fakeball: Query<Entity, With<FakeBall>>,
+
+    mut q_score_text: Query<&mut Text, With<ScoreText>>,
 
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -735,6 +843,7 @@ fn update_player_view(
     my_assets: Res<MyAssets>,
 ) {
     if let Ok((plyer_entity, player)) = q_player.get_single() {
+        // Fake ball
         let fakeball = q_fakeball.get_single();
 
         if player.timer_cooltime.finished() {
@@ -753,6 +862,13 @@ fn update_player_view(
             // don't need fake ball
             if let Ok(fakeball) = fakeball {
                 commands.entity(fakeball).despawn_recursive();
+            }
+        }
+
+        // Score
+        if let Ok(mut text) = q_score_text.get_single_mut() {
+            if let Some(score_text) = text.sections.first_mut() {
+                score_text.value = format!("Score:{:>6}", player.score);
             }
         }
     }
