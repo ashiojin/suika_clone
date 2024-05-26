@@ -18,6 +18,7 @@ use clap::Parser;
 // - [ ] Player position:
 //   - [ ] y-position should be higher than all of balls.
 //   - [ ] x-position should be limited x positon to the inside of the bottle.
+// - [ ] Use random generator.
 // - [ ] GameOver.
 // - [ ] Create and Load an external file (.ron or others)
 //   for ball size, texture, and other data.
@@ -36,7 +37,7 @@ use clap::Parser;
 // Window Settings
 const TITLE: &str = "Suikx clone";
 const LOGICAL_WIDTH: f32 = 1440.;
-const LOGICAL_HEIGHT: f32 = 810.;
+const LOGICAL_HEIGHT: f32 = 940.;
 const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH;
 const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT;
 const WINDOW_MAX_WIDTH: f32 = 1920.;
@@ -149,15 +150,22 @@ fn main() {
 
 #[derive(Resource, Debug)]
 struct MyAssets {
-    h_ball: Handle<Image>,
+    h_balls: Vec<Handle<Image>>,
     h_font: Handle<Font>,
 }
 impl MyAssets {
     fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
-        vec![
-            self.h_ball.clone().untyped(),
+        let mut v: Vec<_> = self.h_balls.iter().cloned().map(|h| h.untyped()).collect();
+        let mut v2 = vec![
             self.h_font.clone().untyped(),
-        ]
+        ];
+        v.append(&mut v2);
+        v
+    }
+
+    fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {
+        let idx = level.0 - BALL_LEVEL_MIN;
+        &self.h_balls[idx]
     }
 }
 
@@ -235,17 +243,17 @@ const fn color(lv: BallLevel) -> Color {
 }
 const BALL_LEVEL_SETTINGS: [BallLevelSetting; BALL_LEVEL_MAX-BALL_LEVEL_MIN+1] =
 [
-    BallLevelSetting::new(020. * 0.8, color(BallLevel(1))),
-    BallLevelSetting::new(025. * 0.8, color(BallLevel(2))),
-    BallLevelSetting::new(035. * 0.8, color(BallLevel(3))),
-    BallLevelSetting::new(040. * 0.8, color(BallLevel(4))),
-    BallLevelSetting::new(055. * 0.8, color(BallLevel(5))),
-    BallLevelSetting::new(060. * 0.8, color(BallLevel(6))),
-    BallLevelSetting::new(080. * 0.8, color(BallLevel(7))),
-    BallLevelSetting::new(100. * 0.8, color(BallLevel(8))),
-    BallLevelSetting::new(130. * 0.8, color(BallLevel(9))),
-    BallLevelSetting::new(160. * 0.8, color(BallLevel(10))),
-    BallLevelSetting::new(200. * 0.8, color(BallLevel(11))),
+    BallLevelSetting::new(028.0, color(BallLevel(1))),
+    BallLevelSetting::new(034.5, color(BallLevel(2))),
+    BallLevelSetting::new(043.5, color(BallLevel(3))),
+    BallLevelSetting::new(055.0, color(BallLevel(4))),
+    BallLevelSetting::new(069.0, color(BallLevel(5))),
+    BallLevelSetting::new(086.0, color(BallLevel(6))),
+    BallLevelSetting::new(105.0, color(BallLevel(7))),
+    BallLevelSetting::new(127.0, color(BallLevel(8))),
+    BallLevelSetting::new(151.0, color(BallLevel(9))),
+    BallLevelSetting::new(177.5, color(BallLevel(10))),
+    BallLevelSetting::new(207.0, color(BallLevel(11))),
 ];
 impl Default for BallLevel {
     fn default() -> Self {
@@ -344,8 +352,8 @@ const SCORE_HEIGHT: f32 = 40.;
 //  +------+   | : thickness
 //
 //   <~~~~> : width
-const BOTTLE_WIDTH: f32 = 400.0;
-const BOTTLE_HEIGHT: f32 = 500.0;
+const BOTTLE_WIDTH: f32 = 740.0;
+const BOTTLE_HEIGHT: f32 = 740.0;
 const BOTTLE_THICKNESS: f32 = 30.0;
 
 const BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_WIDTH + 2.*BOTTLE_THICKNESS, BOTTLE_THICKNESS);
@@ -367,9 +375,9 @@ const PLAYER_Y: f32 = WALL_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
 //   These are layers. each layer can freely use +[0.0, 1.0) Z-Order for any purpose.
 const Z_BACK: f32 = -20.;
 const Z_SCORE: f32 = -10.;
-const Z_PLAYER: f32 = 00.;
-const Z_BALL: f32 = 10.;
-const Z_WALL: f32 = 20.;
+const Z_WALL: f32 = 00.;
+const Z_PLAYER: f32 = 10.;
+const Z_BALL: f32 = 20.;
 
 const Z_BALL_D_BY_LEVEL: f32 = 0.01;
 
@@ -377,9 +385,16 @@ fn load_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
+
+    let mut h_balls = vec![];
+    for i in BALL_LEVEL_MIN..=BALL_LEVEL_MAX {
+        h_balls.push(
+            asset_server.load(format!("images/kao/kao_{:>02}.png", i))
+        );
+    }
     commands.insert_resource(
         MyAssets {
-            h_ball: asset_server.load("ball_01.png"),
+            h_balls,
             h_font: asset_server.load("fonts/GL-CurulMinamoto.ttf"),
         }
     );
@@ -675,7 +690,7 @@ fn score_ball_events(
     if let Ok(mut player) = q_player.get_single_mut() {
         let score: u32 = ev_ball.read()
             .map(|ev| match ev {
-                BallSpawnEvent::Drop(_, level) => {
+                BallSpawnEvent::Drop(_, _level) => {
                     //level.0 as u32 * 1
                     0
                 },
@@ -851,7 +866,7 @@ fn update_player_view(
             if fakeball.is_err() {
                 commands.entity(plyer_entity)
                     .with_children(|b| {
-                        let ball_view = create_ball_view(&mut meshes, &mut materials, &player.next_ball_level, player.hand_offset, &my_assets);
+                        let ball_view = create_ball_view(&mut meshes, &mut materials, player.next_ball_level, player.hand_offset, &my_assets);
                         b.spawn((
                             FakeBall,
                             ball_view,
@@ -913,15 +928,17 @@ fn create_ball_view(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 
-    level: &BallLevel,
+    level: BallLevel,
     pos: Vec2,
 
     my_assets: &Res<MyAssets>,
 ) -> impl Bundle {
-    let ball_material = materials.add(my_assets.h_ball.clone());
+
+    let ball_material = materials.add(my_assets.get_ball_image(level).clone());
     let ball_r = level.get_r();
+    let tex_k = 512. / 420.;
     MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::new(ball_r*2., ball_r*2.)).into(),
+        mesh: meshes.add(Rectangle::new(ball_r*2.*tex_k, ball_r*2.*tex_k)).into(),
         transform: Transform::from_translation(
              pos.extend(Z_BALL + Z_BALL_D_BY_LEVEL * level.0 as f32)
         ),
@@ -943,7 +960,7 @@ fn spawn_ball(
         use BallSpawnEvent::*;
         match *ev {
             Drop(pos, level) => {
-                let ball_view = create_ball_view(&mut meshes, &mut materials, &level, pos, &my_assets);
+                let ball_view = create_ball_view(&mut meshes, &mut materials, level, pos, &my_assets);
                 commands.spawn((
                     Ball::new(level),
                     RigidBody::Dynamic,
@@ -953,7 +970,7 @@ fn spawn_ball(
             },
             Combine(pos, Some(level)) => {
                 let ball_r_start = level.get_growstart_r();
-                let ball_view = create_ball_view(&mut meshes, &mut materials, &level, pos, &my_assets);
+                let ball_view = create_ball_view(&mut meshes, &mut materials, level, pos, &my_assets);
                 commands.spawn((
                     Ball::new(level),
                     RigidBody::Dynamic,
