@@ -11,25 +11,25 @@ use clap::Parser;
 //
 // ToDo Items
 // - (ALWAYS) Refactoring!
-// - Remove Max Level Balls Combined.
-// - Scoring:
-//   - Combine Scores.
-//   - Drop Scores.
-// - Player position:
-//   - y-position should be higher than all of balls.
-//   - x-position should be limited x positon to the inside of the bottle.
-// - GameOver.
-// - Create and Load an external file (.ron or others)
+// - [x] Remove Max Level Balls Combined.
+// - [ ] Scoring:
+//   - [ ] Combine Scores.
+//   - [ ] Drop Scores.
+// - [ ] Player position:
+//   - [ ] y-position should be higher than all of balls.
+//   - [ ] x-position should be limited x positon to the inside of the bottle.
+// - [ ] GameOver.
+// - [ ] Create and Load an external file (.ron or others)
 //   for ball size, texture, and other data.
-// - Sound.
-//   - BGM.
-//   - SE.
-// - Title Screen.
-// - Player texture.
-// - Config Screen.
-// - Player Actions.
-//   - Holding a ball.
-//   - Shaking the bottle.
+// - [ ] Sound.
+//   - [ ] BGM.
+//   - [ ] SE.
+// - [ ] Title Screen.
+// - [ ] Player texture.
+// - [ ] Config Screen.
+// - [ ] Player Actions.
+//   - [ ] Holding a ball.
+//   - [ ] Shaking the bottle.
 //
 
 
@@ -543,7 +543,7 @@ enum BallEvent {
 #[derive(Event, Clone, Copy, PartialEq, Debug)]
 enum BallSpawnEvent {
     Drop(Vec2, BallLevel),
-    Combine(Vec2, BallLevel),
+    Combine(Vec2, Option<BallLevel>),
 }
 #[inline]
 fn damping(x: f32) -> f32 {
@@ -620,10 +620,10 @@ fn combine_balls_touched(
 
                     if cur_lv == BALL_LEVEL_MAX {
                         ev_ball_spawn.send(
-                            BallSpawnEvent::Combine(pos, BallLevel(BALL_LEVEL_MIN)));
+                            BallSpawnEvent::Combine(pos, None));
                     } else {
                         ev_ball_spawn.send(
-                            BallSpawnEvent::Combine(pos, BallLevel(cur_lv + 1)));
+                            BallSpawnEvent::Combine(pos, Some(BallLevel(cur_lv + 1))));
                     }
                 }
 
@@ -835,7 +835,7 @@ fn spawn_ball(
                     ball_view,
                 ));
             },
-            Combine(pos, level) => {
+            Combine(pos, Some(level)) => {
                 let ball_r_start = level.get_growstart_r();
                 let ball_view = create_ball_view(&mut meshes, &mut materials, &level, pos, &my_assets);
                 commands.spawn((
@@ -845,6 +845,9 @@ fn spawn_ball(
                     BallGrowing::new(config.grow_time),
                     ball_view,
                 ));
+            },
+            Combine(_, None) => {
+                // Nothing to do
             }
         }
     }
