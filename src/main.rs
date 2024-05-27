@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 use bevy::{
-    asset::LoadState, prelude::*, reflect::Reflect, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}, window::WindowResolution
+    asset::LoadState, prelude::*, reflect::Reflect, render::camera::ScalingMode, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}, window::WindowResolution
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
@@ -15,9 +15,9 @@ use clap::Parser;
 // - [x] Scoring:
 //   - [x] Combine Scores.
 //   - [x] Drop Scores.
-// - [ ] Player position:
-//   - [ ] y-position should be higher than all of balls.
-//   - [ ] x-position should be limited x positon to the inside of the bottle.
+// - [x] Player position:
+//   - [x] y-position should be higher than all of balls.
+//   - [x] x-position should be limited x positon to the inside of the bottle.
 // - [ ] Use random generator.
 // - [ ] GameOver.
 // - [ ] Create and Load an external file (.ron or others)
@@ -129,6 +129,8 @@ fn main() {
     app.add_systems(Update, (
         grow_ball_spawned,
         check_ball_collisions,
+        move_puppeteer,
+        puppet_player_pos.after(move_puppeteer),
         action_player,
         combine_balls_touched
             .after(check_ball_collisions),
@@ -214,6 +216,9 @@ impl Player {
             ((now.0 + 1731) % 101) % 4usize + BALL_LEVEL_MIN
 
             );
+    }
+    fn is_fakeball_exists(&self) -> bool {
+        self.timer_cooltime.finished()
     }
 }
 
@@ -319,6 +324,11 @@ impl Ball {
 // # Screen Layout
 // +: (0.0, 0.0)
 //                                             
+//                      S                       
+//                      v                      
+//---------------------------------------------
+//                                             
+//                                             
 //                      P                      
 //                               SCORE: xx     
 //                *         *                  
@@ -330,6 +340,7 @@ impl Ball {
 //                *         *    | ... |       
 //                **bottle***    +-----+       
 //                                             
+//---------------------------------------------
 //                                             
 //                                             
 const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
@@ -370,6 +381,8 @@ const WALL_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
 
 const PLAYER_GAP_WALL: f32 = 50.;
 const PLAYER_Y: f32 = WALL_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
+const PLAYER_GAP_TO_MAX: f32 = 200.;
+const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
 
 // Z-Order
 //   These are layers. each layer can freely use +[0.0, 1.0) Z-Order for any purpose.
@@ -505,11 +518,14 @@ fn cleanup_loading_screen(
     }
 }
 
+
 fn setup_camera(
     mut commands: Commands,
 ) {
+    let mut camera_bundle = Camera2dBundle::default();
+    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(1040.);
     commands.spawn((
-        Camera2dBundle::default(),
+        camera_bundle,
     ));
 }
 
@@ -737,6 +753,10 @@ fn read_keyboard(
     }
 }
 
+#[derive(Component, Debug, Default)]
+struct PlayerPuppeteer {
+}
+
 fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -747,6 +767,19 @@ fn spawn_player(
             Vec2::new(-30., 30.),
             Vec2::new(30., 30.),
         );
+
+    commands.spawn((
+        PlayerPuppeteer{},
+        TransformBundle::from_transform(
+            Transform::from_translation(Vec2::new(0., PLAYER_Y_MAX).extend(Z_PLAYER))
+        ),
+        ShapeCaster::new(
+            Collider::circle(10.),
+            Vec2::Y * -30.,
+            0.,
+            Direction2d::NEG_Y
+        ),
+    ));
 
     let player_y = PLAYER_Y;
 
@@ -762,14 +795,60 @@ fn spawn_player(
     ));
 }
 
-fn action_player(
+fn move_puppeteer(
+    q_player: Query<&Player>,
+    mut q_puppeteer: Query<(&mut Transform, &PlayerPuppeteer)>,
+    mut ev_player_act: EventReader<PlayerActionEvent>,
+) {
+    if let Ok((mut trans, _)) = q_puppeteer.get_single_mut() {
+        if let Ok(player) = q_player.get_single() {
+            for ev in ev_player_act.read() {
+                if let PlayerActionEvent::TryMove(lr) = ev {
+                    trans.translation.x =
+                        (trans.translation.x + lr * player.speed)
+                            .clamp(-BOTTLE_WIDTH/2., BOTTLE_WIDTH/2.);
+                }
+            }
+        }
+    }
+}
+
+fn puppet_player_pos(
     mut q_player: Query<(&mut Transform, &mut Player)>,
+    q_puppeteer: Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
+) {
+    if let Ok((trans, _caster, hits)) = q_puppeteer.get_single() {
+        if let Some(hit) = hits.iter().min_by(|a, b| a.time_of_impact.partial_cmp(&b.time_of_impact).unwrap()) {
+
+            if let Ok((mut player_trans, player)) = q_player.get_single_mut() {
+                let ball_r = if player.is_fakeball_exists() {
+                    player.next_ball_level.get_r()
+                } else {
+                    0.
+                };
+                let player_y = f32::max(
+                    PLAYER_Y,
+                    trans.translation.y
+                        - hit.time_of_impact
+                        + ball_r
+                );
+
+                player_trans.translation.x = trans.translation.x;
+                player_trans.translation.y = player_y;
+            }
+        }
+
+    }
+}
+
+fn action_player(
+    mut q_player: Query<(&Transform, &mut Player)>,
     mut ev_player_act: EventReader<PlayerActionEvent>,
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
 
     time: Res<Time>,
 ) {
-    if let Ok((mut trans, mut player)) = q_player.get_single_mut() {
+    if let Ok((trans, mut player)) = q_player.get_single_mut() {
         player.timer_cooltime.tick(time.delta());
 
         for ev in ev_player_act.read() {
@@ -785,8 +864,8 @@ fn action_player(
                         player.timer_cooltime.reset();
                     }
                 },
-                PlayerActionEvent::TryMove(lr) => {
-                    trans.translation.x += lr * player.speed;
+                PlayerActionEvent::TryMove(_lr) => {
+//                    trans.translation.x += lr * player.speed;
                 },
             }
         }
