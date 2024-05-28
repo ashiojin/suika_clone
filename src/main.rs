@@ -25,7 +25,7 @@ use clap::Parser;
 //   - [x] x-position should be limited x positon to the inside of the bottle.
 // - [x] Use random generator.
 // - [x] GameOver.
-// - [ ] Reset game.
+// - [x] Reset game.
 // - [ ] Create and Load an external file (.ron or others)
 //   for ball size, texture, and other data.
 // - [ ] Sound.
@@ -44,7 +44,7 @@ use clap::Parser;
 
 // Window Settings
 const TITLE: &str = "Suikx clone";
-const LOGICAL_WIDTH: f32 = 1920.;
+const LOGICAL_WIDTH: f32 = 1440.;
 const LOGICAL_HEIGHT: f32 = 1080. - 120./* for browser ui spaces*/;
 const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH / 2.;
 const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT / 2.;
@@ -131,6 +131,7 @@ fn main() {
     ));
 
     app.add_systems(OnEnter(GameState::InGame), (
+        physics_restart,
         setup_bottle,
         spawn_player,
         spawn_score_view,
@@ -159,8 +160,18 @@ fn main() {
     ).run_if(in_state(GameState::InGame)));
 
     app.add_systems(OnEnter(GameState::GameOver), (
-        setup_gameover_overpopup,
+        setup_gameover_popup,
     ));
+
+    app.add_systems(FixedUpdate, (
+        read_keyboard_for_gameover_popup,
+    ).run_if(in_state(GameState::GameOver)));
+
+    app.add_systems(OnExit(GameState::GameOver), (
+        cleanup_gameover_popup,
+        cleanup_ingame_entites
+    ));
+
 
     // For Debug
     app.add_systems(Update, (
@@ -520,7 +531,7 @@ fn setup_loading_screen(
         b.spawn((
             Text2dBundle {
                 text: Text::from_section("Now Loading...", text_style),
-                transform: Transform::from_translation(Vec2::new(0., 0.).extend(0.1)),
+                transform: Transform::from_translation(Vec2::new(300., -150.).extend(0.1)),
                 text_anchor: bevy::sprite::Anchor::BottomRight,
                 ..default()
             },
@@ -564,6 +575,11 @@ fn setup_camera(
     ));
 }
 
+fn physics_restart(
+    mut physics_time: ResMut<Time<Physics>>,
+) {
+    physics_time.unpause();
+}
 
 fn setup_bottle(
     mut commands: Commands,
@@ -747,7 +763,7 @@ fn score_ball_events(
                 },
                 BallSpawnEvent::Combine(_, level) => {
                     let level_combined = level.map(|l| l.0-1).unwrap_or(BALL_LEVEL_MAX);
-                    level_combined.pow(2) as u32 * 5
+                    level_combined.pow(2) as u32 // * 1
                 },
             })
             .sum();
@@ -1159,21 +1175,51 @@ fn grow_ball_spawned(
     }
 }
 
+#[allow(clippy::complexity)]
+fn cleanup_ingame_entites(
+    mut commands: Commands,
+    q_entites: Query<Entity,
+        Or<(
+            With<Player>, // FIXME: Should add an InGameEntity component?
+            With<PlayerPuppeteer>,
+            With<Ball>,
+            With<Wall>,
+            With<ScoreView>,
+        )>>,
+) {
+    for e in q_entites.iter() {
+        commands.entity(e)
+            .despawn_recursive();
+    }
+}
+
 //
 //    +----------------+    
 //    |                |    
 //    |    Game Over   |    
 //    |                |    
 //    |  Score: XXXXXX |    
+//    |  press space.. |    
 //    |                |    
 //    +----------------+    
 //
 const GO_POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
 const GO_POPUP_SIZE: Vec2 = Vec2::new(500., 500.);
 const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
-const GO_POPUP_STR_2_Y: f32 = 0. - 100.;
+const GO_POPUP_STR_2_Y: f32 = 0. -  50.;
+const GO_POPUP_STR_3_Y: f32 = 0. - 100.;
 
-fn setup_gameover_overpopup(
+#[derive(Component, Debug)]
+struct GameOverPopup;
+
+#[derive(Component, Debug)]
+struct ControllerGameOverPopup {
+    input_suppresser: Timer,
+}
+#[derive(Component, Debug)]
+struct GameOverPopupMessageToRestart;
+
+fn setup_gameover_popup(
     mut commands: Commands,
     q_player: Query<&Player>,
     my_assets: Res<MyAssets>,
@@ -1181,9 +1227,13 @@ fn setup_gameover_overpopup(
     if let Ok(player) = q_player.get_single() {
         let score = player.score;
         commands.spawn((
+            GameOverPopup,
+            ControllerGameOverPopup{
+                input_suppresser: Timer::from_seconds(3.0, TimerMode::Once)
+            },
             SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgba(1.0, 1.0, 1.0, 0.5),
+                    color: Color::rgba(0.9, 0.9, 0.9, 0.5),
                     custom_size: Some(GO_POPUP_SIZE),
                     ..default()
                 },
@@ -1199,7 +1249,7 @@ fn setup_gameover_overpopup(
             };
             b.spawn((
                 Text2dBundle {
-                    text: Text::from_section("GAME OVER", text_style.clone()),
+                    text: Text::from_section("GAME OVER", text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP_GAMEOVER + 0.01)
                     ),
@@ -1207,6 +1257,11 @@ fn setup_gameover_overpopup(
                     ..default()
                 },
             ));
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: 50.0,
+                color: Color::GREEN,
+            };
             b.spawn((
                 Text2dBundle {
                     text: Text::from_section(
@@ -1218,10 +1273,62 @@ fn setup_gameover_overpopup(
                     ..default()
                 },
             ));
-
-    });
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: 30.0,
+                color: Color::BLACK,
+            };
+            b.spawn((
+                GameOverPopupMessageToRestart,
+                Text2dBundle {
+                    text: Text::from_section(
+                        "Press [space key] to restart.", text_style),
+                    transform: Transform::from_translation(
+                        Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    ),
+                    visibility: Visibility::Hidden,
+                    text_anchor: bevy::sprite::Anchor::Center,
+                    ..default()
+                },
+            ));
+        });
     }
+}
 
+#[allow(clippy::complexity)]
+fn cleanup_gameover_popup(
+    mut commands: Commands,
+    q_popup: Query<Entity,
+        Or<(
+            With<GameOverPopup>,
+        )>
+    >,
+) {
+    for p in q_popup.iter() {
+        commands.entity(p)
+            .despawn_recursive();
+    }
+}
+
+fn read_keyboard_for_gameover_popup(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut q_controller: Query<&mut ControllerGameOverPopup>,
+    mut q_popup_message: Query<&mut Visibility,
+        (With<GameOverPopupMessageToRestart>, Without<ControllerGameOverPopup>)>,
+    time: Res<Time>,
+) {
+    if let Ok(mut controller) = q_controller.get_single_mut() {
+        controller.input_suppresser.tick(time.delta());
+        if controller.input_suppresser.finished() {
+            if let Ok(mut vis_msg) = q_popup_message.get_single_mut() {
+                *vis_msg = Visibility::Inherited;
+            }
+            if keyboard.just_pressed(KeyCode::Space) {
+                next_state.set(GameState::InGame);
+            }
+        }
+    }
 }
 
 #[derive(Resource, Debug)]
