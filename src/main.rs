@@ -5,6 +5,11 @@ use bevy::{
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
 
+use bevy_rand::prelude::*;
+use bevy_rand::resource::GlobalEntropy;
+use bevy_prng::ChaCha8Rng;
+use rand_core::RngCore;
+
 use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
 use clap::Parser;
 
@@ -18,28 +23,31 @@ use clap::Parser;
 // - [x] Player position:
 //   - [x] y-position should be higher than all of balls.
 //   - [x] x-position should be limited x positon to the inside of the bottle.
-// - [ ] Use random generator.
-// - [ ] GameOver.
+// - [x] Use random generator.
+// - [x] GameOver.
+// - [ ] Reset game.
 // - [ ] Create and Load an external file (.ron or others)
 //   for ball size, texture, and other data.
 // - [ ] Sound.
 //   - [ ] BGM.
 //   - [ ] SE.
 // - [ ] Title Screen.
+// - [ ] Create PlayerBundle
 // - [ ] Player texture.
 // - [ ] Config Screen.
 // - [ ] Player Actions.
 //   - [ ] Holding a ball.
 //   - [ ] Shaking the bottle.
+// - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 //
 
 
 // Window Settings
 const TITLE: &str = "Suikx clone";
-const LOGICAL_WIDTH: f32 = 1440.;
-const LOGICAL_HEIGHT: f32 = 940.;
-const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH;
-const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT;
+const LOGICAL_WIDTH: f32 = 1920.;
+const LOGICAL_HEIGHT: f32 = 1080. - 120./* for browser ui spaces*/;
+const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH / 2.;
+const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT / 2.;
 const WINDOW_MAX_WIDTH: f32 = 1920.;
 const WINDOW_MAX_HEIGHT: f32 = 1080.;
 
@@ -52,6 +60,7 @@ enum GameState {
     #[default]
     Loading,
     InGame,
+    GameOver,
 }
 
 fn main() {
@@ -61,6 +70,7 @@ fn main() {
     let mut app = App::new();
 
     app.add_plugins((
+        EntropyPlugin::<ChaCha8Rng>::default(),
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: TITLE.into(),
@@ -141,10 +151,20 @@ fn main() {
             .after(action_player),
         limit_velocity_of_ball, // TODO: should exec after velocities are caluculated
         score_ball_events,
+        check_game_over,
     ).run_if(in_state(GameState::InGame)));
 
     app.add_systems(FixedUpdate, (
-        read_keyboard,
+        read_keyboard_for_player_actions,
+    ).run_if(in_state(GameState::InGame)));
+
+    app.add_systems(OnEnter(GameState::GameOver), (
+        setup_gameover_overpopup,
+    ));
+
+    // For Debug
+    app.add_systems(Update, (
+        display_area,
     ).run_if(in_state(GameState::InGame)));
 
     app.run();
@@ -176,6 +196,7 @@ impl MyAssets {
 struct Player {
     speed: f32,
     next_ball_level: BallLevel,
+    max_ball_level: BallLevel,
 
     timer_cooltime: Timer,
 
@@ -186,12 +207,14 @@ struct Player {
 
 const PLAYER_SPEED: f32 = 3.0;
 const PLAYER_DROP_COOLTIME: f32 = 1.0;
+const PLAYER_MAX_BALL_LEVEL_FOR_DROPPING: BallLevel = BallLevel::new(4usize);
 
 impl Default for Player {
     fn default() -> Self {
         Self {
             speed: PLAYER_SPEED,
             next_ball_level: default(),
+            max_ball_level: default(),
 
             timer_cooltime: Timer::from_seconds(PLAYER_DROP_COOLTIME, TimerMode::Once),
             hand_offset: Vec2::ZERO,
@@ -201,21 +224,20 @@ impl Default for Player {
     }
 }
 impl Player {
-    fn new(speed: f32, sec_cooltime: f32, hand_offset: Vec2, first_ball_level: BallLevel) -> Self {
+    fn new(speed: f32, sec_cooltime: f32, hand_offset: Vec2, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
         Self {
             speed,
             next_ball_level: first_ball_level,
+            max_ball_level,
             timer_cooltime: Timer::from_seconds(sec_cooltime, TimerMode::Once),
             hand_offset,
             ..default()
         }
     }
-    fn set_next_ball_level(&mut self, /* randam generator here? */) {
-        let now = self.next_ball_level;
-        self.next_ball_level = BallLevel::new(
-            ((now.0 + 1731) % 101) % 4usize + BALL_LEVEL_MIN
+    fn set_next_ball_level_from_rng(&mut self, rng: &mut EntropyComponent<ChaCha8Rng>) {
 
-            );
+        self.next_ball_level = BallLevel::from_rand_u32(rng.next_u32(),
+            BallLevel::new(BALL_LEVEL_MIN), self.max_ball_level);
     }
     fn is_fakeball_exists(&self) -> bool {
         self.timer_cooltime.finished()
@@ -227,6 +249,7 @@ struct Wall;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct BallLevel(usize);
+
 const BALL_LEVEL_MIN:usize = 1;
 const BALL_LEVEL_MAX:usize = 11;
 struct BallLevelSetting {
@@ -266,10 +289,15 @@ impl Default for BallLevel {
     }
 }
 impl BallLevel {
-    fn new(lv: usize) -> Self {
+    const fn new(lv: usize) -> Self {
         assert!(lv >= BALL_LEVEL_MIN);
         assert!(lv <= BALL_LEVEL_MAX);
         Self(lv)
+    }
+    fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
+        Self::new(
+            (rnd as usize % (max.0-min.0)) + min.0
+        )
     }
     fn get_settings(&self) -> &'static BallLevelSetting {
         &BALL_LEVEL_SETTINGS[self.0 - BALL_LEVEL_MIN]
@@ -326,7 +354,7 @@ impl Ball {
 //                                             
 //                      S                       
 //                      v                      
-//---------------------------------------------
+//--------------------------------------------- (height: 1080-120=960)
 //                                             
 //                                             
 //                      P                      
@@ -348,6 +376,11 @@ const SCORE_TEXT_WEIGHT: f32 = 30.;
 const SCORE_WIDTH: f32 = 360.; // "Score: 12345" (12) 12 * 30.
 const SCORE_HEIGHT: f32 = 40.;
 
+const AREA_X_MIN: f32 = -500.0;
+const AREA_X_MAX: f32 =  500.0;
+const AREA_Y_MIN: f32 = -500.0;
+const AREA_Y_MAX: f32 =  500.0 + 200.0;
+
 
 //  A Y+
 //  |
@@ -363,8 +396,9 @@ const SCORE_HEIGHT: f32 = 40.;
 //  +------+   | : thickness
 //
 //   <~~~~> : width
+const BOTTLE_CENTER_Y: f32 = -100.0;
 const BOTTLE_WIDTH: f32 = 740.0;
-const BOTTLE_HEIGHT: f32 = 740.0;
+const BOTTLE_HEIGHT: f32 = 650.0;
 const BOTTLE_THICKNESS: f32 = 30.0;
 
 const BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_WIDTH + 2.*BOTTLE_THICKNESS, BOTTLE_THICKNESS);
@@ -372,11 +406,11 @@ const SIDE_SIZE: Vec2 = Vec2::new(BOTTLE_THICKNESS, BOTTLE_HEIGHT);
 
 const WALL_OUTER_LEFT_TOP: Vec2 = Vec2::new(
         -1. * BOTTOM_SIZE.x * 0.5,
-        -1. * -SIDE_SIZE.y * 0.5,
+        -1. * -SIDE_SIZE.y * 0.5 + BOTTLE_CENTER_Y,
     );
 const WALL_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
         BOTTOM_SIZE.x * 0.5,
-        -SIDE_SIZE.y * 0.5,
+        -SIDE_SIZE.y * 0.5 + BOTTLE_CENTER_Y,
     );
 
 const PLAYER_GAP_WALL: f32 = 50.;
@@ -391,6 +425,7 @@ const Z_SCORE: f32 = -10.;
 const Z_WALL: f32 = 00.;
 const Z_PLAYER: f32 = 10.;
 const Z_BALL: f32 = 20.;
+const Z_POPUP_GAMEOVER: f32 = 30.;
 
 const Z_BALL_D_BY_LEVEL: f32 = 0.01;
 
@@ -720,6 +755,33 @@ fn score_ball_events(
     }
 }
 
+fn check_game_over(
+    q_balls: Query<&Transform, With<Ball>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut physics_time: ResMut<Time<Physics>>,
+) {
+    if let Some(_ball) = q_balls.iter().find(|t| {
+        let t = t.translation;
+        let x = t.x;
+        let y = t.y;
+        !(AREA_X_MIN..=AREA_X_MAX).contains(&x) ||
+            !(AREA_Y_MIN..=AREA_Y_MAX).contains(&y)
+    }) {
+        next_state.set(GameState::GameOver);
+        physics_time.pause();
+    }
+}
+
+fn display_area(
+    mut gizmos: Gizmos<MyLoadingScreenGizmos>,
+) {
+    gizmos.rect_2d(
+        Vec2::new((AREA_X_MAX+AREA_X_MIN)/2., (AREA_Y_MAX+AREA_Y_MIN)/2.),
+        0.,
+        Vec2::new(AREA_X_MAX-AREA_X_MIN, AREA_Y_MAX-AREA_Y_MIN),
+        Color::RED);
+}
+
 
 
 #[derive(Event, Debug, Clone, Copy, PartialEq)]
@@ -728,7 +790,7 @@ enum PlayerActionEvent {
     TryMove(f32), // [-1, 1]
 }
 
-fn read_keyboard(
+fn read_keyboard_for_player_actions(
     q_player: Query<&Player>,
     keyboard: Res<ButtonInput<KeyCode>>,
 
@@ -761,6 +823,8 @@ fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+
+    mut global_ent: ResMut<GlobalEntropy<ChaCha8Rng>>,
 ) {
     let player_tri = Triangle2d::new(
             Vec2::Y * -30.,
@@ -768,6 +832,9 @@ fn spawn_player(
             Vec2::new(30., 30.),
         );
 
+    let mut player = Player::new(PLAYER_SPEED, PLAYER_DROP_COOLTIME, Vec2::new(0., -20.0), BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
+    let mut rng = global_ent.fork_rng();
+    player.set_next_ball_level_from_rng(&mut rng);
     commands.spawn((
         PlayerPuppeteer{},
         TransformBundle::from_transform(
@@ -775,7 +842,7 @@ fn spawn_player(
         ),
         ShapeCaster::new(
             Collider::circle(10.),
-            Vec2::Y * -30.,
+            player.hand_offset,
             0.,
             Direction2d::NEG_Y
         ),
@@ -784,7 +851,7 @@ fn spawn_player(
     let player_y = PLAYER_Y;
 
     commands.spawn((
-        Player::new(PLAYER_SPEED, PLAYER_DROP_COOLTIME, Vec2::new(0., -20.0), BallLevel::new(1)),
+        player,
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(player_tri)),
             material: materials.add(Color::GREEN),
@@ -792,6 +859,7 @@ fn spawn_player(
                 Vec2::new(0., player_y).extend(Z_PLAYER)),
             ..default()
         },
+        rng,
     ));
 }
 
@@ -842,13 +910,13 @@ fn puppet_player_pos(
 }
 
 fn action_player(
-    mut q_player: Query<(&Transform, &mut Player)>,
+    mut q_player: Query<(&Transform, &mut Player, &mut EntropyComponent<ChaCha8Rng>)>,
     mut ev_player_act: EventReader<PlayerActionEvent>,
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
 
     time: Res<Time>,
 ) {
-    if let Ok((trans, mut player)) = q_player.get_single_mut() {
+    if let Ok((trans, mut player, mut rng)) = q_player.get_single_mut() {
         player.timer_cooltime.tick(time.delta());
 
         for ev in ev_player_act.read() {
@@ -860,7 +928,7 @@ fn action_player(
 
                         ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
 
-                        player.set_next_ball_level();
+                        player.set_next_ball_level_from_rng(&mut rng);
                         player.timer_cooltime.reset();
                     }
                 },
@@ -945,7 +1013,9 @@ fn update_player_view(
             if fakeball.is_err() {
                 commands.entity(plyer_entity)
                     .with_children(|b| {
-                        let ball_view = create_ball_view(&mut meshes, &mut materials, player.next_ball_level, player.hand_offset, &my_assets);
+                        let ball_view = create_ball_view(
+                            &mut meshes, &mut materials, player.next_ball_level,
+                            player.hand_offset, &my_assets);
                         b.spawn((
                             FakeBall,
                             ball_view,
@@ -1039,7 +1109,8 @@ fn spawn_ball(
         use BallSpawnEvent::*;
         match *ev {
             Drop(pos, level) => {
-                let ball_view = create_ball_view(&mut meshes, &mut materials, level, pos, &my_assets);
+                let ball_view = create_ball_view(&mut meshes, &mut materials,
+                                                 level, pos, &my_assets);
                 commands.spawn((
                     Ball::new(level),
                     RigidBody::Dynamic,
@@ -1049,7 +1120,8 @@ fn spawn_ball(
             },
             Combine(pos, Some(level)) => {
                 let ball_r_start = level.get_growstart_r();
-                let ball_view = create_ball_view(&mut meshes, &mut materials, level, pos, &my_assets);
+                let ball_view = create_ball_view(&mut meshes, &mut materials,
+                                                 level, pos, &my_assets);
                 commands.spawn((
                     Ball::new(level),
                     RigidBody::Dynamic,
@@ -1085,6 +1157,71 @@ fn grow_ball_spawned(
                 .try_insert(Collider::circle(r));
         }
     }
+}
+
+//
+//    +----------------+    
+//    |                |    
+//    |    Game Over   |    
+//    |                |    
+//    |  Score: XXXXXX |    
+//    |                |    
+//    +----------------+    
+//
+const GO_POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
+const GO_POPUP_SIZE: Vec2 = Vec2::new(500., 500.);
+const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
+const GO_POPUP_STR_2_Y: f32 = 0. - 100.;
+
+fn setup_gameover_overpopup(
+    mut commands: Commands,
+    q_player: Query<&Player>,
+    my_assets: Res<MyAssets>,
+) {
+    if let Ok(player) = q_player.get_single() {
+        let score = player.score;
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgba(1.0, 1.0, 1.0, 0.5),
+                    custom_size: Some(GO_POPUP_SIZE),
+                    ..default()
+                },
+                transform: Transform::from_translation(
+                               GO_POPUP_CENTER.extend(Z_POPUP_GAMEOVER)),
+                ..default()
+            },
+        )).with_children(|b| {
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: 60.0,
+                color: Color::GREEN,
+            };
+            b.spawn((
+                Text2dBundle {
+                    text: Text::from_section("GAME OVER", text_style.clone()),
+                    transform: Transform::from_translation(
+                        Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    ),
+                    text_anchor: bevy::sprite::Anchor::Center,
+                    ..default()
+                },
+            ));
+            b.spawn((
+                Text2dBundle {
+                    text: Text::from_section(
+                        format!("Score:{:>6}", score), text_style),
+                    transform: Transform::from_translation(
+                        Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    ),
+                    text_anchor: bevy::sprite::Anchor::Center,
+                    ..default()
+                },
+            ));
+
+    });
+    }
+
 }
 
 #[derive(Resource, Debug)]
