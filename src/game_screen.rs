@@ -196,91 +196,23 @@ const PLAYER_GAP_TO_MAX: f32 = 200.;
 const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BallLevel(pub usize);
 
-pub const BALL_LEVEL_MIN:usize = 1;
-pub const BALL_LEVEL_MAX:usize = 11;
-struct BallLevelSetting {
-    radius: f32,
-    _color: Color,
-}
-impl BallLevelSetting {
-    const fn new(radius: f32, color: Color) -> Self {
-        Self { radius, _color: color }
-    }
-}
-const fn color(lv: BallLevel) -> Color {
-    let idx = lv.0 - BALL_LEVEL_MIN;
-    let x = (idx * 360) / (BALL_LEVEL_MAX-BALL_LEVEL_MIN+1);
-    let h = x as f32;
-    let s = 1.0;
-    let l = 0.5;
-    Color::hsl(h, s, l)
-}
-const BALL_LEVEL_SETTINGS: [BallLevelSetting; BALL_LEVEL_MAX-BALL_LEVEL_MIN+1] =
-[
-    BallLevelSetting::new(028.0, color(BallLevel(1))),
-    BallLevelSetting::new(034.5, color(BallLevel(2))),
-    BallLevelSetting::new(043.5, color(BallLevel(3))),
-    BallLevelSetting::new(055.0, color(BallLevel(4))),
-    BallLevelSetting::new(069.0, color(BallLevel(5))),
-    BallLevelSetting::new(086.0, color(BallLevel(6))),
-    BallLevelSetting::new(105.0, color(BallLevel(7))),
-    BallLevelSetting::new(127.0, color(BallLevel(8))),
-    BallLevelSetting::new(151.0, color(BallLevel(9))),
-    BallLevelSetting::new(177.5, color(BallLevel(10))),
-    BallLevelSetting::new(207.0, color(BallLevel(11))),
-];
 impl Default for BallLevel {
     fn default() -> Self {
         Self(BALL_LEVEL_MIN)
     }
 }
 impl BallLevel {
-    const fn new(lv: usize) -> Self {
+    pub const fn new(lv: usize) -> Self {
         assert!(lv >= BALL_LEVEL_MIN);
-        assert!(lv <= BALL_LEVEL_MAX);
         Self(lv)
     }
-    fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
+    pub fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
         Self::new(
             (rnd as usize % (max.0-min.0)) + min.0
         )
-    }
-    fn get_settings(&self) -> &'static BallLevelSetting {
-        &BALL_LEVEL_SETTINGS[self.0 - BALL_LEVEL_MIN]
-    }
-
-    fn get_r(&self) -> f32 {
-        self.get_settings().radius
-    }
-    fn _get_color(&self) -> Color {
-        self.get_settings()._color
-    }
-
-    fn get_growstart_r(&self) -> f32 {
-        //                               
-        //   -  *                        
-        //   |  ***                      
-        //   |  *  **  y+r      r: min(ball radius)
-        //   y  *    **         y: combined ball radius
-        //   |  *      **       x: max radius of new free space <- this!
-        //   |  *        **              
-        //   |  *   x+r    **            
-        //   =  *------------*           
-        //   |  *          **            
-        //   |  *        **              
-        //   y  *      **                
-        //   |  *    **                  
-        //   |  *  **                    
-        //   |  ***                      
-        //   _  *                        
-        //                               
-        let r = BallLevel::new(BALL_LEVEL_MIN).get_r();
-        let y = BallLevel::new(self.0 - 1).get_r();
-
-        (2. * r * y + r * r).powf(1. / 2.) - r
     }
 }
 
@@ -447,6 +379,7 @@ fn combine_balls_touched(
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
 
     q_ball: Query<(Entity, &Transform, &Ball)>,
+    sc_asset: Res<ScAssets>,
 ) {
     for ev in ev_ball.read() {
         match ev {
@@ -458,14 +391,14 @@ fn combine_balls_touched(
 
                 if let (Ok((_, t1, b1)), Ok((_, t2, _))) = (b1, b2) {
                     let pos = (t1.translation.xy() + t2.translation.xy()) / 2.;
-                    let cur_lv = b1.get_level().0;
+                    let cur_lv = b1.get_level();
 
-                    if cur_lv == BALL_LEVEL_MAX {
+                    if *cur_lv == sc_asset.get_ball_max_level() {
                         ev_ball_spawn.send(
                             BallSpawnEvent::Combine(pos, None));
                     } else {
                         ev_ball_spawn.send(
-                            BallSpawnEvent::Combine(pos, Some(BallLevel(cur_lv + 1))));
+                            BallSpawnEvent::Combine(pos, Some(BallLevel(cur_lv.0 + 1))));
                     }
                 }
 
@@ -477,6 +410,8 @@ fn combine_balls_touched(
 fn score_ball_events(
     mut q_player: Query<&mut Player>,
     mut ev_ball: EventReader<BallSpawnEvent>,
+
+    sc_asset: Res<ScAssets>,
 ) {
     if let Ok(mut player) = q_player.get_single_mut() {
         let score: u32 = ev_ball.read()
@@ -486,7 +421,8 @@ fn score_ball_events(
                     0
                 },
                 BallSpawnEvent::Combine(_, level) => {
-                    let level_combined = level.map(|l| l.0-1).unwrap_or(BALL_LEVEL_MAX);
+                    let level_combined = level.map(|l| l.0-1)
+                        .unwrap_or(sc_asset.get_ball_max_level().0);
                     level_combined.pow(2) as u32 // * 1
                 },
             })
@@ -615,13 +551,14 @@ fn move_puppeteer(
 fn puppet_player_pos(
     mut q_player: Query<(&mut Transform, &mut Player)>,
     q_puppeteer: Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
+    sc_asset: Res<ScAssets>,
 ) {
     if let Ok((trans, _caster, hits)) = q_puppeteer.get_single() {
         if let Some(hit) = hits.iter().min_by(|a, b| a.time_of_impact.partial_cmp(&b.time_of_impact).unwrap()) {
 
             if let Ok((mut player_trans, player)) = q_player.get_single_mut() {
                 let ball_r = if player.is_fakeball_exists() {
-                    player.next_ball_level.get_r()
+                    sc_asset.get_ball_r(player.next_ball_level)
                 } else {
                     0.
                 };
@@ -815,10 +752,9 @@ fn create_ball_view(
 ) -> impl Bundle {
 
     let ball_material = materials.add(my_assets.get_ball_image(level).clone());
-    let ball_r = level.get_r();
-    let tex_k = 512. / 420.;
+    let (mesh_w, mesh_h) = my_assets.get_ball_mesh_wh(level);
     MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::new(ball_r*2.*tex_k, ball_r*2.*tex_k)).into(),
+        mesh: meshes.add(Rectangle::new(mesh_w, mesh_h)).into(),
         transform: Transform::from_translation(
              pos.extend(Z_BALL + Z_BALL_D_BY_LEVEL * level.0 as f32)
         ),
@@ -845,12 +781,12 @@ fn spawn_ball(
                 commands.spawn((
                     Ball::new(level),
                     RigidBody::Dynamic,
-                    Collider::circle(level.get_r()),
+                    Collider::circle(my_assets.get_ball_r(level)),
                     ball_view,
                 ));
             },
             Combine(pos, Some(level)) => {
-                let ball_r_start = level.get_growstart_r();
+                let ball_r_start = my_assets.get_ball_start_r(level);
                 let ball_view = create_ball_view(&mut meshes, &mut materials,
                                                  level, pos, &my_assets);
                 commands.spawn((
@@ -872,17 +808,21 @@ fn grow_ball_spawned(
     mut commands: Commands,
     mut q_ball: Query<(Entity, &mut BallGrowing, &Ball)>,
     time: Res<Time>,
+    sc_asset: Res<ScAssets>,
 ) {
     for (entity, mut spacer, ball) in q_ball.iter_mut() {
         spacer.sec += time.delta_seconds();
 
         if spacer.sec > spacer.sec_max {
             commands.entity(entity)
-                .try_insert(Collider::circle(ball.get_level().get_r()))
+                .try_insert(Collider::circle(
+                        sc_asset.get_ball_r(*ball.get_level())
+                    ))
                 .remove::<BallGrowing>();
         } else {
-            let r_to = ball.get_level().get_r();
-            let r_from = ball.get_level().get_growstart_r();
+            let level = *ball.get_level();
+            let r_to = sc_asset.get_ball_r(level);
+            let r_from = sc_asset.get_ball_start_r(level);
             let r = (spacer.sec / spacer.sec_max) * (r_to - r_from) + r_from;
             commands.entity(entity)
                 .try_insert(Collider::circle(r));
