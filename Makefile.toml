@@ -13,6 +13,11 @@ args = [
 [tasks.build]
 command = "cargo"
 args = ["build"]
+dependencies = ["copy-fonts"]
+
+[tasks.copy-fonts]
+command = "cp"
+args = ["--update", "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf", "assets/fonts/"]
 
 [tasks.run]
 run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }

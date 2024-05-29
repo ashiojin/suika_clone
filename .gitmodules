@@ -1,0 +1,3 @@
+[submodule "external/GL-CurulMinamoto"]
+	path = external/GL-CurulMinamoto
+	url = https://github.com/Gutenberg-Labo/GL-CurulMinamoto.git

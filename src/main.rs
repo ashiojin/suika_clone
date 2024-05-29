@@ -1,7 +1,6 @@
+use std::f32::consts::TAU;
 use bevy::{
-    prelude::*,
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Material2d},
-    reflect::Reflect,
+    asset::LoadState, prelude::*, reflect::Reflect, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}, window::WindowResolution
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
@@ -9,19 +8,73 @@ use itertools::Itertools;
 use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
 use clap::Parser;
 
+//
+// ToDo Items
+// - (ALWAYS) Refactoring!
+// - Remove Max Level Balls Combined.
+// - Scoring:
+//   - Combine Scores.
+//   - Drop Scores.
+// - Player position:
+//   - y-position should be higher than all of balls.
+//   - x-position should be limited x positon to the inside of the bottle.
+// - GameOver.
+// - Create and Load an external file (.ron or others)
+//   for ball size, texture, and other data.
+// - Sound.
+//   - BGM.
+//   - SE.
+// - Title Screen.
+// - Player texture.
+// - Config Screen.
+// - Player Actions.
+//   - Holding a ball.
+//   - Shaking the bottle.
+//
+
+
+// Window Settings
+const TITLE: &str = "Suikx clone";
+const LOGICAL_WIDTH: f32 = 1440.;
+const LOGICAL_HEIGHT: f32 = 810.;
+const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH;
+const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT;
+const WINDOW_MAX_WIDTH: f32 = 1920.;
+const WINDOW_MAX_HEIGHT: f32 = 1080.;
+
+// Physics Engine Settings
 const GRAVITY_SCALE: f32 = 9.81 * 100.;
 const XPBD_SUBSTEP: u32 = 24;
+
+#[derive(States, Default, Hash, Clone, Copy, PartialEq, Eq, Debug)]
+enum GameState {
+    #[default]
+    Loading,
+    InGame,
+}
 
 fn main() {
     #[cfg(target_family = "windows")]
     std::env::set_var("RUST_BACKTRACE", "1"); // Can't read env values when running on WSL
 
-
-
     let mut app = App::new();
 
     app.add_plugins((
-        DefaultPlugins,
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: TITLE.into(),
+                name: Some(TITLE.into()),
+                resolution: WindowResolution::new(LOGICAL_WIDTH, LOGICAL_HEIGHT),
+                resize_constraints: WindowResizeConstraints {
+                    min_width: WINDOW_MIN_WIDTH,
+                    min_height: WINDOW_MIN_HEIGHT,
+                    max_width: WINDOW_MAX_WIDTH,
+                    max_height: WINDOW_MAX_HEIGHT,
+                },
+                ..default()
+            }),
+            ..default()
+        }),
         PhysicsPlugins::default(),
 
         PhysicsDebugPlugin::default(),
@@ -39,6 +92,10 @@ fn main() {
     app.add_console_command::<PrintConfigCommand, _>(command_print_config);
     app.add_console_command::<GrowCommand, _>(command_grow);
 
+    app.init_state::<GameState>();
+
+    app.init_gizmo_group::<MyLoadingScreenGizmos>();
+
     app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
     app.insert_resource(SubstepCount(XPBD_SUBSTEP));
     app.insert_resource(Config::default());
@@ -48,19 +105,27 @@ fn main() {
     app.add_event::<BallSpawnEvent>();
 
     app.add_systems(Startup, (
-        load_assets, // TODO: Need loading state
-
-
         setup_camera,
-        setup_wall,
+    ));
+    app.add_systems(OnEnter(GameState::Loading), (
+        load_assets,
+        setup_loading_screen,
+    ));
+    app.add_systems(Update, (
+        check_loading,
+        update_loading_screen,
+    ).run_if(in_state(GameState::Loading)));
+    app.add_systems(OnExit(GameState::Loading), (
+        cleanup_loading_screen,
+    ));
 
+    app.add_systems(OnEnter(GameState::InGame), (
+        setup_wall,
         spawn_player,
     ));
 
     app.add_systems(Update, (
         grow_ball_spawned,
-
-        //limit_velocity_of_ball.after(make_repulsive),
         check_ball_collisions,
         action_player,
         combine_balls_touched
@@ -68,13 +133,14 @@ fn main() {
         spawn_ball
             .after(action_player)
             .after(combine_balls_touched),
-        limit_velocity_of_ball, // TODO: exec after velocities are caluculated
-        update_player_view,
-    ));
+        update_player_view
+            .after(action_player),
+        limit_velocity_of_ball, // TODO: should exec after velocities are caluculated
+    ).run_if(in_state(GameState::InGame)));
 
     app.add_systems(FixedUpdate, (
         read_keyboard,
-    ));
+    ).run_if(in_state(GameState::InGame)));
 
     app.run();
 }
@@ -82,6 +148,15 @@ fn main() {
 #[derive(Resource, Debug)]
 struct MyAssets {
     h_ball: Handle<Image>,
+    h_font: Handle<Font>,
+}
+impl MyAssets {
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+        vec![
+            self.h_ball.clone().untyped(),
+            self.h_font.clone().untyped(),
+        ]
+    }
 }
 
 
@@ -269,8 +344,114 @@ fn load_assets(
     commands.insert_resource(
         MyAssets {
             h_ball: asset_server.load("ball_01.png"),
+            h_font: asset_server.load("fonts/GL-CurulMinamoto.ttf"),
         }
     );
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+enum LoadingState {
+    Ok,
+    Loading,
+    Error,
+}
+fn summarise_assetpack_loadstate(
+    asset_pack: &MyAssets,
+    asset_server: &AssetServer,
+) -> LoadingState {
+    asset_pack.get_untyped_handles()
+        .iter()
+        .map(|h| asset_server.get_load_states(h.id()))
+        .filter_map(|s| s.map(|(s, _, _)| s))
+        .fold(LoadingState::Ok, |a, s| {
+            let s = match s {
+                LoadState::Loaded => LoadingState::Ok,
+                LoadState::Failed => LoadingState::Error,
+                _ => LoadingState::Loading,
+            };
+            LoadingState::max(a, s)
+        })
+}
+
+fn check_loading(
+    asset_pack: Res<MyAssets>,
+    asset_server: Res<AssetServer>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    let state = summarise_assetpack_loadstate(&asset_pack, &asset_server);
+    match state {
+        LoadingState::Ok => {
+            next_state.set(GameState::InGame);
+        }
+        LoadingState::Loading => {
+            // wait for next
+        }
+        LoadingState::Error => {
+            panic!("load failed!");
+        }
+    }
+}
+
+#[derive(Component, Debug)]
+struct ForLoadingScreen;
+#[derive(GizmoConfigGroup, Default, Reflect)]
+struct MyLoadingScreenGizmos {}
+
+fn setup_loading_screen(
+    mut commands: Commands,
+    mut config_gizmos: ResMut<GizmoConfigStore>,
+) {
+    commands.spawn((
+        ForLoadingScreen,
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::BLACK,
+                custom_size: Some(Vec2::new(600., 300.)),
+                ..default()
+            },
+            transform: Transform::from_translation(Vec2::new(0., 0.).extend(0.0)),
+            ..default()
+        },
+    )).with_children(|b| {
+        let text_style = TextStyle {
+            font_size: 60.0,
+            color: Color::WHITE,
+            ..default()
+        };
+        b.spawn((
+            Text2dBundle {
+                text: Text::from_section("Now Loading...", text_style),
+                transform: Transform::from_translation(Vec2::new(0., 0.).extend(0.1)),
+                text_anchor: bevy::sprite::Anchor::BottomRight,
+                ..default()
+            },
+        ));
+    });
+
+    let (config, ..) = config_gizmos.config_mut::<MyLoadingScreenGizmos>();
+    config.line_width = 5.;
+}
+
+fn update_loading_screen(
+    mut gizmos: Gizmos<MyLoadingScreenGizmos>,
+    time: Res<Time>,
+) {
+    let second_hand = (time.elapsed_seconds() % 1.0) * TAU;
+    gizmos.arrow_2d(
+        Vec2::ZERO,
+        Vec2::from_angle(second_hand) * 100.,
+        Color::YELLOW,
+    );
+}
+
+fn cleanup_loading_screen(
+    mut commands: Commands,
+    q_screen_items: Query<Entity, With<ForLoadingScreen>>,
+) {
+    for e in q_screen_items.iter() {
+        commands.entity(e)
+            .despawn_recursive();
+    }
 }
 
 fn setup_camera(
