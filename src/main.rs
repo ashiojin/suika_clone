@@ -32,19 +32,28 @@ use crate::prelude::*;
 // - [x] Use random generator.
 // - [x] GameOver.
 // - [x] Reset game.
-// - [ ] Create and Load an external file (.ron or others)
-//   for ball size, texture, and other data.
+// - [x] Embedded an external file (.ron or others) as settings
+//   for ball size, texture infos.
 // - [ ] Sound.
 //   - [ ] BGM.
 //   - [ ] SE.
 // - [ ] Title Screen.
-// - [ ] Create PlayerBundle
-// - [ ] Player texture.
 // - [ ] Config Screen.
+//   - [ ] List and Load a .ron file
+// - [ ] Create PlayerBundle.
+// - [ ] Player texture.
 // - [ ] Player Actions.
 //   - [ ] Holding a ball.
 //   - [ ] Shaking the bottle.
+// - [ ] Extend .ron
+//   - [ ] player settings
+//   - [ ] bottle settings
+//   - [ ] background image
+//   - [ ] popup/messages
 // - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
+// - [ ] Separate game states to 
+//       application state (pre-load/title/config/loading/in-game) and
+//       in-game state (playing/pausing/gameover)
 //
 
 

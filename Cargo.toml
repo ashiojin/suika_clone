@@ -26,6 +26,8 @@ bevy-debug-text-overlay = "8.1"
 bevy_console = "0.11"
 clap = "4.5.4"
 
+ron = "0.8"
+serde = { version = "1", features = ["derive"] }
 
 itertools = "0.12" # TODO: Shold find a suitable version of the library for our purpose and for other library dependencies.
 

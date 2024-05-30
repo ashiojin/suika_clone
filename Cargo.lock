@@ -3804,6 +3804,8 @@ dependencies = [
  "clap",
  "itertools",
  "rand_core",
+ "ron",
+ "serde",
 ]
 
 [[package]]

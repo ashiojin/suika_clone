@@ -93,7 +93,7 @@ fn command_grow(
 ) {
     if let Some(Ok(GrowCommand { tm })) = log.take() {
         config.grow_time = tm;
-        reply!(log, "{:?}", *config);
+        reply!(log, "{:?}", config.grow_time);
     }
 }
 
@@ -110,7 +110,7 @@ fn command_disp_area(
 ) {
     if let Some(Ok(DispAreaCommand { display })) = log.take() {
         config.display_area = display.unwrap_or(false);
-        reply!(log, "{:?}", *config);
+        reply!(log, "{:?}", config.display_area);
     }
 }
 

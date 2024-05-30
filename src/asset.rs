@@ -128,7 +128,7 @@ pub fn load_assets(
 ) {
     let from_ron = config.game_ron.as_ref()
         .expect("Game settings should be set before loading.");
-    let balls = from_ron.iter()
+    let balls = from_ron.balls.iter()
         .map(|n| BallLevelSettingR::from(n, &asset_server))
         .collect();
 

@@ -1,0 +1,34 @@
+(
+    balls: [
+        (
+            physics_radius: 28.0,
+            view_width: 68.26667,
+            view_height: 68.26667,
+            image_asset_path: "images/kao/kao_01.png",
+        ),
+        (
+            physics_radius: 34.5,
+            view_width: 84.11429,
+            view_height: 84.11429,
+            image_asset_path: "images/kao/kao_02.png",
+        ),
+        (
+            physics_radius: 43.5,
+            view_width: 106.057144,
+            view_height: 106.057144,
+            image_asset_path: "images/kao/kao_03.png",
+        ),
+        (
+            physics_radius: 55.0,
+            view_width: 134.09525,
+            view_height: 134.09525,
+            image_asset_path: "images/kao/kao_04.png",
+        ),
+        (
+            physics_radius: 69.0,
+            view_width: 168.22858,
+            view_height: 168.22858,
+            image_asset_path: "images/kao/kao_05.png",
+        ),
+    ],
+)
