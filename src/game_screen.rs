@@ -36,6 +36,7 @@ impl Plugin for ScGameScreenPlugin {
         ));
 
         app.add_systems(Update, (
+            read_keyboard_for_player_actions,
             grow_ball_spawned,
             check_ball_collisions,
             move_puppeteer,
@@ -53,15 +54,11 @@ impl Plugin for ScGameScreenPlugin {
             check_game_over,
         ).run_if(in_state(GameState::InGame)));
 
-        app.add_systems(FixedUpdate, (
-            read_keyboard_for_player_actions,
-        ).run_if(in_state(GameState::InGame)));
-
         app.add_systems(OnEnter(GameState::GameOver), (
             setup_gameover_popup,
         ));
 
-        app.add_systems(FixedUpdate, (
+        app.add_systems(Update, (
             read_keyboard_for_gameover_popup,
         ).run_if(in_state(GameState::GameOver)));
 
