@@ -9,6 +9,7 @@ use bevy_prng::ChaCha8Rng;
 mod debug;
 mod common;
 mod asset;
+mod title_screen;
 mod game_screen;
 mod physics_custom;
 
@@ -20,6 +21,10 @@ mod prelude {
     pub use crate::game_screen::*;
 }
 use crate::prelude::*;
+
+
+use crate::title_screen::*;
+
 
 //
 // ToDo Items
@@ -39,7 +44,7 @@ use crate::prelude::*;
 // - [x] Sound.
 //   - [x] BGM.
 //   - [x] SE.
-// - [ ] Title Screen.
+// - [x] Title Screen.
 //   - Use embedded assets(title image)
 // - [ ] Config Screen. (or Popup on title screen)
 //   - [ ] List and Load a .ron file
@@ -54,10 +59,14 @@ use crate::prelude::*;
 //   - [ ] bottle settings
 //   - [ ] background image
 //   - [ ] popup/messages
+// - [ ] Pause in playing game
+//   - [ ] Return to Title
+//   - [ ] Restart
 // - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 // - [ ] Separate game states to 
 //       application state (pre-load/title/config/loading/in-game) and
 //       in-game state (playing/pausing/gameover)
+// - [ ] Separate Asset Loading Logic into Plugin
 //
 
 
@@ -102,12 +111,14 @@ fn main() {
         ScDebugPlugin::new(true, true),
     ));
 
+    app.insert_resource(Config::default());
     app.init_state::<GameState>();
     app.add_systems(Startup, (
         setup_camera,
     ));
 
     app.add_plugins((
+        ScTitleScreenPlugin,
         ScLoadingScreenPlugin,
         ScGameScreenPlugin,
     ));

@@ -21,7 +21,6 @@ impl Plugin for ScGameScreenPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
         app.insert_resource(SubstepCount(XPBD_SUBSTEP));
-        app.insert_resource(Config::default());
 
         app.add_event::<BallEvent>();
         app.add_event::<PlayerActionEvent>();
