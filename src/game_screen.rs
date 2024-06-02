@@ -55,7 +55,6 @@ impl Plugin for ScGameScreenPlugin {
                 .after(combine_balls_touched),
             update_player_view
                 .after(action_player),
-            limit_velocity_of_ball, // TODO: should exec after velocities are caluculated
             score_ball_events,
             check_game_over,
         ).run_if(in_state(GameState::InGame)));
@@ -320,24 +319,6 @@ enum BallEvent {
 enum BallSpawnEvent {
     Drop(Vec2, BallLevel),
     Combine(Vec2, Option<BallLevel>),
-}
-#[inline]
-fn damping(x: f32) -> f32 {
-    let k = 0.00025;
-    let c = 1.0 / k;
-
-    c - (1.0 / (k * std::f32::consts::E.powf(k * x)))
-}
-
-fn limit_velocity_of_ball(
-    mut q_ball: Query<(Entity, &mut LinearVelocity), With<Ball>>,
-) {
-    for (_, mut vel) in q_ball.iter_mut() {
-        let l = vel.length();
-        if l > 0.1 {
-            *vel = ((damping(l) / l) * vel.0).into();
-        }
-    }
 }
 
 fn check_ball_collisions(

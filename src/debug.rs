@@ -31,7 +31,6 @@ impl Default for DebugConfig {
 }
 
 
-
 impl Plugin for ScDebugPlugin {
     fn build(&self, app: &mut App) {
         if self.physics {
@@ -53,6 +52,7 @@ impl Plugin for ScDebugPlugin {
             });
             app.add_console_command::<PrintConfigCommand, _>(command_print_config);
             app.add_console_command::<GrowCommand, _>(command_grow);
+            app.add_console_command::<MaxVelCommand, _>(command_max_vel);
             app.add_console_command::<DispAreaCommand, _>(command_disp_area);
 
             app.insert_resource(DebugConfig {
@@ -97,6 +97,22 @@ fn command_grow(
     }
 }
 
+
+#[derive(Parser, ConsoleCommand)]
+#[command(name = "max_vel")]
+struct MaxVelCommand {
+    max: f32,
+}
+fn command_max_vel(
+    mut log: ConsoleCommand<MaxVelCommand>,
+
+    mut config: ResMut<Config>,
+) {
+    if let Some(Ok(MaxVelCommand { max })) = log.take() {
+        config.max_velocity = max;
+        reply!(log, "{:?}", config.max_velocity);
+    }
+}
 
 #[derive(Parser, ConsoleCommand, Default)]
 #[command(name = "disp_area")]

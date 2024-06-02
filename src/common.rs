@@ -58,6 +58,7 @@ const DEFAULT_GAME_RON: &str = include_str!("../assets/ron/kao.ron");
 pub struct Config {
     pub grow_time: f32,
     pub area: Area,
+    pub max_velocity: f32,
 
     pub game_ron: Option<GameRon>,
 
@@ -73,6 +74,7 @@ impl Default for Config {
         Self {
             grow_time: 0.2,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
+            max_velocity: 60. * 32. * (30./2.),
             game_ron: Some(game_ron),
         }
     }
