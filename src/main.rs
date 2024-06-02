@@ -41,6 +41,7 @@ use crate::prelude::*;
 //   - Use embedded assets(title image)
 // - [ ] Config Screen. (or Popup on title screen)
 //   - [ ] List and Load a .ron file
+// - [x] Change timing of spawing fake ball to after previous ball is touched to other
 // - [ ] Create PlayerBundle.
 // - [ ] Player texture.
 // - [ ] Player Actions.

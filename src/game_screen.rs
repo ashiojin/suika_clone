@@ -40,9 +40,11 @@ impl Plugin for ScGameScreenPlugin {
             read_keyboard_for_player_actions,
             grow_ball_spawned,
             check_ball_collisions,
+            check_dropping_ball,
             move_puppeteer,
             puppet_player_pos.after(move_puppeteer),
-            action_player,
+            action_player
+                .after(check_dropping_ball),
             combine_balls_touched
                 .after(check_ball_collisions),
             spawn_ball
@@ -80,7 +82,8 @@ struct Player {
     next_ball_level: BallLevel,
     max_ball_level: BallLevel,
 
-    timer_cooltime: Timer,
+//    timer_cooltime: Timer,
+    can_drop: bool,
 
     hand_offset: Vec2,
 
@@ -88,7 +91,6 @@ struct Player {
 }
 
 const PLAYER_SPEED: f32 = 3.0;
-const PLAYER_DROP_COOLTIME: f32 = 1.0;
 const PLAYER_MAX_BALL_LEVEL_FOR_DROPPING: BallLevel = BallLevel::new(4usize);
 
 impl Default for Player {
@@ -98,7 +100,7 @@ impl Default for Player {
             next_ball_level: default(),
             max_ball_level: default(),
 
-            timer_cooltime: Timer::from_seconds(PLAYER_DROP_COOLTIME, TimerMode::Once),
+            can_drop: true,
             hand_offset: Vec2::ZERO,
 
             score: 0,
@@ -106,12 +108,11 @@ impl Default for Player {
     }
 }
 impl Player {
-    fn new(speed: f32, sec_cooltime: f32, hand_offset: Vec2, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
+    fn new(speed: f32, hand_offset: Vec2, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
         Self {
             speed,
             next_ball_level: first_ball_level,
             max_ball_level,
-            timer_cooltime: Timer::from_seconds(sec_cooltime, TimerMode::Once),
             hand_offset,
             ..default()
         }
@@ -122,7 +123,7 @@ impl Player {
             BallLevel::new(BALL_LEVEL_MIN), self.max_ball_level);
     }
     fn is_fakeball_exists(&self) -> bool {
-        self.timer_cooltime.finished()
+        self.can_drop
     }
 }
 
@@ -500,7 +501,7 @@ fn spawn_player(
             Vec2::new(30., 30.),
         );
 
-    let mut player = Player::new(PLAYER_SPEED, PLAYER_DROP_COOLTIME, Vec2::new(0., -20.0), BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
+    let mut player = Player::new(PLAYER_SPEED, Vec2::new(0., -20.0), BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
     let mut rng = global_ent.fork_rng();
     player.set_next_ball_level_from_rng(&mut rng);
     commands.spawn((
@@ -582,23 +583,20 @@ fn action_player(
     mut q_player: Query<(&Transform, &mut Player, &mut EntropyComponent<ChaCha8Rng>)>,
     mut ev_player_act: EventReader<PlayerActionEvent>,
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
-
-    time: Res<Time>,
 ) {
     if let Ok((trans, mut player, mut rng)) = q_player.get_single_mut() {
-        player.timer_cooltime.tick(time.delta());
 
         for ev in ev_player_act.read() {
             match ev {
                 PlayerActionEvent::TryDrop => {
-                    if player.timer_cooltime.finished() {
+                    if player.can_drop {
                         let pos = trans.translation.xy() + player.hand_offset;
                         let lv = player.next_ball_level;
 
                         ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
 
                         player.set_next_ball_level_from_rng(&mut rng);
-                        player.timer_cooltime.reset();
+                        player.can_drop = false;
                     }
                 },
                 PlayerActionEvent::TryMove(_lr) => {
@@ -608,6 +606,9 @@ fn action_player(
         }
     }
 }
+
+#[derive(Component, Debug)]
+struct DroppingBall;
 
 #[derive(Component, Debug)]
 struct FakeBall;
@@ -677,7 +678,7 @@ fn update_player_view(
         // Fake ball
         let fakeball = q_fakeball.get_single();
 
-        if player.timer_cooltime.finished() {
+        if player.is_fakeball_exists() {
             // need fake ball
             if fakeball.is_err() {
                 commands.entity(plyer_entity)
@@ -780,6 +781,7 @@ fn spawn_ball(
                 let ball_view = create_ball_view(&mut meshes, &mut materials,
                                                  level, pos, &my_assets);
                 commands.spawn((
+                    DroppingBall,
                     Ball::new(level),
                     RigidBody::Dynamic,
                     Collider::circle(my_assets.get_ball_r(level)),
@@ -801,6 +803,25 @@ fn spawn_ball(
             Combine(_, None) => {
                 // Nothing to do
             }
+        }
+    }
+}
+
+fn check_dropping_ball(
+    mut commands: Commands,
+    mut q_player: Query<&mut Player, Without<DroppingBall>>,
+    q_ball: Query<(Entity, &CollidingEntities), With<DroppingBall>>,
+) {
+    if let Ok(mut player) = q_player.get_single_mut() {
+        if let Ok((entity, colliding_entities)) = q_ball.get_single() {
+            if !colliding_entities.is_empty() {
+                // touch anything
+                commands.entity(entity)
+                    .remove::<DroppingBall>();
+                player.can_drop = true;
+            }
+        } else {
+            player.can_drop = true;
         }
     }
 }
