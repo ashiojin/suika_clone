@@ -33,6 +33,7 @@ impl Plugin for ScGameScreenPlugin {
             setup_bottle,
             spawn_player,
             spawn_score_view,
+            start_play_bgm,
         ));
 
         app.add_systems(Update, (
@@ -45,6 +46,9 @@ impl Plugin for ScGameScreenPlugin {
             combine_balls_touched
                 .after(check_ball_collisions),
             spawn_ball
+                .after(action_player)
+                .after(combine_balls_touched),
+            play_se_combine_balls
                 .after(action_player)
                 .after(combine_balls_touched),
             update_player_view
@@ -376,7 +380,7 @@ fn combine_balls_touched(
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
 
     q_ball: Query<(Entity, &Transform, &Ball)>,
-    sc_asset: Res<ScAssets>,
+    sc_asset: Res<GameAssets>,
 ) {
     for ev in ev_ball.read() {
         match ev {
@@ -408,7 +412,7 @@ fn score_ball_events(
     mut q_player: Query<&mut Player>,
     mut ev_ball: EventReader<BallSpawnEvent>,
 
-    sc_asset: Res<ScAssets>,
+    sc_asset: Res<GameAssets>,
 ) {
     if let Ok(mut player) = q_player.get_single_mut() {
         let score: u32 = ev_ball.read()
@@ -548,7 +552,7 @@ fn move_puppeteer(
 fn puppet_player_pos(
     mut q_player: Query<(&mut Transform, &mut Player)>,
     q_puppeteer: Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
-    sc_asset: Res<ScAssets>,
+    sc_asset: Res<GameAssets>,
 ) {
     if let Ok((trans, _caster, hits)) = q_puppeteer.get_single() {
         if let Some(hit) = hits.iter().min_by(|a, b| a.time_of_impact.partial_cmp(&b.time_of_impact).unwrap()) {
@@ -616,7 +620,7 @@ struct ScoreText;
 
 fn spawn_score_view(
     mut commands: Commands,
-    my_assets: Res<ScAssets>,
+    my_assets: Res<GameAssets>,
 ) {
     let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
     let bottom_rt = Vec2::new(
@@ -667,7 +671,7 @@ fn update_player_view(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    my_assets: Res<ScAssets>,
+    my_assets: Res<GameAssets>,
 ) {
     if let Ok((plyer_entity, player)) = q_player.get_single() {
         // Fake ball
@@ -745,7 +749,7 @@ fn create_ball_view(
     level: BallLevel,
     pos: Vec2,
 
-    my_assets: &Res<ScAssets>,
+    my_assets: &Res<GameAssets>,
 ) -> impl Bundle {
 
     let ball_material = materials.add(my_assets.get_ball_image(level).clone());
@@ -766,7 +770,7 @@ fn spawn_ball(
     mut materials: ResMut<Assets<ColorMaterial>>,
 
     mut ev_ball_spawn: EventReader<BallSpawnEvent>,
-    my_assets: Res<ScAssets>,
+    my_assets: Res<GameAssets>,
     config: Res<Config>,
 ) {
     for ev in ev_ball_spawn.read() {
@@ -801,11 +805,29 @@ fn spawn_ball(
     }
 }
 
+fn play_se_combine_balls(
+    mut commands: Commands,
+    mut ev_ball_spawn: EventReader<BallSpawnEvent>,
+    sc_assets: Res<GameAssets>,
+) {
+    for ev in ev_ball_spawn.read() {
+        use BallSpawnEvent::*;
+        if matches!(ev, Combine(_,_)) {
+            spawn_combine_se(
+                &mut commands,
+                &sc_assets
+            );
+        }
+    }
+
+
+}
+
 fn grow_ball_spawned(
     mut commands: Commands,
     mut q_ball: Query<(Entity, &mut BallGrowing, &Ball)>,
     time: Res<Time>,
-    sc_asset: Res<ScAssets>,
+    sc_asset: Res<GameAssets>,
 ) {
     for (entity, mut spacer, ball) in q_ball.iter_mut() {
         spacer.sec += time.delta_seconds();
@@ -874,7 +896,7 @@ struct GameOverPopupMessageToRestart;
 fn setup_gameover_popup(
     mut commands: Commands,
     q_player: Query<&Player>,
-    my_assets: Res<ScAssets>,
+    my_assets: Res<GameAssets>,
 ) {
     if let Ok(player) = q_player.get_single() {
         let score = player.score;
@@ -981,4 +1003,45 @@ fn read_keyboard_for_gameover_popup(
             }
         }
     }
+}
+
+
+#[derive(Component, Debug)]
+struct Bgm;
+
+fn start_play_bgm(
+    mut commands: Commands,
+    mut q_bgm: Query<&mut AudioSink, With<Bgm>>,
+    sc_asset: Res<GameAssets>,
+) {
+    if let Ok(sink) = q_bgm.get_single_mut() {
+        sink.play(); // Already spawned: call play() to be sure
+    } else {
+        commands.spawn((
+            Bgm,
+            AudioBundle {
+                source: sc_asset.h_bgm.clone(),
+                ..default()
+            }
+        ));
+    }
+}
+
+#[derive(Component, Debug)]
+struct Se;
+
+fn spawn_combine_se(
+    commands: &mut Commands,
+    sc_assets: &GameAssets
+) {
+    commands.spawn((
+        Se,
+        AudioBundle {
+            source: sc_assets.h_se_combine.clone(),
+            settings: PlaybackSettings {
+                mode: bevy::audio::PlaybackMode::Despawn,
+                ..default()
+            },
+        },
+    ));
 }

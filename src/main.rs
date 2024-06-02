@@ -34,11 +34,12 @@ use crate::prelude::*;
 // - [x] Reset game.
 // - [x] Embedded an external file (.ron or others) as settings
 //   for ball size, texture infos.
-// - [ ] Sound.
-//   - [ ] BGM.
-//   - [ ] SE.
+// - [x] Sound.
+//   - [x] BGM.
+//   - [x] SE.
 // - [ ] Title Screen.
-// - [ ] Config Screen.
+//   - Use embedded assets(title image)
+// - [ ] Config Screen. (or Popup on title screen)
 //   - [ ] List and Load a .ron file
 // - [ ] Create PlayerBundle.
 // - [ ] Player texture.

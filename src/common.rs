@@ -39,8 +39,16 @@ pub struct BallLevelSettingRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct SoundRon {
+    pub bgm_asset_path: String,
+    pub se_combine_asset_path: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
+    pub sounds: SoundRon,
 }
 
 const DEFAULT_GAME_RON: &str = include_str!("../assets/ron/kao.ron");

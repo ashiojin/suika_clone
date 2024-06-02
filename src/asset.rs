@@ -8,7 +8,7 @@ use bevy::{
 
 
 #[derive(Debug)]
-pub struct BallLevelSettingR {
+pub struct BallLevelDef {
     pub physics_radius: f32,
 
     pub view_width: f32,
@@ -17,7 +17,7 @@ pub struct BallLevelSettingR {
     pub h_image: Handle<Image>,
 }
 
-impl BallLevelSettingR {
+impl BallLevelDef {
     fn from(n: &BallLevelSettingRon, asset_server: &AssetServer,) -> Self {
         Self {
             physics_radius: n.physics_radius,
@@ -29,16 +29,22 @@ impl BallLevelSettingR {
 }
 
 #[derive(Resource, Debug)]
-pub struct ScAssets {
-    pub ball_level_settings: Vec<BallLevelSettingR>,
+pub struct GameAssets {
+    pub ball_level_settings: Vec<BallLevelDef>,
     pub h_font: Handle<Font>,
+
+    pub h_bgm: Handle<AudioSource>,
+    pub h_se_combine: Handle<AudioSource>,
 }
-impl ScAssets {
+impl GameAssets {
     pub fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
         let mut v: Vec<_> = self.ball_level_settings.iter()
             .map(|x| &x.h_image).cloned().map(|h| h.untyped()).collect();
         let mut v2 = vec![
             self.h_font.clone().untyped(),
+
+            self.h_bgm.clone().untyped(),
+            self.h_se_combine.clone().untyped(),
         ];
         v.append(&mut v2);
         v
@@ -57,7 +63,7 @@ impl ScAssets {
     }
 
     #[inline]
-    pub fn get_ball_setting(&self, lv: BallLevel) -> &BallLevelSettingR {
+    pub fn get_ball_setting(&self, lv: BallLevel) -> &BallLevelDef {
         assert!(self.get_ball_max_level() >= lv);
         &self.ball_level_settings[lv.0]
     }
@@ -129,13 +135,17 @@ pub fn load_assets(
     let from_ron = config.game_ron.as_ref()
         .expect("Game settings should be set before loading.");
     let balls = from_ron.balls.iter()
-        .map(|n| BallLevelSettingR::from(n, &asset_server))
+        .map(|n| BallLevelDef::from(n, &asset_server))
         .collect();
+    let h_bgm =asset_server.load(&from_ron.sounds.bgm_asset_path);
+    let h_se_combine = asset_server.load(&from_ron.sounds.se_combine_asset_path);
 
     commands.insert_resource(
-        ScAssets {
+        GameAssets {
             ball_level_settings: balls,
             h_font: asset_server.load("fonts/GL-CurulMinamoto.ttf"),
+            h_bgm,
+            h_se_combine,
         }
     );
 }
@@ -147,7 +157,7 @@ pub enum LoadingState {
     Error,
 }
 fn summarise_assetpack_loadstate(
-    asset_pack: &ScAssets,
+    asset_pack: &GameAssets,
     asset_server: &AssetServer,
 ) -> LoadingState {
     asset_pack.get_untyped_handles()
@@ -165,7 +175,7 @@ fn summarise_assetpack_loadstate(
 }
 
 pub fn check_loading(
-    asset_pack: Res<ScAssets>,
+    asset_pack: Res<GameAssets>,
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
