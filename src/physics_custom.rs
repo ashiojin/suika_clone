@@ -44,7 +44,5 @@ fn limit_velocity_of_ball(
             info!("limit! {} <= {}", l, max);
         }
     }
-
-    info!("call limit");
 }
 
