@@ -32,7 +32,7 @@
         ),
     ],
     sounds: (
-        bgm_asset_path: "sounds/bgm.wav",
-        se_combine_asset_path: "sounds/se_combine.wav",
+        bgm_asset_path: "sounds/bgm.ogg",
+        se_combine_asset_path: "sounds/se_combine.ogg",
     ),
 )

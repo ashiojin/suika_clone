@@ -10,7 +10,7 @@ pub enum GameState {
     GameOver,
 }
 
-#[derive(Reflect, Debug)]
+#[derive(Reflect, Debug, Clone)]
 pub struct Area {
     pub min_x: f32,
     pub max_x: f32,
@@ -53,15 +53,19 @@ pub struct GameRon {
 }
 
 const DEFAULT_GAME_RON: &str = include_str!("../assets/ron/kao.ron");
+const DEFAULT_GAME_RON_NAME: &str = "(default)";
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Clone)]
 #[derive(Reflect)]
 pub struct Config {
     pub grow_time: f32,
     pub area: Area,
     pub max_velocity: f32,
 
-    pub game_ron: Option<GameRon>,
+    pub bgm_volume: i32, // 0..=100
+
+    pub game_ron: GameRon,
+    pub game_ron_name: String,
 
 }
 impl Default for Config {
@@ -76,9 +80,19 @@ impl Default for Config {
             grow_time: 0.2,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
             max_velocity: 60. * 32. * (30./2.),
-            game_ron: Some(game_ron),
+
+            bgm_volume: 50,
+
+            game_ron,
+            game_ron_name: "(default)".to_string(),
         }
     }
+}
+
+pub fn read_default_game_ron() -> (GameRon, &'static str) {
+    let game_ron: GameRon = ron::from_str(DEFAULT_GAME_RON)
+        .expect("Failed to deserialize DEFAULT_GAME_RON");
+    (game_ron, DEFAULT_GAME_RON_NAME)
 }
 
 // Z-Order

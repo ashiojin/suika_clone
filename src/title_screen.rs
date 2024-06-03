@@ -6,6 +6,11 @@ use bevy::{
     },
 };
 
+mod common;
+use self::common::*;
+mod config_popup;
+
+
 pub struct ScTitleScreenPlugin;
 
 impl Plugin for ScTitleScreenPlugin {
@@ -15,6 +20,7 @@ impl Plugin for ScTitleScreenPlugin {
 
         app.insert_state(TitleState::Loading);
         app.insert_resource(TitleAssets::default());
+        app.insert_resource(config_popup::ConfigData::default());
         app.add_systems(OnEnter(GameState::Title), (
             load_title_screen,
         ));
@@ -37,6 +43,17 @@ impl Plugin for ScTitleScreenPlugin {
             ).run_if(in_state(TitleState::Idle))
         );
 
+        app.add_systems(OnEnter(TitleState::Config),
+            (
+                config_popup::prepare,
+            )
+        );
+        app.add_systems(Update,
+            (
+                config_popup::ui_popup,
+            ).run_if(in_state(TitleState::Config))
+        );
+
         app.add_systems(OnEnter(TitleState::End), 
             (
                 end_title_screen,
@@ -44,14 +61,6 @@ impl Plugin for ScTitleScreenPlugin {
         );
 
     }
-}
-
-#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-enum TitleState {
-    #[default]
-    Loading,
-    Idle,
-    End,
 }
 
 #[derive(Resource, Debug, Default)]
@@ -67,9 +76,6 @@ impl TitleAssets {
         v
     }
 }
-
-#[derive(Component, Debug)]
-struct InTitleScreen;
 
 
 fn load_title_screen(
@@ -140,7 +146,7 @@ fn spawn_title_screen(
         };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("Press [Space] to Start.", text_style),
+                text: Text::from_section("[Space] : Start, [c] : Config", text_style),
 
                 transform:
                     Transform::from_translation(
@@ -159,6 +165,10 @@ fn read_keyboard(
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
         next_title_state.set(TitleState::End);
+    }
+
+    if keyboard.just_pressed(KeyCode::KeyC) {
+        next_title_state.set(TitleState::Config);
     }
 }
 

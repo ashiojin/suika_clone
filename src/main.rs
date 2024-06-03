@@ -1,6 +1,9 @@
 use bevy::{
     prelude::*, render::camera::ScalingMode, window::WindowResolution
 };
+use bevy_egui::egui;
+use bevy_egui::EguiContexts;
+use bevy_egui::EguiPlugin;
 use bevy_xpbd_2d::prelude::*;
 
 use bevy_rand::prelude::*;
@@ -46,8 +49,11 @@ use crate::title_screen::*;
 //   - [x] SE.
 // - [x] Title Screen.
 //   - Use embedded assets(title image)
-// - [ ] Config Screen. (or Popup on title screen)
-//   - [ ] List and Load a .ron file
+// - [x] Config Screen. (or Popup on title screen)
+//   - [x] List and Load a .ron file
+// - [ ] Refine config screen & title screen.
+//   - [ ] Loading state needed to read 'list.ron' and selected game ron
+//   - [ ] Use bevy_egui_kbgp
 // - [x] Change timing of spawing fake ball to after previous ball is touched to other
 // - [ ] Create PlayerBundle.
 // - [ ] Player texture.
@@ -62,6 +68,7 @@ use crate::title_screen::*;
 // - [ ] Pause in playing game
 //   - [ ] Return to Title
 //   - [ ] Restart
+// - [ ] Save config.
 // - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 // - [ ] Separate game states to 
 //       application state (pre-load/title/config/loading/in-game) and
@@ -108,12 +115,14 @@ fn main() {
             .build()
             .add(LimitVelocityPlugin),
 
+        EguiPlugin,
         ScDebugPlugin::new(true, true),
     ));
 
     app.insert_resource(Config::default());
     app.init_state::<GameState>();
     app.add_systems(Startup, (
+        setup_egui,
         setup_camera,
     ));
 
@@ -136,3 +145,19 @@ fn setup_camera(
     ));
 }
 
+fn setup_egui(
+    mut context: EguiContexts,
+) {
+    // see https://qiita.com/8bitTD/items/c3f1a9421615c3db1879
+    let mut txt_font = egui::FontDefinitions::default();
+    txt_font.families.get_mut(&egui::FontFamily::Proportional)
+        .unwrap()
+        .insert(0, "GL-CurulMinamo".to_owned());
+
+
+    let fd = egui::FontData::from_static(include_bytes!("../assets/fonts/GL-CurulMinamoto.ttf"));
+
+    txt_font.font_data.insert("GL-CurulMinamo".to_owned(), fd);
+
+    context.ctx_mut().set_fonts(txt_font);
+}

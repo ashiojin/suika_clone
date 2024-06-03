@@ -1,0 +1,12 @@
+(
+    list: [
+        (
+            name: "数字顔",
+            file: "kao.ron",
+        ),
+        (
+            name: "数字顔s",
+            file: "kao_s.ron",
+        )
+    ]
+)
