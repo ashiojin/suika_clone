@@ -51,6 +51,7 @@ use crate::title_screen::*;
 //   - Use embedded assets(title image)
 // - [x] Config Screen. (or Popup on title screen)
 //   - [x] List and Load a .ron file
+// - [ ] Separate Asset Loading Logic into Plugin or Use bevy_asset_loader
 // - [ ] Refine config screen & title screen.
 //   - [ ] Loading state needed to read 'list.ron' and selected game ron
 //   - [ ] Use bevy_egui_kbgp
@@ -69,11 +70,11 @@ use crate::title_screen::*;
 //   - [ ] Return to Title
 //   - [ ] Restart
 // - [ ] Save config.
+// - [ ] Set config from program args.
 // - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 // - [ ] Separate game states to 
 //       application state (pre-load/title/config/loading/in-game) and
 //       in-game state (playing/pausing/gameover)
-// - [ ] Separate Asset Loading Logic into Plugin
 //
 
 
