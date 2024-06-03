@@ -8,11 +8,13 @@
 ## Build
 
 開発環境は、WSL2上のubuntu 22.04 でのみ確認してます。
-ビルド＆動作確認には、なんかいろいろ依存してたはずなのです・・・が、メモってないので、 いろいろインストールが必要なものがあるはず・・・。
+ビルド＆動作確認には、なんかいろいろ依存してたはずなのです・・・が、メモってない。いつかちゃんと修正します。
+いろいろインストールが必要なものがあるはず・・・。
 
 [cargo-make](https://github.com/sagiegurari/cargo-make) が必要です。
 `makers build` / `makers run` はWindows版を開発ビルド／実行します。
 `makers build-web` / `makers run-web` はWeb版を開発ビルド／実行します。
+Makefileに追加してないですが、linux版もビルドできたはず・・・。
 
 
 ## ToDo Items (Development)
@@ -66,5 +68,6 @@
 ## ToDo Items (Development Environments)
 
 - [ ] Build Environments
+  - [ ] Release Build
 - [ ] Github Actions
 - ...
