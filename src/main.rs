@@ -29,53 +29,6 @@ use crate::prelude::*;
 use crate::title_screen::*;
 
 
-//
-// ToDo Items
-// - (ALWAYS) Refactoring!
-// - [x] Remove Max Level Balls Combined.
-// - [x] Scoring:
-//   - [x] Combine Scores.
-//   - [x] Drop Scores.
-// - [x] Player position:
-//   - [x] y-position should be higher than all of balls.
-//   - [x] x-position should be limited x positon to the inside of the bottle.
-// - [x] Use random generator.
-// - [x] GameOver.
-// - [x] Reset game.
-// - [x] Embedded an external file (.ron or others) as settings
-//   for ball size, texture infos.
-// - [x] Sound.
-//   - [x] BGM.
-//   - [x] SE.
-// - [x] Title Screen.
-//   - Use embedded assets(title image)
-// - [x] Config Screen. (or Popup on title screen)
-//   - [x] List and Load a .ron file
-// - [ ] Separate Asset Loading Logic into Plugin or Use bevy_asset_loader
-// - [ ] Refine config screen & title screen.
-//   - [ ] Loading state needed to read 'list.ron' and selected game ron
-//   - [ ] Use bevy_egui_kbgp
-// - [x] Change timing of spawing fake ball to after previous ball is touched to other
-// - [ ] Create PlayerBundle.
-// - [ ] Player texture.
-// - [ ] Player Actions.
-//   - [ ] Holding a ball.
-//   - [ ] Shaking the bottle.
-// - [ ] Extend .ron
-//   - [ ] player settings
-//   - [ ] bottle settings
-//   - [ ] background image
-//   - [ ] popup/messages
-// - [ ] Pause in playing game
-//   - [ ] Return to Title
-//   - [ ] Restart
-// - [ ] Save config.
-// - [ ] Set config from program args.
-// - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
-// - [ ] Separate game states to 
-//       application state (pre-load/title/config/loading/in-game) and
-//       in-game state (playing/pausing/gameover)
-//
 
 
 // Window Settings
