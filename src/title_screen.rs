@@ -1,14 +1,16 @@
 use crate::prelude::*;
 use bevy::{
     prelude::*,
-    asset::{
-        embedded_asset, LoadState
-    },
+    asset::embedded_asset,
 };
+
+use bevy_common_assets::ron::RonAssetPlugin;
 
 mod common;
 use self::common::*;
 mod config_popup;
+mod list_ron;
+use list_ron::*;
 
 
 pub struct ScTitleScreenPlugin;
@@ -17,6 +19,10 @@ impl Plugin for ScTitleScreenPlugin {
     fn build(&self, app: &mut App) {
 
         embedded_asset!(app, "title_screen/title_bg_image.png");
+
+        app.add_plugins((
+            RonAssetPlugin::<ListRon>::new(&["list.ron"]),
+        ));
 
         app.insert_state(TitleState::Loading);
         app.insert_resource(TitleAssets::default());
@@ -59,19 +65,20 @@ impl Plugin for ScTitleScreenPlugin {
                 end_title_screen,
             )
         );
-
     }
 }
 
 #[derive(Resource, Debug, Default)]
 struct TitleAssets {
     h_bg_image: Handle<Image>,
+    h_list_ron: Handle<ListRon>,
 }
 
-impl TitleAssets {
-    pub fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+impl Loadable for TitleAssets {
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
         let v = vec![
             self.h_bg_image.clone().untyped(),
+            self.h_list_ron.clone().untyped(),
         ];
         v
     }
@@ -79,44 +86,35 @@ impl TitleAssets {
 
 
 fn load_title_screen(
+    mut commands: Commands,
     mut asset: ResMut<TitleAssets>,
     asset_server: Res<AssetServer>,
 ) {
     asset.h_bg_image = asset_server.load("embedded://suika_clone/title_screen/title_bg_image.png");
+    asset.h_list_ron = asset_server.load("ron/index.list.ron");
+
+    let text_style = TextStyle {
+        font_size: 30.,
+        ..default()
+    };
+    commands.spawn((
+        InTitleScreen,
+        Text2dBundle {
+            text: Text::from_section("ashiojin.com", text_style),
+            transform: Transform::from_translation(Vec2::new(0., 0.).extend(-1.0)),
+            ..default()
+        },
+    ));
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
-enum LoadingState {
-    Ok,
-    Loading,
-    Error,
-}
-fn summarise_assetpack_loadstate(
-    asset_pack: &TitleAssets,
-    asset_server: &AssetServer,
-) -> LoadingState {
-    asset_pack.get_untyped_handles()
-        .iter()
-        .map(|h| asset_server.get_load_states(h.id()))
-        .filter_map(|s| s.map(|(s, _, _)| s))
-        .fold(LoadingState::Ok, |a, s| {
-            let s = match s {
-                LoadState::Loaded => LoadingState::Ok,
-                LoadState::Failed => LoadingState::Error,
-                _ => LoadingState::Loading,
-            };
-            LoadingState::max(a, s)
-        })
-}
 
 fn check_loading(
     asset_pack: Res<TitleAssets>,
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<TitleState>>,
 ) {
-    let state = summarise_assetpack_loadstate(&asset_pack, &asset_server);
-    match state {
-        LoadingState::Ok => {
+    match asset_pack.get_loading_state(&asset_server) {
+        LoadingState::Completed => {
             next_state.set(TitleState::Idle);
         }
         LoadingState::Loading => {

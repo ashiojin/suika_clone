@@ -1,13 +1,13 @@
 use crate::prelude::*;
-use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 
+use super::TitleAssets;
 use super::TitleState;
-
-use std::fs;
+use super::list_ron::*;
 
 use crate::game_ron::get_default_game_ron_name_and_file_name;
+
 
 #[derive(Resource, Debug, Default)]
 pub struct ConfigData {
@@ -16,31 +16,21 @@ pub struct ConfigData {
     ron_options: Vec<Option<ListRonItem>>,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
-struct ListRonItem {
-    name: String,
-    file: String,
-}
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
-struct ListRon {
-    list: Vec<ListRonItem>,
-}
 
 
 pub fn prepare(
     mut config_data: ResMut<ConfigData>,
     config: Res<Config>,
+    title_asset: Res<TitleAssets>,
+    list_ron: Res<Assets<ListRon>>,
 ) {
     config_data.copy = config.clone();
 
-    let list_ron = fs::read_to_string("assets/ron/list.ron")
-        .expect("Failed to load assets/ron/list.ron");
-
-    let list_ron: ListRon = ron::from_str(&list_ron)
-        .expect("Failed to load assets/ron/list.ron");
+    let list_ron = list_ron.get(title_asset.h_list_ron.id())
+        .expect("list.ron is not loaded yet.");
 
     let mut options = vec![None];
-    options.append(&mut list_ron.list.into_iter().map(Some).collect());
+    options.append(&mut list_ron.list.iter().cloned().map(Some).collect());
 
     config_data.ron_options = options;
 
