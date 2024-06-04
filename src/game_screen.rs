@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use bevy::{
-    prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
+    audio::Volume, prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
@@ -810,13 +810,15 @@ fn play_se_combine_balls(
     mut commands: Commands,
     mut ev_ball_spawn: EventReader<BallSpawnEvent>,
     sc_assets: Res<GameAssets>,
+    config: Res<Config>,
 ) {
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;
         if matches!(ev, Combine(_,_)) {
             spawn_combine_se(
                 &mut commands,
-                &sc_assets
+                &sc_assets,
+                &config,
             );
         }
     }
@@ -1014,6 +1016,7 @@ fn start_play_bgm(
     mut commands: Commands,
     mut q_bgm: Query<&mut AudioSink, With<Bgm>>,
     sc_asset: Res<GameAssets>,
+    config: Res<Config>,
 ) {
     if let Ok(sink) = q_bgm.get_single_mut() {
         sink.play(); // Already spawned: call play() to be sure
@@ -1022,7 +1025,11 @@ fn start_play_bgm(
             Bgm,
             AudioBundle {
                 source: sc_asset.h_bgm.clone(),
-                ..default()
+                settings: PlaybackSettings {
+                    mode: bevy::audio::PlaybackMode::Loop,
+                    volume: Volume::new(1.0 * (config.bgm_volume as f32 / 50.)),
+                    ..default()
+                },
             }
         ));
     }
@@ -1033,7 +1040,8 @@ struct Se;
 
 fn spawn_combine_se(
     commands: &mut Commands,
-    sc_assets: &GameAssets
+    sc_assets: &GameAssets,
+    config: &Config,
 ) {
     commands.spawn((
         Se,
@@ -1041,6 +1049,7 @@ fn spawn_combine_se(
             source: sc_assets.h_se_combine.clone(),
             settings: PlaybackSettings {
                 mode: bevy::audio::PlaybackMode::Despawn,
+                volume: Volume::new(1.0 * (config.se_volume as f32 / 50.)),
                 ..default()
             },
         },

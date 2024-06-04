@@ -6,106 +6,6 @@ use crate::game_ron::*;
 
 use bevy_common_assets::ron::RonAssetPlugin;
 
-#[derive(Debug)]
-pub struct BallLevelDef {
-    pub physics_radius: f32,
-
-    pub view_width: f32,
-    pub view_height: f32,
-
-    pub h_image: Handle<Image>,
-}
-
-impl BallLevelDef {
-    fn from(n: &BallLevelSettingRon, asset_server: &AssetServer,) -> Self {
-        Self {
-            physics_radius: n.physics_radius,
-            view_width: n.view_width,
-            view_height: n.view_height,
-            h_image: asset_server.load(&n.image_asset_path),
-        }
-    }
-}
-
-#[derive(Resource, Debug)]
-pub struct GameAssets {
-    pub ball_level_settings: Vec<BallLevelDef>,
-    pub h_font: Handle<Font>,
-
-    pub h_bgm: Handle<AudioSource>,
-    pub h_se_combine: Handle<AudioSource>,
-}
-impl Loadable for GameAssets {
-    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
-        let mut v: Vec<_> = self.ball_level_settings.iter()
-            .map(|x| &x.h_image).cloned().map(|h| h.untyped()).collect();
-        let mut v2 = vec![
-            self.h_font.clone().untyped(),
-
-            self.h_bgm.clone().untyped(),
-            self.h_se_combine.clone().untyped(),
-        ];
-        v.append(&mut v2);
-        v
-    }
-}
-impl GameAssets {
-    pub fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {
-        let idx = level.0 - BALL_LEVEL_MIN;
-        &self.ball_level_settings[idx].h_image
-    }
-
-    #[inline]
-    pub fn get_ball_max_level(&self) -> BallLevel {
-        BallLevel (
-            self.ball_level_settings.len() + 1
-        )
-    }
-
-    #[inline]
-    pub fn get_ball_setting(&self, lv: BallLevel) -> &BallLevelDef {
-        assert!(self.get_ball_max_level() >= lv);
-        &self.ball_level_settings[lv.0]
-    }
-
-    #[inline]
-    pub fn get_ball_r(&self, lv: BallLevel) -> f32 {
-        self.get_ball_setting(lv).physics_radius
-    }
-
-    #[inline]
-    pub fn get_ball_start_r(&self, lv: BallLevel) -> f32 {
-        //
-        //   -  *
-        //   |  ***
-        //   |  *  **  y+r      r: min(ball radius)
-        //   y  *    **         y: combined ball radius
-        //   |  *      **       x: max radius of new free space <- this!
-        //   |  *        **
-        //   |  *   x+r    **
-        //   =  *------------*
-        //   |  *          **
-        //   |  *        **
-        //   y  *      **
-        //   |  *    **
-        //   |  *  **
-        //   |  ***
-        //   _  *
-        //
-        let r = self.get_ball_r(BallLevel::new(BALL_LEVEL_MIN));
-        let y = self.get_ball_r(BallLevel::new(lv.0 - 1));
-
-        (2. * r * y + r * r).powf(1. / 2.) - r
-    }
-
-    #[inline]
-    pub fn get_ball_mesh_wh(&self, lv: BallLevel) -> (f32, f32) {
-        let s = self.get_ball_setting(lv);
-        (s.view_width, s.view_height)
-    }
-}
-pub const BALL_LEVEL_MIN: usize = 1;
-
 
 pub struct ScLoadingScreenPlugin;
 
@@ -219,18 +119,18 @@ fn load_assets_game_assets(
     let from_ron = game_ron.get(current_game_ron.0.id())
         .expect("game.ron is not yet loaded.");
     let balls = from_ron.balls.iter()
-        .map(|n| BallLevelDef::from(n, &asset_server))
+        .map(|n| BallLevelDef::create_with_loading(n, &asset_server))
         .collect();
     let h_bgm =asset_server.load(&from_ron.sounds.bgm_asset_path);
     let h_se_combine = asset_server.load(&from_ron.sounds.se_combine_asset_path);
 
     commands.insert_resource(
-        GameAssets {
-            ball_level_settings: balls,
-            h_font: asset_server.load("fonts/GL-CurulMinamoto.ttf"),
+        GameAssets::new(
+            balls,
+            asset_server.load("fonts/GL-CurulMinamoto.ttf"),
             h_bgm,
             h_se_combine,
-        }
+        )
     );
 }
 
@@ -322,4 +222,3 @@ fn cleanup_loading_screen(
             .despawn_recursive();
     }
 }
-

@@ -7,6 +7,8 @@ use super::TitleState;
 
 use std::fs;
 
+use crate::game_ron::get_default_game_ron_name_and_file_name;
+
 #[derive(Resource, Debug, Default)]
 pub struct ConfigData {
     copy: Config,
@@ -60,6 +62,10 @@ pub fn ui_popup(
                 egui::Slider::new(&mut config_data.copy.bgm_volume, 0..=100)
                     .text("BGM Volume")
             );
+            ui.add(
+                egui::Slider::new(&mut config_data.copy.se_volume, 0..=100)
+                    .text("SE Volume")
+            );
 
             for (idx, ron) in ron_options.iter().enumerate() {
                 let name = if let Some(ListRonItem { name, ..}) = ron {
@@ -103,7 +109,7 @@ fn apply(
             (name.as_str(), file.as_str())
         } else {
             info!("3");
-            gat_default_game_ron_name_and_file_name()
+            get_default_game_ron_name_and_file_name()
         };
 
         config.game_ron_name = name.to_string();

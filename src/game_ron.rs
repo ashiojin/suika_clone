@@ -42,6 +42,6 @@ impl Loadable for CurrentGameRon {
 
 const DEFAULT_GAME_RON_NAME: &str = "(default)";
 const DEFAULT_GAME_RON_FILE_NAME: &str = "kao.game.ron";
-pub fn gat_default_game_ron_name_and_file_name() -> (&'static str, &'static str) {
+pub fn get_default_game_ron_name_and_file_name() -> (&'static str, &'static str) {
     (DEFAULT_GAME_RON_NAME, DEFAULT_GAME_RON_FILE_NAME)
 }

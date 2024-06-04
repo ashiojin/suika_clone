@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game_ron::gat_default_game_ron_name_and_file_name;
+use crate::game_ron::get_default_game_ron_name_and_file_name;
 
 #[derive(States, Default, Hash, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameState {
@@ -37,6 +37,7 @@ pub struct Config {
     pub max_velocity: f32,
 
     pub bgm_volume: i32, // 0..=100
+    pub se_volume: i32, // 0..=100
 
     pub game_ron_name: String,
     pub game_ron_file_name: String,
@@ -44,13 +45,14 @@ pub struct Config {
 }
 impl Default for Config {
     fn default() -> Self {
-        let (game_ron_name, game_ron_file_name) = gat_default_game_ron_name_and_file_name();
+        let (game_ron_name, game_ron_file_name) = get_default_game_ron_name_and_file_name();
         Self {
             grow_time: 0.2,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
             max_velocity: 60. * 32. * (30./2.),
 
             bgm_volume: 50,
+            se_volume: 50,
 
             game_ron_name: game_ron_name.to_string(),
             game_ron_file_name: game_ron_file_name.to_string(),
