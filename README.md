@@ -39,11 +39,11 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
   - Use embedded assets(title image)
 - [x] Config Screen. (or Popup on title screen)
   - [x] List and Load a .ron file
-- [ ] Separate Asset Loading Logic into Plugin ~~or Use `bevy_asset_loader`~~
-- [ ] Change some GameRon/Images/Audios to Embedded assets.
+- [x] Separate Asset Loading Logic ~~into Plugin~~ ~~or Use `bevy_asset_loader`~~
 - [ ] Refine config screen & title screen.
-  - [ ] Loading state needed to read 'list.ron' and selected game ron
+  - [x] Loading state needed to read 'list.ron' and selected game ron
   - [ ] Use `bevy_egui_kbgp`
+- [ ] Change some GameRon/Images/Audios to Embedded assets.
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
 - [ ] Create PlayerBundle.
 - [ ] Player texture.
