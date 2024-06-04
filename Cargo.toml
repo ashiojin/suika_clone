@@ -12,6 +12,8 @@ opt-level = 3
 [dependencies]
 bevy = { version = "0.13", features = [] }
 
+bevy_common_assets = { version = "0.10", features = ["ron"] }
+
 bevy_xpbd_2d = "0.4" # Physics engine
 
 egui = "0.13"

@@ -39,7 +39,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
   - Use embedded assets(title image)
 - [x] Config Screen. (or Popup on title screen)
   - [x] List and Load a .ron file
-- [ ] Separate Asset Loading Logic into Plugin or Use `bevy_asset_loader`
+- [ ] Separate Asset Loading Logic into Plugin ~~or Use `bevy_asset_loader`~~
+- [ ] Change some GameRon/Images/Audios to Embedded assets.
 - [ ] Refine config screen & title screen.
   - [ ] Loading state needed to read 'list.ron' and selected game ron
   - [ ] Use `bevy_egui_kbgp`
@@ -57,8 +58,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Pause in playing game
   - [ ] Return to Title
   - [ ] Restart
-- [ ] Save config.
 - [ ] Set config from program args.
+- [ ] Save config.
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 - [ ] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and

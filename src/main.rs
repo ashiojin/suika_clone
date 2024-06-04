@@ -11,6 +11,8 @@ use bevy_prng::ChaCha8Rng;
 
 mod debug;
 mod common;
+mod game_ron;
+mod resource_loader;
 mod asset;
 mod title_screen;
 mod game_screen;
@@ -19,9 +21,11 @@ mod physics_custom;
 mod prelude {
     pub use crate::debug::*;
     pub use crate::common::*;
+    pub use crate::resource_loader::*;
     pub use crate::asset::*;
     pub use crate::physics_custom::*;
     pub use crate::game_screen::*;
+
 }
 use crate::prelude::*;
 
@@ -65,6 +69,7 @@ fn main() {
             }),
             ..default()
         }),
+
         PhysicsPlugins::default()
             .build()
             .add(LimitVelocityPlugin),

@@ -42,9 +42,6 @@ pub fn prepare(
 
     config_data.ron_options = options;
 
-
-
-
 }
 
 
@@ -102,21 +99,14 @@ fn apply(
         info!("1");
         let ron = &config_data.ron_options[idx];
 
-        let (ron, name) = if let Some(ListRonItem{ name, file }) = ron {
-            info!("2");
-            let ron = fs::read_to_string(format!("assets/ron/{}", file))
-                .expect("Failed to load selected game ron");
-            let game_ron: GameRon = ron::from_str(&ron)
-                .expect("Failed to load selected game ron");
-
-            (game_ron, name.as_str())
-
+        let (name, file) = if let Some(ListRonItem{ name, file }) = ron {
+            (name.as_str(), file.as_str())
         } else {
             info!("3");
-            read_default_game_ron()
+            gat_default_game_ron_name_and_file_name()
         };
 
-        config.game_ron = ron;
         config.game_ron_name = name.to_string();
+        config.game_ron_file_name = file.to_string();
     }
 }

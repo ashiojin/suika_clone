@@ -1,11 +1,10 @@
 use std::f32::consts::TAU;
 use crate::prelude::*;
-use bevy::{
-    prelude::*,
-    asset::LoadState,
-};
+use bevy::prelude::*;
 
+use crate::game_ron::*;
 
+use bevy_common_assets::ron::RonAssetPlugin;
 
 #[derive(Debug)]
 pub struct BallLevelDef {
@@ -36,8 +35,8 @@ pub struct GameAssets {
     pub h_bgm: Handle<AudioSource>,
     pub h_se_combine: Handle<AudioSource>,
 }
-impl GameAssets {
-    pub fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+impl Loadable for GameAssets {
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
         let mut v: Vec<_> = self.ball_level_settings.iter()
             .map(|x| &x.h_image).cloned().map(|h| h.untyped()).collect();
         let mut v2 = vec![
@@ -49,7 +48,8 @@ impl GameAssets {
         v.append(&mut v2);
         v
     }
-
+}
+impl GameAssets {
     pub fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {
         let idx = level.0 - BALL_LEVEL_MIN;
         &self.ball_level_settings[idx].h_image
@@ -111,28 +111,113 @@ pub struct ScLoadingScreenPlugin;
 
 impl Plugin for ScLoadingScreenPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins((
+            RonAssetPlugin::<GameRon>::new(&["game.ron"]),
+        ));
         app.init_gizmo_group::<MyLoadingScreenGizmos>();
 
+        app.init_state::<LoadingScreenState>();
+
         app.add_systems(OnEnter(GameState::Loading), (
-            load_assets,
+            kick_loading,
             setup_loading_screen,
         ));
         app.add_systems(Update, (
-            check_loading,
             update_loading_screen,
         ).run_if(in_state(GameState::Loading)));
         app.add_systems(OnExit(GameState::Loading), (
             cleanup_loading_screen,
         ));
+
+        app.add_systems(OnEnter(LoadingScreenState::LoadingGameRon),
+            (
+                start_loading_game_ron,
+            )
+        );
+
+        app.add_systems(Update,
+            (
+                wait_to_complete_loading_game_ron,
+            ).run_if(in_state(LoadingScreenState::LoadingGameRon))
+        );
+
+        app.add_systems(OnEnter(LoadingScreenState::LoadingGameAssets),
+            (
+                load_assets_game_assets,
+            )
+        );
+
+        app.add_systems(Update,
+            (
+                wait_to_complete_loading_game_assets,
+            ).run_if(in_state(LoadingScreenState::LoadingGameAssets))
+        );
+
+        app.add_systems(OnEnter(LoadingScreenState::Completed),
+            (
+                complete_loading,
+            )
+        );
+
     }
 }
 
-pub fn load_assets(
+#[derive(States, Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+enum LoadingScreenState {
+    #[default]
+    NotLoaded,
+    LoadingGameRon,
+    LoadingGameAssets,
+    Completed,
+}
+
+
+fn kick_loading(
+    mut next_state: ResMut<NextState<LoadingScreenState>>,
+) {
+    next_state.set(LoadingScreenState::LoadingGameRon);
+}
+
+fn start_loading_game_ron(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     config: Res<Config>,
 ) {
-    let from_ron = &config.game_ron;
+    let game_ron_name = &config.game_ron_file_name;
+
+    commands.insert_resource(
+        CurrentGameRon(
+            asset_server.load(format!("ron/{}", game_ron_name)),
+        )
+    );
+}
+
+fn wait_to_complete_loading_game_ron(
+    game_ron: Res<CurrentGameRon>,
+    asset_server: Res<AssetServer>,
+    mut next_state: ResMut<NextState<LoadingScreenState>>,
+) {
+    match game_ron.get_loading_state(&asset_server) {
+        LoadingState::Completed => {
+            next_state.set(LoadingScreenState::LoadingGameAssets);
+        }
+        LoadingState::Loading => {
+            // wait for next
+        }
+        LoadingState::Error => {
+            panic!("load failed!");
+        }
+    }
+}
+
+fn load_assets_game_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_game_ron: Res<CurrentGameRon>,
+    game_ron: Res<Assets<GameRon>>,
+) {
+    let from_ron = game_ron.get(current_game_ron.0.id())
+        .expect("game.ron is not yet loaded.");
     let balls = from_ron.balls.iter()
         .map(|n| BallLevelDef::from(n, &asset_server))
         .collect();
@@ -149,39 +234,16 @@ pub fn load_assets(
     );
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub enum LoadingState {
-    Ok,
-    Loading,
-    Error,
-}
-fn summarise_assetpack_loadstate(
-    asset_pack: &GameAssets,
-    asset_server: &AssetServer,
-) -> LoadingState {
-    asset_pack.get_untyped_handles()
-        .iter()
-        .map(|h| asset_server.get_load_states(h.id()))
-        .filter_map(|s| s.map(|(s, _, _)| s))
-        .fold(LoadingState::Ok, |a, s| {
-            let s = match s {
-                LoadState::Loaded => LoadingState::Ok,
-                LoadState::Failed => LoadingState::Error,
-                _ => LoadingState::Loading,
-            };
-            LoadingState::max(a, s)
-        })
-}
 
-pub fn check_loading(
+fn wait_to_complete_loading_game_assets(
     asset_pack: Res<GameAssets>,
     asset_server: Res<AssetServer>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<LoadingScreenState>>,
 ) {
-    let state = summarise_assetpack_loadstate(&asset_pack, &asset_server);
+    let state = asset_pack.get_loading_state(&asset_server);
     match state {
-        LoadingState::Ok => {
-            next_state.set(GameState::InGame);
+        LoadingState::Completed => {
+            next_state.set(LoadingScreenState::Completed);
         }
         LoadingState::Loading => {
             // wait for next
@@ -191,6 +253,13 @@ pub fn check_loading(
         }
     }
 }
+
+fn complete_loading(
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    next_state.set(GameState::InGame);
+}
+
 
 #[derive(Component, Debug)]
 pub struct ForLoadingScreen;
@@ -232,7 +301,7 @@ pub fn setup_loading_screen(
     config.line_width = 5.;
 }
 
-pub fn update_loading_screen(
+fn update_loading_screen(
     mut gizmos: Gizmos<MyLoadingScreenGizmos>,
     time: Res<Time>,
 ) {
@@ -244,7 +313,7 @@ pub fn update_loading_screen(
     );
 }
 
-pub fn cleanup_loading_screen(
+fn cleanup_loading_screen(
     mut commands: Commands,
     q_screen_items: Query<Entity, With<ForLoadingScreen>>,
 ) {
