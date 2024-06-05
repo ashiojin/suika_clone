@@ -40,9 +40,12 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [x] Config Screen. (or Popup on title screen)
   - [x] List and Load a .ron file
 - [x] Separate Asset Loading Logic ~~into Plugin~~ ~~or Use `bevy_asset_loader`~~
-- [ ] Refine config screen & title screen.
+- [x] Refine config screen & title screen.
   - [x] Loading state needed to read 'list.ron' and selected game ron
-  - [ ] Use `bevy_egui_kbgp`
+  - [x] Use `bevy_egui_kbgp`
+    But `bevy_egui_kbgp` (or my code) has some strange focus movement on slider.
+    And `A`, `D` on a slider are not work as to change value.
+    So I don't use slider now.
 - [ ] Change some GameRon/Images/Audios to Embedded assets.
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
 - [ ] Create PlayerBundle.

@@ -28,11 +28,13 @@ impl Plugin for ScTitleScreenPlugin {
         app.insert_resource(TitleAssets::default());
         app.insert_resource(config_popup::ConfigData::default());
         app.add_systems(OnEnter(GameState::Title), (
-            load_title_screen,
+            start_loading,
+            spawn_loading_screen,
         ));
 
         app.add_systems(Update,
             (
+                update_loading_screen,
                 check_loading,
             ).run_if(in_state(TitleState::Loading))
         );
@@ -85,26 +87,55 @@ impl Loadable for TitleAssets {
 }
 
 
-fn load_title_screen(
-    mut commands: Commands,
+#[derive(Component, Debug)]
+struct PreLoadingText;
+
+fn start_loading(
     mut asset: ResMut<TitleAssets>,
     asset_server: Res<AssetServer>,
 ) {
     asset.h_bg_image = asset_server.load("embedded://suika_clone/title_screen/title_bg_image.png");
     asset.h_list_ron = asset_server.load("ron/index.list.ron");
+}
 
+fn spawn_loading_screen(
+    mut commands: Commands,
+) {
     let text_style = TextStyle {
         font_size: 30.,
         ..default()
     };
     commands.spawn((
         InTitleScreen,
+        PreLoadingText,
         Text2dBundle {
             text: Text::from_section("ashiojin.com", text_style),
             transform: Transform::from_translation(Vec2::new(0., 0.).extend(-1.0)),
             ..default()
         },
     ));
+}
+
+fn update_loading_screen(
+    mut q_text: Query<&mut Text, With<PreLoadingText>>,
+    time: Res<Time>,
+) {
+    let marks = [
+        '/', '-', '\\', '|'
+    ];
+    let one = time.elapsed_seconds() % 1.;
+    let idx = one * marks.len() as f32;
+    let idx = idx.floor() as usize;
+    let mark = marks[idx];
+
+    if let Ok(mut text) = q_text.get_single_mut() {
+        let text_style = text.sections[0].style.clone();
+        if 1 == text.sections.len() {
+            text.sections.push(
+                TextSection::new("", text_style));
+        }
+        text.sections[1].value = format!("{}", mark);
+    }
 }
 
 

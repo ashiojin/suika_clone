@@ -1,9 +1,10 @@
 use bevy::{
     prelude::*, render::camera::ScalingMode, window::WindowResolution
 };
-use bevy_egui::egui;
-use bevy_egui::EguiContexts;
-use bevy_egui::EguiPlugin;
+use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy_egui_kbgp::KbgpNavBindings;
+use bevy_egui_kbgp::KbgpPlugin;
+use bevy_egui_kbgp::KbgpSettings;
 use bevy_xpbd_2d::prelude::*;
 
 use bevy_rand::prelude::*;
@@ -77,8 +78,25 @@ fn main() {
             .add(LimitVelocityPlugin),
 
         EguiPlugin,
+        KbgpPlugin,
         ScDebugPlugin::new(true, true),
     ));
+
+    app.insert_resource(KbgpSettings {
+        bindings: KbgpNavBindings::empty()
+            .with_wasd_navigation()
+            .with_arrow_keys_navigation()
+            .with_gamepad_dpad_navigation_and_south_button_activation(),
+        disable_default_navigation: true,
+        disable_default_activation: true,
+        prevent_loss_of_focus: true,
+        focus_on_mouse_movement: true,
+        allow_keyboard: true,
+        allow_gamepads: true,
+        allow_mouse_wheel: true,
+        allow_mouse_buttons: true,
+        allow_mouse_wheel_sideways: true,
+    });
 
     app.insert_resource(Config::default());
     app.init_state::<GameState>();

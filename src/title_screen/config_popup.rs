@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
+use bevy_egui_kbgp::KbgpEguiResponseExt;
 
 use super::TitleAssets;
 use super::TitleState;
@@ -12,7 +13,7 @@ use crate::game_ron::get_default_game_ron_name_and_file_name;
 #[derive(Resource, Debug, Default)]
 pub struct ConfigData {
     copy: Config,
-    ron_selected: Option<usize>,
+    ron_selected: usize,
     ron_options: Vec<Option<ListRonItem>>,
 }
 
@@ -34,8 +35,24 @@ pub fn prepare(
 
     config_data.ron_options = options;
 
+    let (def_name, _) = get_default_game_ron_name_and_file_name();
+
+    config_data.ron_selected = if config.game_ron_name == def_name {
+        0 // Default
+    } else {
+        config_data.ron_options.iter()
+            .position(|o|
+                  o.as_ref()
+                      .map(|e| e.name == config.game_ron_name)
+                      .unwrap_or(false))
+            .unwrap_or(0) // Default
+    }
 }
 
+const VOLUME_OPTIONS: [i32; 11] = [
+    0, 10, 20, 30, 40, 50,
+    60, 70, 80, 90, 100,
+];
 
 pub fn ui_popup(
     mut contexts: EguiContexts,
@@ -43,41 +60,69 @@ pub fn ui_popup(
     mut config_data: ResMut<ConfigData>,
     mut next_state: ResMut<NextState<TitleState>>,
 ) {
+    let (def_ron_name, _) = get_default_game_ron_name_and_file_name();
     let ctx = contexts.ctx_mut();
     let ron_options = config_data.ron_options.clone();
-    egui::Window::new("Config").show(
-        ctx,
+    egui::CentralPanel::default().show(ctx,
         |ui| {
-            ui.add(
-                egui::Slider::new(&mut config_data.copy.bgm_volume, 0..=100)
-                    .text("BGM Volume")
-            );
-            ui.add(
-                egui::Slider::new(&mut config_data.copy.se_volume, 0..=100)
-                    .text("SE Volume")
-            );
-
+            ui.heading("Game");
             for (idx, ron) in ron_options.iter().enumerate() {
                 let name = if let Some(ListRonItem { name, ..}) = ron {
                     name
                 } else {
-                    "(default)"
+                    def_ron_name
                 };
-                if ui.button(name).clicked() {
-                    config_data.ron_selected = Some(idx);
+                let name = if config_data.ron_selected == idx {
+                    format!("* {}", name)
+                } else {
+                    name.to_string()
+                };
+                if ui.button(name)
+                    .kbgp_navigation()
+                    .clicked() {
+                    config_data.ron_selected = idx;
                 }
             }
 
-            if ui.button("Cancel")
-                .clicked() {
-                next_state.set(TitleState::Idle);
-            }
+            ui.heading("Sounds");
+            ui.label(format!("BGM Volume: {}", config_data.copy.bgm_volume));
+            ui.horizontal(|ui| {
+                for vol in &VOLUME_OPTIONS {
+                    if ui.button(format!("{}", vol))
+                        .kbgp_navigation()
+                        .clicked() {
+                        config_data.copy.bgm_volume = *vol;
+                    }
+                }
+            });
+            ui.label(format!("SE Volume: {}", config_data.copy.se_volume));
+            ui.horizontal(|ui| {
+                for vol in &VOLUME_OPTIONS {
+                    if ui.button(format!("{}", vol))
+                        .kbgp_navigation()
+                        .clicked() {
+                        config_data.copy.se_volume = *vol;
+                    }
+                }
+            });
 
-            if ui.button("Ok")
-                .clicked() {
-                apply(&mut config, &config_data);
-                next_state.set(TitleState::Idle);
-            }
+
+            ui.separator();
+            ui.horizontal(|ui| {
+                if ui.button("Cancel")
+                    .kbgp_navigation()
+                    .clicked() {
+                    next_state.set(TitleState::Idle);
+                }
+
+                if ui.button("Ok")
+                    .kbgp_navigation()
+                    .clicked() {
+                    apply(&mut config, &config_data);
+                    next_state.set(TitleState::Idle);
+                }
+            });
+
         }
     );
 }
@@ -87,22 +132,18 @@ fn apply(
     config: &mut Config,
     config_data: &ConfigData,
 ) {
-    info!("{:?}", config_data);
     *config = config_data.copy.clone();
 
     // read ron
-    if let Some(idx) = config_data.ron_selected {
-        info!("1");
-        let ron = &config_data.ron_options[idx];
+    let idx = config_data.ron_selected;
+    let ron = &config_data.ron_options[idx];
 
-        let (name, file) = if let Some(ListRonItem{ name, file }) = ron {
-            (name.as_str(), file.as_str())
-        } else {
-            info!("3");
-            get_default_game_ron_name_and_file_name()
-        };
+    let (name, file) = if let Some(ListRonItem{ name, file }) = ron {
+        (name.as_str(), file.as_str())
+    } else {
+        get_default_game_ron_name_and_file_name()
+    };
 
-        config.game_ron_name = name.to_string();
-        config.game_ron_file_name = file.to_string();
-    }
+    config.game_ron_name = name.to_string();
+    config.game_ron_file_name = file.to_string();
 }
