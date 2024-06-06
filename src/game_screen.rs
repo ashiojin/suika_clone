@@ -26,7 +26,7 @@ impl Plugin for ScGameScreenPlugin {
         app.insert_resource(SubstepCount(XPBD_SUBSTEP));
 
         app.add_event::<BallEvent>();
-        app.add_event::<PlayerActionEvent>();
+        app.add_event::<PlayerInputEvent>();
         app.add_event::<BallSpawnEvent>();
 
 
@@ -35,6 +35,7 @@ impl Plugin for ScGameScreenPlugin {
             setup_bottle,
             spawn_player,
             spawn_score_view,
+            spwan_holding_ball_view,
             start_play_bgm,
         ));
 
@@ -93,22 +94,26 @@ struct Bottle;
 //                                             
 //                      P                      
 //                               SCORE: xx     
-//                *         *                  
-//                *         *                  
-//                *         *    sample+       
-//                *    +    *    |     |       
-//                *         *    | Lv1 |       
-//                *         *    | Lv2 |       
-//                *         *    | ... |       
-//                **bottle***    +-----+       
+//                *         *    HOLDING-+     
+//                *         *    |       |     
+//                *         *    +-------+     
+//                *    +    *    sample--+     
+//                *         *    | ...   |     
+//                *         *    | ...   |     
+//                *         *    | ...   |     
+//                **bottle***    +-------+     
 //                                             
 //---------------------------------------------
 //                                             
 //                                             
 const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
+const MARGEN_Y_RIGHT_SIDE: f32 = 10.;
 const SCORE_TEXT_WEIGHT: f32 = 30.;
 const SCORE_WIDTH: f32 = 360.; // "Score: 12345" (12) 12 * 30.
 const SCORE_HEIGHT: f32 = 40.;
+const HOLDING_VIEW_TEXT_WEIGHT: f32 = 30.;
+const HOLDING_VIEW_WIDTH: f32 = 360.;
+const HOLDING_VIEW_HEIGHT: f32 = 360. + HOLDING_VIEW_TEXT_WEIGHT;
 
 
 
@@ -147,6 +152,21 @@ const PLAYER_GAP_WALL: f32 = 50.;
 const PLAYER_Y: f32 = BOTTLE_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
 const PLAYER_GAP_TO_MAX: f32 = 200.;
 const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
+
+
+const SCORE_CENTER: Vec2 =
+    Vec2::new(
+        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + SCORE_WIDTH * 0.5,
+        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT * 0.5,
+    );
+
+const HOLDING_VIEW_CENTER: Vec2 =
+    Vec2::new(
+        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + HOLDING_VIEW_WIDTH * 0.5,
+        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT - MARGEN_Y_RIGHT_SIDE - HOLDING_VIEW_HEIGHT * 0.5,
+    );
+
+
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -386,17 +406,19 @@ fn check_game_over(
 }
 
 
+/// Player inputs
 #[derive(Event, Debug, Clone, Copy, PartialEq)]
-enum PlayerActionEvent {
-    TryDrop,
-    TryMove(f32), // [-1, 1]
+enum PlayerInputEvent {
+    Drop,
+    Move(f32), // [-1, 1]
+    Hold,
 }
 
 fn read_keyboard_for_player_actions(
     q_player: Query<&Player>,
     keyboard: Res<ButtonInput<KeyCode>>,
 
-    mut ev_player_act: EventWriter<PlayerActionEvent>,
+    mut ev_player_act: EventWriter<PlayerInputEvent>,
 ) {
     if q_player.get_single().is_ok() {
         let mut lr = 0.;
@@ -408,11 +430,15 @@ fn read_keyboard_for_player_actions(
         }
 
         if keyboard.just_pressed(KeyCode::Space) {
-            ev_player_act.send(PlayerActionEvent::TryDrop);
+            ev_player_act.send(PlayerInputEvent::Drop);
+        }
+
+        if keyboard.just_pressed(KeyCode::KeyB) {
+            ev_player_act.send(PlayerInputEvent::Hold);
         }
 
         if lr != 0. {
-            ev_player_act.send(PlayerActionEvent::TryMove(lr));
+            ev_player_act.send(PlayerInputEvent::Move(lr));
         }
     }
 }
@@ -512,12 +538,12 @@ fn spawn_player(
 fn move_puppeteer(
     q_player: Query<&Player>,
     mut q_puppeteer: Query<(&mut Transform, &PlayerPuppeteer)>,
-    mut ev_player_act: EventReader<PlayerActionEvent>,
+    mut ev_player_act: EventReader<PlayerInputEvent>,
 ) {
     if let Ok((mut trans, _)) = q_puppeteer.get_single_mut() {
         if let Ok(player) = q_player.get_single() {
             for ev in ev_player_act.read() {
-                if let PlayerActionEvent::TryMove(lr) = ev {
+                if let PlayerInputEvent::Move(lr) = ev {
                     trans.translation.x =
                         (trans.translation.x + lr * player.speed)
                             .clamp(-BOTTLE_WIDTH/2., BOTTLE_WIDTH/2.);
@@ -592,14 +618,14 @@ fn sync_guide(
 
 fn action_player(
     mut q_player: Query<(&Transform, &mut Player, &mut EntropyComponent<ChaCha8Rng>)>,
-    mut ev_player_act: EventReader<PlayerActionEvent>,
+    mut ev_player_act: EventReader<PlayerInputEvent>,
     mut ev_ball_spawn: EventWriter<BallSpawnEvent>,
 ) {
     if let Ok((trans, mut player, mut rng)) = q_player.get_single_mut() {
 
         for ev in ev_player_act.read() {
             match ev {
-                PlayerActionEvent::TryDrop => {
+                PlayerInputEvent::Drop => {
                     if player.can_drop {
                         let pos = trans.translation.xy();
                         let lv = player.next_ball_level;
@@ -610,7 +636,18 @@ fn action_player(
                         player.can_drop = false;
                     }
                 },
-                PlayerActionEvent::TryMove(_lr) => {
+                PlayerInputEvent::Hold => {
+                    if player.can_drop {
+                        let lv = player.next_ball_level;
+                        if let Some(hold_level) = player.hold_ball {
+                            player.next_ball_level = hold_level;
+                        } else {
+                            player.set_next_ball_level_from_rng(&mut rng);
+                        }
+                        player.hold_ball = Some(lv);
+                    }
+                }
+                PlayerInputEvent::Move(_lr) => {
 //                    trans.translation.x += lr * player.speed;
                 },
             }
@@ -622,7 +659,7 @@ fn action_player(
 struct DroppingBall;
 
 #[derive(Component, Debug)]
-struct FakeBall;
+struct FakeBall(pub BallLevel);
 
 #[derive(Component, Debug)]
 struct ScoreView;
@@ -635,13 +672,7 @@ fn spawn_score_view(
     my_assets: Res<GameAssets>,
 ) {
     let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
-    let bottom_rt = Vec2::new(
-        BOTTLE_OUTER_RIGHT_BOTTOM.x,
-        BOTTLE_OUTER_LEFT_TOP.y,
-    );
-    let score_lt =
-        bottom_rt + Vec2::new(BOTTOLE_MARGIN_RIGHT, 0.)
-            + (Vec2::new(score_size.x, -score_size.y) / 2.);
+    let score_center = SCORE_CENTER;
     commands
         .spawn((
             ScoreView,
@@ -652,7 +683,7 @@ fn spawn_score_view(
                     ..default()
                 },
                 transform: Transform::from_translation(
-                               score_lt.extend(Z_SCORE)),
+                               score_center.extend(Z_UI)),
                 ..default()
             },
         ))
@@ -665,7 +696,7 @@ fn spawn_score_view(
             b.spawn((
                 ScoreText,
                 Text2dBundle {
-                    text: Text::from_section("", text_style.clone()),
+                    text: Text::from_section("***", text_style.clone()),
                     transform: Transform::from_translation(Vec3::Z * 0.01),
                     ..default()
                 },
@@ -673,10 +704,77 @@ fn spawn_score_view(
         });
 }
 
+#[derive(Component, Debug)]
+struct HoldingBallView;
+#[derive(Component, Debug)]
+struct HoldingBallImage(Option<BallLevel>);
+
+fn spwan_holding_ball_view(
+    mut commands: Commands,
+    my_assets: Res<GameAssets>,
+) {
+    commands.spawn((
+        HoldingBallView,
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::BLACK,
+                custom_size: Some(Vec2::new(HOLDING_VIEW_WIDTH, HOLDING_VIEW_HEIGHT)),
+                ..default()
+            },
+            transform: Transform::from_translation(
+                           HOLDING_VIEW_CENTER.extend(Z_UI)),
+            ..default()
+        }
+
+    ))
+    .with_children(|b| {
+        let label_pos =
+            Vec2::new(0., HOLDING_VIEW_HEIGHT/2.- HOLDING_VIEW_TEXT_WEIGHT/2.)
+            ;
+        let image_pos =
+            Vec2::new(0., -HOLDING_VIEW_TEXT_WEIGHT/2.);
+        let text_style = TextStyle {
+            font: my_assets.h_font.clone(),
+            font_size: HOLDING_VIEW_TEXT_WEIGHT,
+            color: Color::WHITE,
+        };
+        b.spawn((
+            Text2dBundle {
+                text: Text::from_section("Hold:", text_style.clone()),
+                transform: Transform::from_translation(label_pos.extend(0.02)),
+                ..default()
+            },
+        ));
+
+        b.spawn((
+            SpatialBundle {
+                transform: Transform::from_translation(
+                               image_pos.extend(0.01)
+                           ),
+                ..default()
+            },
+        ))
+        .with_children(|b| {
+            b.spawn((
+                HoldingBallImage(None),
+                SpatialBundle {
+                    transform: Transform::from_translation(
+                                   Vec2::ZERO.extend(0.01)
+                               ),
+                    ..default()
+                }
+            ));
+        });
+    });
+}
+
+#[allow(clippy::too_many_arguments)]
 fn update_player_view(
     q_player: Query<(Entity, &Player)>,
 
-    q_fakeball: Query<Entity, With<FakeBall>>,
+    q_fakeball: Query<(Entity, &FakeBall)>,
+
+    q_holding_ball: Query<(Entity, &HoldingBallImage)>,
 
     mut q_score_text: Query<&mut Text, With<ScoreText>>,
 
@@ -691,22 +789,55 @@ fn update_player_view(
 
         if player.is_fakeball_exists() {
             // need fake ball
-            if fakeball.is_err() {
+            // - if there already is, check its level and update it if necessary.
+            // - if there is not, spawn it.
+            if let Ok((fakeball_entity, FakeBall(fakeball_level))) = fakeball {
+                if *fakeball_level != player.next_ball_level { // Holding a ball cieses this.
+                    // update
+                    let ball_view = create_ball_view(
+                        &mut meshes, &mut materials, player.next_ball_level,
+                        Vec2::ZERO, &my_assets);
+                    commands.entity(fakeball_entity)
+                        .insert((
+                            FakeBall(player.next_ball_level),
+                            ball_view,
+                        ));
+                }
+            } else {
                 commands.entity(plyer_entity)
                     .with_children(|b| {
                         let ball_view = create_ball_view(
                             &mut meshes, &mut materials, player.next_ball_level,
                             Vec2::ZERO, &my_assets);
                         b.spawn((
-                            FakeBall,
+                            FakeBall(player.next_ball_level),
                             ball_view,
                         ));
                     });
             }
         } else {
             // don't need fake ball
-            if let Ok(fakeball) = fakeball {
-                commands.entity(fakeball).despawn_recursive();
+            if let Ok((fakeball, _)) = fakeball {
+                commands.entity(fakeball)
+                    .despawn_recursive();
+            }
+        }
+
+        // Holding
+        if let Ok((hold_ball_entity, hold_ball)) = q_holding_ball.get_single() {
+            if hold_ball.0 != player.hold_ball {
+                if let Some(hold_ball) = player.hold_ball {
+                    let ball_view = create_ball_view(
+                        &mut meshes, &mut materials, hold_ball,
+                        Vec2::ZERO, &my_assets);
+                    commands.entity(hold_ball_entity)
+                        .insert(HoldingBallImage(Some(hold_ball)))
+                        .insert(ball_view);
+                } else {
+                    commands.entity(hold_ball_entity)
+                        .insert(HoldingBallImage(None))
+                        .insert(Visibility::Hidden);
+                }
             }
         }
 

@@ -11,6 +11,8 @@ pub struct Player {
     pub next_ball_level: BallLevel,
     pub max_ball_level: BallLevel,
 
+    pub hold_ball: Option<BallLevel>,
+
     pub can_drop: bool,
 
     pub score: u32,
@@ -22,6 +24,8 @@ impl Default for Player {
             speed: 3.0,
             next_ball_level: default(),
             max_ball_level: default(),
+
+            hold_ball: None,
 
             can_drop: true,
 

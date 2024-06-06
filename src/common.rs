@@ -78,7 +78,7 @@ impl Config {
 // Z-Order
 //   These are layers. each layer can freely use +[0.0, 1.0) Z-Order for any purpose.
 pub const Z_BACK: f32 = -20.;
-pub const Z_SCORE: f32 = -10.;
+pub const Z_UI: f32 = -10.;
 pub const Z_GUIDE: f32 = 00.;
 pub const Z_WALL: f32 = 10.;
 pub const Z_PLAYER: f32 = 20.;

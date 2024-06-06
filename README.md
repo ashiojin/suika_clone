@@ -51,8 +51,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [x] Player texture.
 - [x] Create ~~PlayerBundle~~ /Asset.
 - [x] Guide for dropping a ball
-- [ ] Player Actions.
-  - [ ] Holding a ball.
+- More Player Actions.
+  - [x] Holding a ball.
   - [ ] Shaking the bottle.
 - [ ] Extend .ron
   - [ ] player settings
