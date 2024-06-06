@@ -48,8 +48,9 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
     So I don't use slider now.
 - [x] Change some GameRon/Images/Audios to Embedded assets.
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
-- [ ] Player texture.
-- [ ] Create PlayerBundle/Asset.
+- [x] Player texture.
+- [x] Create ~~PlayerBundle~~ /Asset.
+- [ ] Guide for dropping a ball
 - [ ] Player Actions.
   - [ ] Holding a ball.
   - [ ] Shaking the bottle.
@@ -61,7 +62,6 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Pause in playing game
   - [ ] Return to Title
   - [ ] Restart
-- [ ] Guide for dropping a ball
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
   - [ ] Player should be able to get more higher y-position.
