@@ -24,9 +24,30 @@ impl BallLevelDef {
     }
 }
 
+#[derive(Debug)]
+pub struct PlayerDef {
+    pub view_width: f32,
+    pub view_height: f32,
+    pub offset_x: f32,
+    pub offset_y: f32,
+    pub h_image: Handle<Image>,
+}
+impl PlayerDef {
+    pub fn create_with_loading(ron: &PlayerRon, asset_server: &AssetServer) -> Self {
+        Self {
+            view_width: ron.view_width,
+            view_height: ron.view_height,
+            offset_x: ron.offset_x,
+            offset_y: ron.offset_y,
+            h_image: asset_server.load(&ron.image_asset_path),
+        }
+    }
+}
+
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
+    pub player_settings: PlayerDef,
     pub h_font: Handle<Font>,
 
     pub h_bgm: Handle<AudioSource>,
@@ -37,6 +58,7 @@ impl Loadable for GameAssets {
         let mut v: Vec<_> = self.ball_level_settings.iter()
             .map(|x| &x.h_image).cloned().map(|h| h.untyped()).collect();
         let mut v2 = vec![
+            self.player_settings.h_image.clone().untyped(),
             self.h_font.clone().untyped(),
 
             self.h_bgm.clone().untyped(),
@@ -50,12 +72,14 @@ pub const BALL_LEVEL_MIN: usize = 1;
 impl GameAssets {
     pub fn new(
         ball_level_settings: Vec<BallLevelDef>,
+        player_settings: PlayerDef,
         h_font: Handle<Font>,
         h_bgm: Handle<AudioSource>,
         h_se_combine: Handle<AudioSource>,
     ) -> Self {
         Self {
             ball_level_settings,
+            player_settings,
             h_font,
             h_bgm,
             h_se_combine,

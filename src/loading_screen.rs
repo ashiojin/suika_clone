@@ -121,12 +121,14 @@ fn load_assets_game_assets(
     let balls = from_ron.balls.iter()
         .map(|n| BallLevelDef::create_with_loading(n, &asset_server))
         .collect();
+    let player = PlayerDef::create_with_loading(&from_ron.player, &asset_server);
     let h_bgm =asset_server.load(&from_ron.sounds.bgm_asset_path);
     let h_se_combine = asset_server.load(&from_ron.sounds.se_combine_asset_path);
 
     commands.insert_resource(
         GameAssets::new(
             balls,
+            player,
             asset_server.load("fonts/GL-CurulMinamoto.ttf"),
             h_bgm,
             h_se_combine,

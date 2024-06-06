@@ -80,16 +80,13 @@ struct Player {
     next_ball_level: BallLevel,
     max_ball_level: BallLevel,
 
-//    timer_cooltime: Timer,
     can_drop: bool,
-
-    hand_offset: Vec2,
 
     score: u32,
 }
 
 const PLAYER_SPEED: f32 = 3.0;
-const PLAYER_MAX_BALL_LEVEL_FOR_DROPPING: BallLevel = BallLevel::new(4usize);
+const PLAYER_MAX_BALL_LEVEL_FOR_DROPPING: BallLevel = BallLevel::new(4usize); // TODO: should be contained to game.ron
 
 impl Default for Player {
     fn default() -> Self {
@@ -99,19 +96,17 @@ impl Default for Player {
             max_ball_level: default(),
 
             can_drop: true,
-            hand_offset: Vec2::ZERO,
 
             score: 0,
         }
     }
 }
 impl Player {
-    fn new(speed: f32, hand_offset: Vec2, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
+    fn new(speed: f32, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
         Self {
             speed,
             next_ball_level: first_ball_level,
             max_ball_level,
-            hand_offset,
             ..default()
         }
     }
@@ -474,14 +469,9 @@ fn spawn_player(
     mut materials: ResMut<Assets<ColorMaterial>>,
 
     mut global_ent: ResMut<GlobalEntropy<ChaCha8Rng>>,
+    assets: Res<GameAssets>,
 ) {
-    let player_tri = Triangle2d::new(
-            Vec2::Y * -30.,
-            Vec2::new(-30., 30.),
-            Vec2::new(30., 30.),
-        );
-
-    let mut player = Player::new(PLAYER_SPEED, Vec2::new(0., -20.0), BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
+    let mut player = Player::new(PLAYER_SPEED, BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
     let mut rng = global_ent.fork_rng();
     player.set_next_ball_level_from_rng(&mut rng);
     commands.spawn((
@@ -491,7 +481,7 @@ fn spawn_player(
         ),
         ShapeCaster::new(
             Collider::circle(10.),
-            player.hand_offset,
+            Vec2::ZERO,
             0.,
             Direction2d::NEG_Y
         ),
@@ -499,17 +489,35 @@ fn spawn_player(
 
     let player_y = PLAYER_Y;
 
+    let player_material = materials.add(assets.player_settings.h_image.clone());
+    let player_mesh = Rectangle::new(
+        assets.player_settings.view_width,
+        assets.player_settings.view_height,
+    );
+    let player_offset = Vec2::new(
+        assets.player_settings.offset_x,
+        assets.player_settings.offset_y,
+    );
+
     commands.spawn((
         player,
-        MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(player_tri)),
-            material: materials.add(Color::GREEN),
+        SpatialBundle {
             transform: Transform::from_translation(
                 Vec2::new(0., player_y).extend(Z_PLAYER)),
             ..default()
         },
         rng,
-    ));
+    )).with_children(|b| {
+        b.spawn((
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(player_mesh)),
+                material: player_material,
+                transform: Transform::from_translation(
+                    player_offset.extend(0.01)),
+                ..default()
+            },
+        ));
+    });
 }
 
 fn move_puppeteer(
@@ -570,7 +578,7 @@ fn action_player(
             match ev {
                 PlayerActionEvent::TryDrop => {
                     if player.can_drop {
-                        let pos = trans.translation.xy() + player.hand_offset;
+                        let pos = trans.translation.xy();
                         let lv = player.next_ball_level;
 
                         ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
@@ -665,7 +673,7 @@ fn update_player_view(
                     .with_children(|b| {
                         let ball_view = create_ball_view(
                             &mut meshes, &mut materials, player.next_ball_level,
-                            player.hand_offset, &my_assets);
+                            Vec2::ZERO, &my_assets);
                         b.spawn((
                             FakeBall,
                             ball_view,

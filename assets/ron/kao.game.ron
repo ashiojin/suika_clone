@@ -67,6 +67,13 @@
             image_asset_path: "images/kao/kao_11.png",
         ),
     ],
+    player: (
+        view_width: 128.0,
+        view_height: 128.0,
+        offset_x: 0.0,
+        offset_y: 25.0,
+        image_asset_path: "images/kao/player.png",
+    ),
     sounds: (
         bgm_asset_path: "sounds/bgm.ogg",
         se_combine_asset_path: "sounds/se_combine.ogg",
