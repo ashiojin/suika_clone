@@ -50,12 +50,13 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
 - [x] Player texture.
 - [x] Create ~~PlayerBundle~~ /Asset.
-- [ ] Guide for dropping a ball
+- [x] Guide for dropping a ball
 - [ ] Player Actions.
   - [ ] Holding a ball.
   - [ ] Shaking the bottle.
 - [ ] Extend .ron
   - [ ] player settings
+    - [ ] Guide color
   - [ ] bottle settings
   - [ ] background image
   - [ ] popup/messages
@@ -78,5 +79,6 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 
 - [ ] Build Environments
   - [ ] Release Build
+    - [ ] Wasm run environment
 - [ ] Github Actions
 - ...

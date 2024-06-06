@@ -42,6 +42,7 @@ impl Plugin for ScGameScreenPlugin {
             check_dropping_ball,
             move_puppeteer,
             puppet_player_pos.after(move_puppeteer),
+            sync_guide.after(puppet_player_pos),
             action_player
                 .after(check_dropping_ball),
             combine_balls_touched
@@ -462,7 +463,13 @@ fn read_keyboard_for_player_actions(
 #[derive(Component, Debug, Default)]
 struct PlayerPuppeteer {
 }
+#[derive(Component, Debug, Default)]
+struct DroppingBallGuide;
+#[derive(Component, Debug, Default)]
+struct DroppingBallGuideBody;
 
+
+/// spwans player / puppetter / guide for dropping a ball
 fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -471,9 +478,7 @@ fn spawn_player(
     mut global_ent: ResMut<GlobalEntropy<ChaCha8Rng>>,
     assets: Res<GameAssets>,
 ) {
-    let mut player = Player::new(PLAYER_SPEED, BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
-    let mut rng = global_ent.fork_rng();
-    player.set_next_ball_level_from_rng(&mut rng);
+    // puppetter
     commands.spawn((
         PlayerPuppeteer{},
         TransformBundle::from_transform(
@@ -487,7 +492,12 @@ fn spawn_player(
         ),
     ));
 
+    // player
     let player_y = PLAYER_Y;
+    let mut player = Player::new(PLAYER_SPEED, BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
+    let mut rng = global_ent.fork_rng();
+    player.set_next_ball_level_from_rng(&mut rng);
+
 
     let player_material = materials.add(assets.player_settings.h_image.clone());
     let player_mesh = Rectangle::new(
@@ -518,6 +528,28 @@ fn spawn_player(
             },
         ));
     });
+
+    // guide
+    let guide_material = materials.add(Color::rgba(0.3, 0.9, 0.3, 0.7));
+    commands.spawn((
+        DroppingBallGuide,
+        SpatialBundle {
+            transform: Transform::from_translation(Vec2::new(0., player_y).extend(Z_GUIDE)),
+            visibility: Visibility::Visible,
+            ..default()
+        },
+    )).with_children(|b| {
+        b.spawn((
+            DroppingBallGuideBody,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Rectangle::new(10.0, 1.0))),
+                material: guide_material,
+                transform: Transform::from_translation(Vec2::new(0., -0.5).extend(0.01)),
+                visibility: Visibility::Inherited,
+                ..default()
+            },
+        ));
+    });
 }
 
 fn move_puppeteer(
@@ -538,13 +570,17 @@ fn move_puppeteer(
     }
 }
 
+fn get_shortest_hit(hits: &ShapeHits) -> Option<&ShapeHitData> {
+    hits.iter().min_by(|a, b| a.time_of_impact.partial_cmp(&b.time_of_impact).unwrap())
+}
+
 fn puppet_player_pos(
     mut q_player: Query<(&mut Transform, &mut Player)>,
     q_puppeteer: Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
     sc_asset: Res<GameAssets>,
 ) {
     if let Ok((trans, _caster, hits)) = q_puppeteer.get_single() {
-        if let Some(hit) = hits.iter().min_by(|a, b| a.time_of_impact.partial_cmp(&b.time_of_impact).unwrap()) {
+        if let Some(hit) = get_shortest_hit(hits) {
 
             if let Ok((mut player_trans, player)) = q_player.get_single_mut() {
                 let ball_r = if player.is_fakeball_exists() {
@@ -564,6 +600,36 @@ fn puppet_player_pos(
             }
         }
 
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn sync_guide(
+    mut set: ParamSet<(
+        Query<(&mut Transform, &mut Visibility), With<DroppingBallGuide>>,
+        Query<&mut Transform, With<DroppingBallGuideBody>>,
+        Query<(&Transform, &Player)>,
+        Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
+    )>,
+) {
+    // 1st: Origin/Visibility of Guide
+    let player_trans = set.p2().get_single().map(|(o, p)| (o.translation.x, o.translation.y, p.is_fakeball_exists()));
+    if let Ok((player_x, player_y, has_fake_ball)) = player_trans {
+        if let Ok((mut trans, mut vis)) = set.p0().get_single_mut() {
+            trans.translation.x = player_x;
+            trans.translation.y = player_y;
+            *vis = if has_fake_ball { Visibility::Visible } else { Visibility::Hidden };
+        }
+    }
+
+    // 2nd: Guide Body Length
+    let puppetter_data = set.p3().get_single().map(|(t, _, hits)| (t.translation.y, get_shortest_hit(hits).cloned()));
+    if let (Ok((puppetter_y, Some(hit))), Ok((_, player_y, _))) = (puppetter_data, player_trans) {
+        if let Ok(mut trans) = set.p1().get_single_mut() {
+            let len = hit.time_of_impact - (puppetter_y - player_y);
+            trans.translation.y = -0.5 * len;
+            trans.scale.y = len;
+        }
     }
 }
 
