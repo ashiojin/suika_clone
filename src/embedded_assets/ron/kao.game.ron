@@ -67,12 +67,15 @@
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_11.png",
         ),
     ],
+    drop_ball_level_max: 4,
     player: (
         view_width: 128.0,
         view_height: 128.0,
         offset_x: 0.0,
         offset_y: 25.0,
         image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/player.png",
+
+        speed: 4.0,
     ),
     sounds: (
         bgm_asset_path: "embedded://suika_clone/embedded_assets/sounds/bgm.ogg",

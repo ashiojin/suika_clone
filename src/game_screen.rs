@@ -8,7 +8,11 @@ use itertools::Itertools;
 use bevy_rand::prelude::*;
 use bevy_rand::resource::GlobalEntropy;
 use bevy_prng::ChaCha8Rng;
-use rand_core::RngCore;
+
+mod common;
+use common::*;
+mod game_over_popup;
+use game_over_popup::*;
 
 pub struct ScGameScreenPlugin;
 
@@ -71,52 +75,6 @@ impl Plugin for ScGameScreenPlugin {
             cleanup_ingame_entites
         ));
 
-    }
-}
-
-#[derive(Component, Debug)]
-struct Player {
-    speed: f32,
-    next_ball_level: BallLevel,
-    max_ball_level: BallLevel,
-
-    can_drop: bool,
-
-    score: u32,
-}
-
-const PLAYER_SPEED: f32 = 3.0;
-const PLAYER_MAX_BALL_LEVEL_FOR_DROPPING: BallLevel = BallLevel::new(4usize); // TODO: should be contained to game.ron
-
-impl Default for Player {
-    fn default() -> Self {
-        Self {
-            speed: PLAYER_SPEED,
-            next_ball_level: default(),
-            max_ball_level: default(),
-
-            can_drop: true,
-
-            score: 0,
-        }
-    }
-}
-impl Player {
-    fn new(speed: f32, first_ball_level: BallLevel, max_ball_level: BallLevel) -> Self {
-        Self {
-            speed,
-            next_ball_level: first_ball_level,
-            max_ball_level,
-            ..default()
-        }
-    }
-    fn set_next_ball_level_from_rng(&mut self, rng: &mut EntropyComponent<ChaCha8Rng>) {
-
-        self.next_ball_level = BallLevel::from_rand_u32(rng.next_u32(),
-            BallLevel::new(BALL_LEVEL_MIN), self.max_ball_level);
-    }
-    fn is_fakeball_exists(&self) -> bool {
-        self.can_drop
     }
 }
 
@@ -206,7 +164,7 @@ impl BallLevel {
     }
     pub fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
         Self::new(
-            (rnd as usize % (max.0-min.0)) + min.0
+            (rnd as usize % (max.0-min.0+1)) + min.0
         )
     }
 }
@@ -493,7 +451,7 @@ fn spawn_player(
 
     // player
     let player_y = PLAYER_Y;
-    let mut player = Player::new(PLAYER_SPEED, BallLevel::new(1), PLAYER_MAX_BALL_LEVEL_FOR_DROPPING);
+    let mut player = Player::new(assets.player_settings.speed, BallLevel::new(1), assets.drop_ball_level_max);
     let mut rng = global_ent.fork_rng();
     player.set_next_ball_level_from_rng(&mut rng);
 
@@ -941,143 +899,6 @@ fn cleanup_ingame_entites(
     }
 }
 
-//
-//    +----------------+    
-//    |                |    
-//    |    Game Over   |    
-//    |                |    
-//    |  Score: XXXXXX |    
-//    |  press space.. |    
-//    |                |    
-//    +----------------+    
-//
-const GO_POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
-const GO_POPUP_SIZE: Vec2 = Vec2::new(500., 500.);
-const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
-const GO_POPUP_STR_2_Y: f32 = 0. -  50.;
-const GO_POPUP_STR_3_Y: f32 = 0. - 100.;
-
-#[derive(Component, Debug)]
-struct GameOverPopup;
-
-#[derive(Component, Debug)]
-struct ControllerGameOverPopup {
-    input_suppresser: Timer,
-}
-#[derive(Component, Debug)]
-struct GameOverPopupMessageToRestart;
-
-fn setup_gameover_popup(
-    mut commands: Commands,
-    q_player: Query<&Player>,
-    my_assets: Res<GameAssets>,
-) {
-    if let Ok(player) = q_player.get_single() {
-        let score = player.score;
-        commands.spawn((
-            GameOverPopup,
-            ControllerGameOverPopup{
-                input_suppresser: Timer::from_seconds(3.0, TimerMode::Once)
-            },
-            SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgba(0.9, 0.9, 0.9, 0.5),
-                    custom_size: Some(GO_POPUP_SIZE),
-                    ..default()
-                },
-                transform: Transform::from_translation(
-                               GO_POPUP_CENTER.extend(Z_POPUP_GAMEOVER)),
-                ..default()
-            },
-        )).with_children(|b| {
-            let text_style = TextStyle {
-                font: my_assets.h_font.clone(),
-                font_size: 60.0,
-                color: Color::GREEN,
-            };
-            b.spawn((
-                Text2dBundle {
-                    text: Text::from_section("GAME OVER", text_style),
-                    transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP_GAMEOVER + 0.01)
-                    ),
-                    text_anchor: bevy::sprite::Anchor::Center,
-                    ..default()
-                },
-            ));
-            let text_style = TextStyle {
-                font: my_assets.h_font.clone(),
-                font_size: 50.0,
-                color: Color::GREEN,
-            };
-            b.spawn((
-                Text2dBundle {
-                    text: Text::from_section(
-                        format!("Score:{:>6}", score), text_style),
-                    transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP_GAMEOVER + 0.01)
-                    ),
-                    text_anchor: bevy::sprite::Anchor::Center,
-                    ..default()
-                },
-            ));
-            let text_style = TextStyle {
-                font: my_assets.h_font.clone(),
-                font_size: 30.0,
-                color: Color::BLACK,
-            };
-            b.spawn((
-                GameOverPopupMessageToRestart,
-                Text2dBundle {
-                    text: Text::from_section(
-                        "Press [space key] to restart.", text_style),
-                    transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
-                    ),
-                    visibility: Visibility::Hidden,
-                    text_anchor: bevy::sprite::Anchor::Center,
-                    ..default()
-                },
-            ));
-        });
-    }
-}
-
-#[allow(clippy::complexity)]
-fn cleanup_gameover_popup(
-    mut commands: Commands,
-    q_popup: Query<Entity,
-        Or<(
-            With<GameOverPopup>,
-        )>
-    >,
-) {
-    for p in q_popup.iter() {
-        commands.entity(p)
-            .despawn_recursive();
-    }
-}
-
-fn read_keyboard_for_gameover_popup(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut q_controller: Query<&mut ControllerGameOverPopup>,
-    mut q_popup_message: Query<&mut Visibility,
-        (With<GameOverPopupMessageToRestart>, Without<ControllerGameOverPopup>)>,
-    time: Res<Time>,
-) {
-    if let Ok(mut controller) = q_controller.get_single_mut() {
-        controller.input_suppresser.tick(time.delta());
-        if controller.input_suppresser.finished() {
-            if let Ok(mut vis_msg) = q_popup_message.get_single_mut() {
-                *vis_msg = Visibility::Inherited;
-            }
-            if keyboard.just_pressed(KeyCode::Space) {
-                next_state.set(GameState::InGame);
-            }
-        }
-    }
-}
 
 
 pub fn start_play_bgm(

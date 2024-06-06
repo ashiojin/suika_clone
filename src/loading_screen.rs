@@ -128,6 +128,7 @@ fn load_assets_game_assets(
     commands.insert_resource(
         GameAssets::new(
             balls,
+            BallLevel(from_ron.drop_ball_level_max),
             player,
             asset_server.load("fonts/GL-CurulMinamoto.ttf"),
             h_bgm,

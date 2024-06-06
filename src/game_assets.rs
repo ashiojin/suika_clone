@@ -31,6 +31,8 @@ pub struct PlayerDef {
     pub offset_x: f32,
     pub offset_y: f32,
     pub h_image: Handle<Image>,
+
+    pub speed: f32,
 }
 impl PlayerDef {
     pub fn create_with_loading(ron: &PlayerRon, asset_server: &AssetServer) -> Self {
@@ -40,6 +42,7 @@ impl PlayerDef {
             offset_x: ron.offset_x,
             offset_y: ron.offset_y,
             h_image: asset_server.load(&ron.image_asset_path),
+            speed: ron.speed,
         }
     }
 }
@@ -47,6 +50,7 @@ impl PlayerDef {
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
+    pub drop_ball_level_max: BallLevel,
     pub player_settings: PlayerDef,
     pub h_font: Handle<Font>,
 
@@ -72,6 +76,7 @@ pub const BALL_LEVEL_MIN: usize = 1;
 impl GameAssets {
     pub fn new(
         ball_level_settings: Vec<BallLevelDef>,
+        drop_ball_level_max: BallLevel,
         player_settings: PlayerDef,
         h_font: Handle<Font>,
         h_bgm: Handle<AudioSource>,
@@ -79,6 +84,7 @@ impl GameAssets {
     ) -> Self {
         Self {
             ball_level_settings,
+            drop_ball_level_max,
             player_settings,
             h_font,
             h_bgm,

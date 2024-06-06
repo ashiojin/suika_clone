@@ -23,6 +23,7 @@ pub struct PlayerRon {
     pub offset_x: f32,
     pub offset_y: f32,
     pub image_asset_path: String,
+    pub speed: f32,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -37,6 +38,7 @@ pub struct SoundRon {
 #[derive(Asset)]
 pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
+    pub drop_ball_level_max: usize,
     pub player: PlayerRon,
     pub sounds: SoundRon,
 }
