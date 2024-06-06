@@ -2,11 +2,11 @@
     list: [
         (
             name: "数字顔",
-            file: "kao.game.ron",
+            path: "ron/kao.game.ron",
         ),
         (
             name: "数字顔s",
-            file: "kao_s.game.ron",
+            path: "ron/kao_s.game.ron",
         )
     ]
 )

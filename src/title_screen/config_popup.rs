@@ -7,7 +7,7 @@ use super::TitleAssets;
 use super::TitleState;
 use super::list_ron::*;
 
-use crate::game_ron::get_default_game_ron_name_and_file_name;
+use crate::game_ron::get_default_game_ron_name_and_asset_path;
 
 
 #[derive(Resource, Debug, Default)]
@@ -35,7 +35,7 @@ pub fn prepare(
 
     config_data.ron_options = options;
 
-    let (def_name, _) = get_default_game_ron_name_and_file_name();
+    let (def_name, _) = get_default_game_ron_name_and_asset_path();
 
     config_data.ron_selected = if config.game_ron_name == def_name {
         0 // Default
@@ -60,7 +60,7 @@ pub fn ui_popup(
     mut config_data: ResMut<ConfigData>,
     mut next_state: ResMut<NextState<TitleState>>,
 ) {
-    let (def_ron_name, _) = get_default_game_ron_name_and_file_name();
+    let (def_ron_name, _) = get_default_game_ron_name_and_asset_path();
     let ctx = contexts.ctx_mut();
     let ron_options = config_data.ron_options.clone();
     egui::CentralPanel::default().show(ctx,
@@ -138,12 +138,12 @@ fn apply(
     let idx = config_data.ron_selected;
     let ron = &config_data.ron_options[idx];
 
-    let (name, file) = if let Some(ListRonItem{ name, file }) = ron {
+    let (name, file) = if let Some(ListRonItem{ name, path: file }) = ron {
         (name.as_str(), file.as_str())
     } else {
-        get_default_game_ron_name_and_file_name()
+        get_default_game_ron_name_and_asset_path()
     };
 
     config.game_ron_name = name.to_string();
-    config.game_ron_file_name = file.to_string();
+    config.game_ron_asset_path = file.to_string();
 }

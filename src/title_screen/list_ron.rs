@@ -5,7 +5,7 @@ use bevy::prelude::*;
 #[derive(Reflect)]
 pub struct ListRonItem {
     pub name: String,
-    pub file: String,
+    pub path: String,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]

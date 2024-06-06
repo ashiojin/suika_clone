@@ -83,11 +83,11 @@ fn start_loading_game_ron(
     asset_server: Res<AssetServer>,
     config: Res<Config>,
 ) {
-    let game_ron_name = &config.game_ron_file_name;
+    let game_ron_name = &config.game_ron_asset_path;
 
     commands.insert_resource(
         CurrentGameRon(
-            asset_server.load(format!("ron/{}", game_ron_name)),
+            asset_server.load(game_ron_name),
         )
     );
 }

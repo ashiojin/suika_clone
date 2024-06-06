@@ -2,6 +2,7 @@ use crate::prelude::*;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::embedded_assets::assets::DEFAULT_GAME_RON_PATH;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
@@ -41,7 +42,8 @@ impl Loadable for CurrentGameRon {
 }
 
 const DEFAULT_GAME_RON_NAME: &str = "(default)";
-const DEFAULT_GAME_RON_FILE_NAME: &str = "kao.game.ron";
-pub fn get_default_game_ron_name_and_file_name() -> (&'static str, &'static str) {
-    (DEFAULT_GAME_RON_NAME, DEFAULT_GAME_RON_FILE_NAME)
+pub fn get_default_game_ron_name_and_asset_path() -> (&'static str, &'static str) {
+    (DEFAULT_GAME_RON_NAME, DEFAULT_GAME_RON_PATH)
 }
+
+

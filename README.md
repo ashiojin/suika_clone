@@ -46,10 +46,10 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
     But `bevy_egui_kbgp` (or my code) has some strange focus movement on slider.
     And `A`, `D` on a slider are not work as to change value.
     So I don't use slider now.
-- [ ] Change some GameRon/Images/Audios to Embedded assets.
+- [x] Change some GameRon/Images/Audios to Embedded assets.
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
-- [ ] Create PlayerBundle.
 - [ ] Player texture.
+- [ ] Create PlayerBundle/Asset.
 - [ ] Player Actions.
   - [ ] Holding a ball.
   - [ ] Shaking the bottle.
@@ -61,12 +61,17 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Pause in playing game
   - [ ] Return to Title
   - [ ] Restart
+- [ ] Guide for dropping a ball
+- [ ] Adjust game parameter/physics behavior
+  - [ ] Spawned ball has too much impluse to bounce off the others.
+  - [ ] Player should be able to get more higher y-position.
 - [ ] Set config from program args.
 - [ ] Save config.
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 - [ ] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
+
 
 
 ## ToDo Items (Development Environments)

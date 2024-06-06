@@ -12,6 +12,7 @@ use bevy_prng::ChaCha8Rng;
 
 mod debug;
 mod common;
+mod embedded_assets;
 mod game_assets;
 mod game_ron;
 mod resource_loader;
@@ -34,6 +35,7 @@ use crate::prelude::*;
 
 
 use crate::title_screen::*;
+use crate::embedded_assets::assets::ScEmbeddedAssetsPlugin;
 
 
 
@@ -80,6 +82,8 @@ fn main() {
         EguiPlugin,
         KbgpPlugin,
         ScDebugPlugin::new(true, true),
+
+        ScEmbeddedAssetsPlugin,
     ));
 
     app.insert_resource(KbgpSettings {
