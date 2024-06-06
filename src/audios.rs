@@ -25,6 +25,15 @@ pub fn force_single_bgm(
     }
 }
 
+pub fn stop_bgm(
+    mut commands: Commands,
+    mut q_bgm: Query<Entity, With<Bgm>>,
+) {
+    for bgm in q_bgm.iter_mut() {
+        commands.entity(bgm).despawn_recursive();
+    }
+}
+
 pub fn spawn_bgm(
     commands: &mut Commands,
     h_bgm: Handle<AudioSource>,
@@ -63,4 +72,3 @@ pub fn spawn_se(
         },
     ));
 }
-

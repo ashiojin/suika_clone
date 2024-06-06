@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub enum TitleState {
+pub enum TitleScreenState {
     #[default]
+    Inactive,
     Loading,
     Idle,
     Config,
-    End,
+    End, // TODO: Is it necessary?
 }
 
 #[derive(Component, Debug)]

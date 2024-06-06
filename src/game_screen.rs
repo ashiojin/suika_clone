@@ -13,6 +13,8 @@ mod common;
 use common::*;
 mod game_over_popup;
 use game_over_popup::*;
+mod pause_popup;
+use pause_popup::*;
 
 pub struct ScGameScreenPlugin;
 
@@ -25,18 +27,30 @@ impl Plugin for ScGameScreenPlugin {
         app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
         app.insert_resource(SubstepCount(XPBD_SUBSTEP));
 
+        app.insert_state(GameScreenState::Inactive);
+
         app.add_event::<BallEvent>();
         app.add_event::<PlayerInputEvent>();
         app.add_event::<BallSpawnEvent>();
 
-
         app.add_systems(OnEnter(GameState::InGame), (
-            physics_restart,
+            activate_game_screen,
+        ));
+        app.add_systems(OnExit(GameState::InGame), (
+            cleanup_ingame_entites,
+            cleanup_gameover_popup,
+            stop_bgm,
+            inactivate_game_screen,
+        ));
+
+        app.add_systems(OnEnter(GameScreenState::Init), (
             setup_bottle,
             spawn_player,
             spawn_score_view,
             spwan_holding_ball_view,
             start_play_bgm,
+
+            start_playing,
         ));
 
         app.add_systems(Update, (
@@ -44,10 +58,14 @@ impl Plugin for ScGameScreenPlugin {
             grow_ball_spawned,
             check_ball_collisions,
             check_dropping_ball,
-            move_puppeteer,
+            move_puppeteer
+                .after(read_keyboard_for_player_actions),
             puppet_player_pos.after(move_puppeteer),
             sync_guide.after(puppet_player_pos),
+            pause_game
+                .after(read_keyboard_for_player_actions),
             action_player
+                .after(read_keyboard_for_player_actions)
                 .after(check_dropping_ball),
             combine_balls_touched
                 .after(check_ball_collisions),
@@ -61,28 +79,60 @@ impl Plugin for ScGameScreenPlugin {
                 .after(action_player),
             score_ball_events,
             check_game_over,
-        ).run_if(in_state(GameState::InGame)));
+        ).run_if(in_state(GameScreenState::Playing)));
 
-        app.add_systems(OnEnter(GameState::GameOver), (
+        // game over
+        app.add_systems(OnEnter(GameScreenState::GameOver), (
+            physics_pause,
             setup_gameover_popup,
         ));
 
         app.add_systems(Update, (
             read_keyboard_for_gameover_popup,
-        ).run_if(in_state(GameState::GameOver)));
+        ).run_if(in_state(GameScreenState::GameOver)));
 
-        app.add_systems(OnExit(GameState::GameOver), (
+        app.add_systems(OnExit(GameScreenState::GameOver), (
+            physics_restart,
             cleanup_gameover_popup,
             cleanup_ingame_entites
         ));
 
+        // pausing
+        app.add_systems(OnEnter(GameScreenState::Pausing), (
+            physics_pause,
+            setup_pause_popup,
+        ));
+
+        app.add_systems(Update, (
+            read_keyboard_for_pause_popup,
+        ).run_if(in_state(GameScreenState::Pausing)));
+
+        app.add_systems(OnExit(GameScreenState::Pausing), (
+            physics_restart,
+            cleanup_pause_popup,
+        ));
+
     }
+}
+
+fn activate_game_screen(
+    mut next_state: ResMut<NextState<GameScreenState>>
+) {
+    next_state.set(GameScreenState::Init);
+}
+
+fn inactivate_game_screen(
+    mut next_state: ResMut<NextState<GameScreenState>>
+) {
+    next_state.set(GameScreenState::Inactive);
 }
 
 
 
 #[derive(Component, Debug)]
 struct Bottle;
+#[derive(Component, Debug)]
+struct Background;
 
 // # Screen Layout
 // +: (0.0, 0.0)
@@ -210,6 +260,12 @@ fn physics_restart(
     physics_time.unpause();
 }
 
+fn physics_pause(
+    mut physics_time: ResMut<Time<Physics>>,
+) {
+    physics_time.pause();
+}
+
 fn setup_bottle(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -225,7 +281,7 @@ fn setup_bottle(
     let left_bottle_c = left_bottle_l_t + 0.5 * inv_y(BOTTLE_SIDE_SIZE);
     let right_bottle_c = right_bottle_l_t + 0.5 * inv_y(BOTTLE_SIDE_SIZE);
 
-    let bottle_color = Color::RED;
+    let bottle_color = Color::rgb(0.9, 0.7, 0.1);
     let bottle_material = materials.add(bottle_color);
 
     // Bottom
@@ -269,6 +325,7 @@ fn setup_bottle(
 
     // BACK
     commands.spawn((
+        Background,
         MaterialMesh2dBundle {
             mesh: meshes.add(Rectangle::from_size(Vec2::new(900., 900.))).into(),
             transform: Transform::from_translation(
@@ -388,8 +445,7 @@ fn score_ball_events(
 
 fn check_game_over(
     q_balls: Query<&Transform, With<Ball>>,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut physics_time: ResMut<Time<Physics>>,
+    mut next_state: ResMut<NextState<GameScreenState>>,
     config: Res<Config>,
 ) {
     let Area { min_x, max_x, min_y, max_y } = config.area;
@@ -400,8 +456,7 @@ fn check_game_over(
         !(min_x..=max_x).contains(&x) ||
             !(min_y..=max_y).contains(&y)
     }) {
-        next_state.set(GameState::GameOver);
-        physics_time.pause();
+        next_state.set(GameScreenState::GameOver);
     }
 }
 
@@ -412,6 +467,7 @@ enum PlayerInputEvent {
     Drop,
     Move(f32), // [-1, 1]
     Hold,
+    Pause,
 }
 
 fn read_keyboard_for_player_actions(
@@ -433,8 +489,12 @@ fn read_keyboard_for_player_actions(
             ev_player_act.send(PlayerInputEvent::Drop);
         }
 
-        if keyboard.just_pressed(KeyCode::KeyB) {
+        if keyboard.just_pressed(KeyCode::ArrowUp) {
             ev_player_act.send(PlayerInputEvent::Hold);
+        }
+
+        if keyboard.just_pressed(KeyCode::KeyP) {
+            ev_player_act.send(PlayerInputEvent::Pause);
         }
 
         if lr != 0. {
@@ -648,8 +708,9 @@ fn action_player(
                     }
                 }
                 PlayerInputEvent::Move(_lr) => {
-//                    trans.translation.x += lr * player.speed;
                 },
+                PlayerInputEvent::Pause => {
+                }
             }
         }
     }
@@ -766,6 +827,12 @@ fn spwan_holding_ball_view(
             ));
         });
     });
+}
+
+fn start_playing(
+    mut next_state: ResMut<NextState<GameScreenState>>,
+) {
+    next_state.set(GameScreenState::Playing);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1019,8 +1086,11 @@ fn cleanup_ingame_entites(
         Or<(
             With<Player>, // FIXME: Should add an InGameEntity component?
             With<PlayerPuppeteer>,
+            With<DroppingBallGuide>,
+            With<HoldingBallView>,
             With<Ball>,
             With<Bottle>,
+            With<Background>,
             With<ScoreView>,
         )>>,
 ) {
@@ -1046,5 +1116,16 @@ pub fn start_play_bgm(
             sc_asset.h_bgm.clone(),
             config.get_bgm_volume(),
         );
+    }
+}
+
+fn pause_game(
+    mut events: EventReader<PlayerInputEvent>,
+    mut next_state: ResMut<NextState<GameScreenState>>,
+) {
+    for event in events.read() {
+        if matches!(event, PlayerInputEvent::Pause) {
+            next_state.set(GameScreenState::Pausing);
+        }
     }
 }

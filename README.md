@@ -60,8 +60,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
   - [ ] bottle settings
   - [ ] background image
   - [ ] popup/messages
-- [ ] Pause in playing game
-  - [ ] Return to Title
+- [x] Pause in playing game
+  - [x] Return to Title
   - [ ] Restart
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
@@ -69,9 +69,11 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Set config from program args.
 - [ ] Save config.
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
-- [ ] Separate game states to 
+- [x] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
+- [ ] Re-design States
+      See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
 
 
 

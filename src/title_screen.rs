@@ -24,10 +24,17 @@ impl Plugin for ScTitleScreenPlugin {
             RonAssetPlugin::<ListRon>::new(&["list.ron"]),
         ));
 
-        app.insert_state(TitleState::Loading);
+        app.insert_state(TitleScreenState::Inactive);
         app.insert_resource(TitleAssets::default());
         app.insert_resource(config_popup::ConfigData::default());
         app.add_systems(OnEnter(GameState::Title), (
+            activate_title_screen,
+        ));
+        app.add_systems(OnExit(GameState::Title), (
+            inactivate_title_screen,
+        ));
+
+        app.add_systems(OnEnter(TitleScreenState::Loading), (
             start_loading,
             spawn_loading_screen,
         ));
@@ -36,10 +43,10 @@ impl Plugin for ScTitleScreenPlugin {
             (
                 update_loading_screen,
                 check_loading,
-            ).run_if(in_state(TitleState::Loading))
+            ).run_if(in_state(TitleScreenState::Loading))
         );
 
-        app.add_systems(OnEnter(TitleState::Idle),
+        app.add_systems(OnEnter(TitleScreenState::Idle),
             (
                 spawn_title_screen,
             )
@@ -48,10 +55,10 @@ impl Plugin for ScTitleScreenPlugin {
         app.add_systems(Update,
             (
                 read_keyboard,
-            ).run_if(in_state(TitleState::Idle))
+            ).run_if(in_state(TitleScreenState::Idle))
         );
 
-        app.add_systems(OnEnter(TitleState::Config),
+        app.add_systems(OnEnter(TitleScreenState::Config),
             (
                 config_popup::prepare,
             )
@@ -59,16 +66,28 @@ impl Plugin for ScTitleScreenPlugin {
         app.add_systems(Update,
             (
                 config_popup::ui_popup,
-            ).run_if(in_state(TitleState::Config))
+            ).run_if(in_state(TitleScreenState::Config))
         );
 
-        app.add_systems(OnEnter(TitleState::End), 
+        app.add_systems(OnEnter(TitleScreenState::End), 
             (
                 end_title_screen,
             )
         );
     }
 }
+
+fn activate_title_screen(
+    mut next_state: ResMut<NextState<TitleScreenState>>,
+) {
+    next_state.set(TitleScreenState::Loading);
+}
+fn inactivate_title_screen(
+    mut next_state: ResMut<NextState<TitleScreenState>>,
+) {
+    next_state.set(TitleScreenState::Inactive);
+}
+
 
 #[derive(Resource, Debug, Default)]
 struct TitleAssets {
@@ -142,11 +161,11 @@ fn update_loading_screen(
 fn check_loading(
     asset_pack: Res<TitleAssets>,
     asset_server: Res<AssetServer>,
-    mut next_state: ResMut<NextState<TitleState>>,
+    mut next_state: ResMut<NextState<TitleScreenState>>,
 ) {
     match asset_pack.get_loading_state(&asset_server) {
         LoadingState::Completed => {
-            next_state.set(TitleState::Idle);
+            next_state.set(TitleScreenState::Idle);
         }
         LoadingState::Loading => {
             // wait for next
@@ -190,14 +209,14 @@ fn spawn_title_screen(
 
 fn read_keyboard(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_title_state: ResMut<NextState<TitleState>>,
+    mut next_title_state: ResMut<NextState<TitleScreenState>>,
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
-        next_title_state.set(TitleState::End);
+        next_title_state.set(TitleScreenState::End);
     }
 
     if keyboard.just_pressed(KeyCode::KeyC) {
-        next_title_state.set(TitleState::Config);
+        next_title_state.set(TitleScreenState::Config);
     }
 }
 
@@ -212,3 +231,4 @@ fn end_title_screen(
     }
     next_state.set(GameState::Loading);
 }
+

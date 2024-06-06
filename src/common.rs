@@ -11,7 +11,6 @@ pub enum GameState {
     Title,
     Loading,
     InGame,
-    GameOver,
 }
 
 #[derive(Reflect, Debug, Clone)]

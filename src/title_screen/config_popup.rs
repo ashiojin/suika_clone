@@ -4,7 +4,7 @@ use bevy_egui::{egui, EguiContexts};
 use bevy_egui_kbgp::KbgpEguiResponseExt;
 
 use super::TitleAssets;
-use super::TitleState;
+use super::TitleScreenState;
 use super::list_ron::*;
 
 use crate::game_ron::get_default_game_ron_name_and_asset_path;
@@ -58,7 +58,7 @@ pub fn ui_popup(
     mut contexts: EguiContexts,
     mut config: ResMut<Config>,
     mut config_data: ResMut<ConfigData>,
-    mut next_state: ResMut<NextState<TitleState>>,
+    mut next_state: ResMut<NextState<TitleScreenState>>,
 ) {
     let (def_ron_name, _) = get_default_game_ron_name_and_asset_path();
     let ctx = contexts.ctx_mut();
@@ -112,14 +112,14 @@ pub fn ui_popup(
                 if ui.button("Cancel")
                     .kbgp_navigation()
                     .clicked() {
-                    next_state.set(TitleState::Idle);
+                    next_state.set(TitleScreenState::Idle);
                 }
 
                 if ui.button("Ok")
                     .kbgp_navigation()
                     .clicked() {
                     apply(&mut config, &config_data);
-                    next_state.set(TitleState::Idle);
+                    next_state.set(TitleScreenState::Idle);
                 }
             });
 

@@ -39,7 +39,7 @@ pub fn setup_gameover_popup(
         commands.spawn((
             GameOverPopup,
             ControllerGameOverPopup{
-                input_suppresser: Timer::from_seconds(3.0, TimerMode::Once)
+                input_suppresser: Timer::from_seconds(1.5, TimerMode::Once)
             },
             SpriteBundle {
                 sprite: Sprite {
@@ -122,7 +122,7 @@ pub fn cleanup_gameover_popup(
 
 pub fn read_keyboard_for_gameover_popup(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<GameScreenState>>,
     mut q_controller: Query<&mut ControllerGameOverPopup>,
     mut q_popup_message: Query<&mut Visibility,
         (With<GameOverPopupMessageToRestart>, Without<ControllerGameOverPopup>)>,
@@ -135,7 +135,7 @@ pub fn read_keyboard_for_gameover_popup(
                 *vis_msg = Visibility::Inherited;
             }
             if keyboard.just_pressed(KeyCode::Space) {
-                next_state.set(GameState::InGame);
+                next_state.set(GameScreenState::Init);
             }
         }
     }

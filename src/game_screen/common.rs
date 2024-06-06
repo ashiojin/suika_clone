@@ -5,6 +5,16 @@ use bevy_rand::prelude::*;
 use bevy_prng::ChaCha8Rng;
 use rand_core::RngCore;
 
+#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum GameScreenState {
+    #[default]
+    Inactive,
+    Init,
+    Playing,
+    Pausing,
+    GameOver,
+}
+
 #[derive(Component, Debug)]
 pub struct Player {
     pub speed: f32,
