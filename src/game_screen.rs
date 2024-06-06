@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use bevy::{
-    audio::Volume, prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
+    prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
@@ -9,7 +9,6 @@ use bevy_rand::prelude::*;
 use bevy_rand::resource::GlobalEntropy;
 use bevy_prng::ChaCha8Rng;
 use rand_core::RngCore;
-
 
 pub struct ScGameScreenPlugin;
 
@@ -889,15 +888,13 @@ fn play_se_combine_balls(
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;
         if matches!(ev, Combine(_,_)) {
-            spawn_combine_se(
+            spawn_se(
                 &mut commands,
-                &sc_assets,
-                &config,
+                sc_assets.h_se_combine.clone(),
+                config.get_se_volume(),
             );
         }
     }
-
-
 }
 
 fn grow_ball_spawned(
@@ -1083,10 +1080,7 @@ fn read_keyboard_for_gameover_popup(
 }
 
 
-#[derive(Component, Debug)]
-struct Bgm;
-
-fn start_play_bgm(
+pub fn start_play_bgm(
     mut commands: Commands,
     mut q_bgm: Query<&mut AudioSink, With<Bgm>>,
     sc_asset: Res<GameAssets>,
@@ -1095,37 +1089,10 @@ fn start_play_bgm(
     if let Ok(sink) = q_bgm.get_single_mut() {
         sink.play(); // Already spawned: call play() to be sure
     } else {
-        commands.spawn((
-            Bgm,
-            AudioBundle {
-                source: sc_asset.h_bgm.clone(),
-                settings: PlaybackSettings {
-                    mode: bevy::audio::PlaybackMode::Loop,
-                    volume: Volume::new(1.0 * (config.bgm_volume as f32 / 50.)),
-                    ..default()
-                },
-            }
-        ));
+        spawn_bgm(
+            &mut commands,
+            sc_asset.h_bgm.clone(),
+            config.get_bgm_volume(),
+        );
     }
-}
-
-#[derive(Component, Debug)]
-struct Se;
-
-fn spawn_combine_se(
-    commands: &mut Commands,
-    sc_assets: &GameAssets,
-    config: &Config,
-) {
-    commands.spawn((
-        Se,
-        AudioBundle {
-            source: sc_assets.h_se_combine.clone(),
-            settings: PlaybackSettings {
-                mode: bevy::audio::PlaybackMode::Despawn,
-                volume: Volume::new(1.0 * (config.se_volume as f32 / 50.)),
-                ..default()
-            },
-        },
-    ));
 }

@@ -16,6 +16,7 @@ mod embedded_assets;
 mod game_assets;
 mod game_ron;
 mod resource_loader;
+mod audios;
 mod loading_screen;
 mod title_screen;
 mod game_screen;
@@ -26,6 +27,7 @@ mod prelude {
     pub use crate::common::*;
     pub use crate::game_assets::*;
     pub use crate::resource_loader::*;
+    pub use crate::audios::*;
     pub use crate::loading_screen::*;
     pub use crate::physics_custom::*;
     pub use crate::game_screen::*;
@@ -107,6 +109,10 @@ fn main() {
     app.add_systems(Startup, (
         setup_egui,
         setup_camera,
+    ));
+
+    app.add_systems(Update, (
+        force_single_bgm,
     ));
 
     app.add_plugins((

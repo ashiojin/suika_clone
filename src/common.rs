@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    audio::Volume,
+};
 
 use crate::game_ron::get_default_game_ron_name_and_asset_path;
 
@@ -57,6 +60,17 @@ impl Default for Config {
             game_ron_name: game_ron_name.to_string(),
             game_ron_asset_path: asset_path.to_string(),
         }
+    }
+}
+fn volume(v: i32) -> Volume {
+    Volume::new(1.0 * v as f32 / 100.)
+}
+impl Config {
+    pub fn get_se_volume(&self) -> Volume {
+        volume(self.se_volume)
+    }
+    pub fn get_bgm_volume(&self) -> Volume {
+        volume(self.bgm_volume)
     }
 }
 
