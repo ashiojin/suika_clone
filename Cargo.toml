@@ -20,6 +20,7 @@ egui = "0.13"
 bevy_egui = "0.25" # bevy_console depend on 0.25
 bevy-egui-kbgp = "0.17" # Keyboard/Gamepad support for bevy_egui
 
+bevy_pkv = "0.10"
 
 #bevy_hanabi = "0.10" # Particle system
 #noise = "0.8"

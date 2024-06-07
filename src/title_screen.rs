@@ -5,6 +5,7 @@ use bevy::{
 };
 
 use bevy_common_assets::ron::RonAssetPlugin;
+use bevy_egui::egui::emath::One;
 
 mod common;
 use self::common::*;
@@ -67,6 +68,11 @@ impl Plugin for ScTitleScreenPlugin {
             (
                 config_popup::ui_popup,
             ).run_if(in_state(TitleScreenState::Config))
+        );
+        app.add_systems(OnExit(TitleScreenState::Config),
+            (
+                save_config,
+            )
         );
 
         app.add_systems(OnEnter(TitleScreenState::End), 

@@ -5,6 +5,7 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_egui_kbgp::KbgpNavBindings;
 use bevy_egui_kbgp::KbgpPlugin;
 use bevy_egui_kbgp::KbgpSettings;
+use bevy_pkv::PkvStore;
 use bevy_xpbd_2d::prelude::*;
 
 use bevy_rand::prelude::*;
@@ -104,11 +105,13 @@ fn main() {
         allow_mouse_wheel_sideways: true,
     });
 
+    app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
     app.insert_resource(Config::default());
     app.init_state::<GameState>();
     app.add_systems(Startup, (
         setup_egui,
         setup_camera,
+        load_config,
     ));
 
     app.add_systems(Update, (

@@ -2,6 +2,8 @@ use bevy::{
     prelude::*,
     audio::Volume,
 };
+use serde::{Deserialize, Serialize};
+use bevy_pkv::PkvStore;
 
 use crate::game_ron::get_default_game_ron_name_and_asset_path;
 
@@ -14,6 +16,7 @@ pub enum GameState {
 }
 
 #[derive(Reflect, Debug, Clone)]
+#[derive(Deserialize, Serialize)]
 pub struct Area {
     pub min_x: f32,
     pub max_x: f32,
@@ -33,11 +36,14 @@ const AREA_Y_MAX: f32 =  500.0 + 200.0;
 
 #[derive(Resource, Debug, Clone)]
 #[derive(Reflect)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
+    // FIXME: Separate fixed parameters. The only reason it is here is for debugging.
     pub grow_time: f32,
     pub area: Area,
     pub max_velocity: f32,
 
+    // configurable
     pub bgm_volume: i32, // 0..=100
     pub se_volume: i32, // 0..=100
 
@@ -64,6 +70,7 @@ impl Default for Config {
 fn volume(v: i32) -> Volume {
     Volume::new(1.0 * v as f32 / 100.)
 }
+const STORE_NAME_CONFIG: &str = "config";
 impl Config {
     pub fn get_se_volume(&self) -> Volume {
         volume(self.se_volume)
@@ -71,6 +78,25 @@ impl Config {
     pub fn get_bgm_volume(&self) -> Volume {
         volume(self.bgm_volume)
     }
+}
+
+pub fn load_config(
+    mut config: ResMut<Config>,
+    pkv: Res<PkvStore>,
+) {
+    if let Ok(saved_config) = pkv.get::<Config>(STORE_NAME_CONFIG) {
+        *config = saved_config;
+    } else {
+        let def_config = default();
+        *config = def_config;
+    }
+}
+pub fn save_config(
+    config: Res<Config>,
+    mut pkv: ResMut<PkvStore>,
+) {
+    pkv.set(STORE_NAME_CONFIG, config.into_inner())
+        .expect("Failed to store `config`.");
 }
 
 
