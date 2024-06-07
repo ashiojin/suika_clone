@@ -89,7 +89,7 @@ struct GrowCommand {
 fn command_grow(
     mut log: ConsoleCommand<GrowCommand>,
 
-    mut config: ResMut<Config>,
+    mut config: ResMut<FixedConfig>,
 ) {
     if let Some(Ok(GrowCommand { tm })) = log.take() {
         config.grow_time = tm;
@@ -106,7 +106,7 @@ struct MaxVelCommand {
 fn command_max_vel(
     mut log: ConsoleCommand<MaxVelCommand>,
 
-    mut config: ResMut<Config>,
+    mut config: ResMut<FixedConfig>,
 ) {
     if let Some(Ok(MaxVelCommand { max })) = log.take() {
         config.max_velocity = max;
@@ -139,7 +139,7 @@ fn run_condition_for_display_area(
 
 fn display_area(
     mut gizmos: Gizmos<DefaultGizmoConfigGroup>,
-    config: Res<Config>,
+    config: Res<FixedConfig>,
 ) {
     let Area { min_x, max_x, min_y, max_y } = config.area;
 

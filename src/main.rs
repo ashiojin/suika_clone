@@ -106,6 +106,7 @@ fn main() {
     });
 
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
+    app.insert_resource(FixedConfig::default());
     app.insert_resource(Config::default());
     app.init_state::<GameState>();
     app.add_systems(Startup, (

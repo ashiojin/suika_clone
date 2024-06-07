@@ -31,17 +31,28 @@ impl Area {
 const AREA_X_MIN: f32 = -500.0;
 const AREA_X_MAX: f32 =  500.0;
 const AREA_Y_MIN: f32 = -500.0;
-const AREA_Y_MAX: f32 =  500.0 + 200.0;
+const AREA_Y_MAX: f32 =  500.0 + 99999.0;
 
+#[derive(Resource, Debug, Clone)]
+pub struct FixedConfig {
+    pub grow_time: f32,
+    pub area: Area,
+    pub max_velocity: f32,
+}
+impl Default for FixedConfig {
+    fn default() -> Self {
+        Self {
+            grow_time: 0.5,
+            area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
+            max_velocity: 60. * 32. * (30./(2. + 1.)),
+        }
+    }
+}
 
 #[derive(Resource, Debug, Clone)]
 #[derive(Reflect)]
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    // FIXME: Separate fixed parameters. The only reason it is here is for debugging.
-    pub grow_time: f32,
-    pub area: Area,
-    pub max_velocity: f32,
 
     // configurable
     pub bgm_volume: i32, // 0..=100
@@ -55,10 +66,6 @@ impl Default for Config {
     fn default() -> Self {
         let (game_ron_name, asset_path) = get_default_game_ron_name_and_asset_path();
         Self {
-            grow_time: 0.5,
-            area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
-            max_velocity: 60. * 32. * (30./(2. + 1.)),
-
             bgm_volume: 50,
             se_volume: 50,
 

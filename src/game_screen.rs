@@ -205,7 +205,7 @@ const BOTTLE_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
 
 const PLAYER_GAP_WALL: f32 = 50.;
 const PLAYER_Y: f32 = BOTTLE_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
-const PLAYER_GAP_TO_MAX: f32 = 200.;
+const PLAYER_GAP_TO_MAX: f32 = 99999.;
 const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
 
 
@@ -489,16 +489,17 @@ fn score_ball_events(
 fn check_game_over(
     q_balls: Query<&Transform, With<Ball>>,
     mut next_state: ResMut<NextState<GameScreenState>>,
-    config: Res<Config>,
+    config: Res<FixedConfig>,
 ) {
     let Area { min_x, max_x, min_y, max_y } = config.area;
-    if let Some(_ball) = q_balls.iter().find(|t| {
+    if let Some(ball) = q_balls.iter().find(|t| {
         let t = t.translation;
         let x = t.x;
         let y = t.y;
         !(min_x..=max_x).contains(&x) ||
             !(min_y..=max_y).contains(&y)
     }) {
+        info!("Game over: {:?} / {:?}", ball, config.area);
         next_state.set(GameScreenState::GameOver);
     }
 }
@@ -1024,7 +1025,7 @@ fn spawn_ball(
 
     mut ev_ball_spawn: EventReader<BallSpawnEvent>,
     my_assets: Res<GameAssets>,
-    config: Res<Config>,
+    config: Res<FixedConfig>,
 ) {
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;

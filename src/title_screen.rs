@@ -5,7 +5,6 @@ use bevy::{
 };
 
 use bevy_common_assets::ron::RonAssetPlugin;
-use bevy_egui::egui::emath::One;
 
 mod common;
 use self::common::*;

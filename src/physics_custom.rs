@@ -31,7 +31,7 @@ fn _damping(x: f32) -> f32 {
 
 fn limit_velocity_of_ball(
     mut q_ball: Query<&mut LinearVelocity>,
-    config: Res<Config>,
+    config: Res<FixedConfig>,
 ) {
     let max = config.max_velocity;
     let max_sq = max * max;
