@@ -63,6 +63,8 @@ impl Plugin for ScGameScreenPlugin {
                 .after(read_keyboard_for_player_actions),
             puppet_player_pos.after(move_puppeteer),
             sync_guide.after(puppet_player_pos),
+            sync_puppetter_shape_caster
+                .after(sync_guide),
             pause_game
                 .after(read_keyboard_for_player_actions),
             action_player
@@ -687,6 +689,19 @@ fn puppet_player_pos(
             }
         }
 
+    }
+}
+
+fn sync_puppetter_shape_caster(
+    mut q_shape_caster: Query<&mut ShapeCaster, With<PlayerPuppeteer>>,
+    q_player: Query<&Player, Without<PlayerPuppeteer>>,
+    assets: Res<GameAssets>,
+) {
+    if let Ok(player) = q_player.get_single() {
+        if let Ok(mut shape_caster) = q_shape_caster.get_single_mut() {
+            let r = assets.get_ball_r(player.next_ball_level);
+            shape_caster.shape = Collider::circle(r);
+        }
     }
 }
 

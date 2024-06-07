@@ -66,7 +66,7 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
   - [x] Player should be able to get more higher y-position.
-  - [ ] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
+  - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
 - [ ] Gamepad supports
 - [ ] Set config from program args.
 - [x] Save config.
