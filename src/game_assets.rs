@@ -49,11 +49,26 @@ impl PlayerDef {
     }
 }
 
+#[derive(Debug)]
+pub struct BottleDef {
+    pub h_fg_image: Handle<Image>,
+    pub h_bg_image: Handle<Image>,
+}
+impl BottleDef {
+    pub fn create_with_loading(ron: &BottleRon, asset_server: &AssetServer) -> Self {
+        Self {
+            h_fg_image: asset_server.load(&ron.fg_image_asset_path),
+            h_bg_image: asset_server.load(&ron.bg_image_asset_path),
+        }
+    }
+}
+
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
     pub drop_ball_level_max: BallLevel,
     pub player_settings: PlayerDef,
+    pub bottle_settings: BottleDef,
     pub h_font: Handle<Font>,
 
     pub h_bgm: Handle<AudioSource>,
@@ -65,6 +80,8 @@ impl Loadable for GameAssets {
             .map(|x| &x.h_image).cloned().map(|h| h.untyped()).collect();
         let mut v2 = vec![
             self.player_settings.h_image.clone().untyped(),
+            self.bottle_settings.h_fg_image.clone().untyped(),
+            self.bottle_settings.h_bg_image.clone().untyped(),
             self.h_font.clone().untyped(),
 
             self.h_bgm.clone().untyped(),
@@ -80,6 +97,7 @@ impl GameAssets {
         ball_level_settings: Vec<BallLevelDef>,
         drop_ball_level_max: BallLevel,
         player_settings: PlayerDef,
+        bottle_settings: BottleDef,
         h_font: Handle<Font>,
         h_bgm: Handle<AudioSource>,
         h_se_combine: Handle<AudioSource>,
@@ -88,6 +106,7 @@ impl GameAssets {
             ball_level_settings,
             drop_ball_level_max,
             player_settings,
+            bottle_settings,
             h_font,
             h_bgm,
             h_se_combine,

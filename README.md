@@ -54,12 +54,15 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - More Player Actions.
   - [x] Holding a ball.
   - [ ] Shaking the bottle.
-- [ ] Extend .ron
+- Extend .ron
   - [x] player settings
     - [x] Guide color
-  - [ ] bottle settings
+  - [x] bottle settings
   - [ ] background image
   - [ ] popup/messages
+  - [ ] score view
+  - [ ] hold view
+- [ ] Gamepad supports
 - [x] Pause in playing game
   - [x] Return to Title
   - [ ] Restart
@@ -67,15 +70,15 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
   - [ ] Spawned ball has too much impluse to bounce off the others.
   - [ ] Player should be able to get more higher y-position.
   - [ ] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
-- [ ] Gamepad supports
 - [ ] Set config from program args.
 - [ ] Save config.
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
-- [x] Separate game states to 
+- [x] Separate game states to
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
 - [ ] Re-design States
       See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
+- [ ] Balls sample view
 
 
 

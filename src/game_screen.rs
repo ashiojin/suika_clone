@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use crate::prelude::*;
 use bevy::{
     prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
@@ -181,21 +182,25 @@ const HOLDING_VIEW_HEIGHT: f32 = 360. + HOLDING_VIEW_TEXT_WEIGHT;
 //  +------+   | : thickness
 //
 //   <~~~~> : width
-const BOTTLE_CENTER_Y: f32 = -100.0;
+const BOTTLE_CENTER: Vec2 = Vec2::new(0., -100.0);
 const BOTTLE_WIDTH: f32 = 740.0;
 const BOTTLE_HEIGHT: f32 = 650.0;
 const BOTTLE_THICKNESS: f32 = 30.0;
+const BOTTLE_OUTER_SIZE: Vec2 = Vec2::new(
+    BOTTLE_WIDTH + BOTTLE_THICKNESS * 2.,
+    BOTTLE_HEIGHT + BOTTLE_THICKNESS,
+);
 
-const BOTTLE_BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_WIDTH + 2.*BOTTLE_THICKNESS, BOTTLE_THICKNESS);
-const BOTTLE_SIDE_SIZE: Vec2 = Vec2::new(BOTTLE_THICKNESS, BOTTLE_HEIGHT);
+const BOTTLE_BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_OUTER_SIZE.x, BOTTLE_THICKNESS);
+const BOTTLE_SIDE_SIZE: Vec2 = Vec2::new(BOTTLE_THICKNESS, BOTTLE_OUTER_SIZE.y);
 
 const BOTTLE_OUTER_LEFT_TOP: Vec2 = Vec2::new(
-        -1. * BOTTLE_BOTTOM_SIZE.x * 0.5,
-        -1. * -BOTTLE_SIDE_SIZE.y * 0.5 + BOTTLE_CENTER_Y,
+        -1. * BOTTLE_OUTER_SIZE.x * 0.5 + BOTTLE_CENTER.x,
+        -1. * -BOTTLE_OUTER_SIZE.y * 0.5 + BOTTLE_CENTER.y,
     );
 const BOTTLE_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
-        BOTTLE_BOTTOM_SIZE.x * 0.5,
-        -BOTTLE_SIDE_SIZE.y * 0.5 + BOTTLE_CENTER_Y,
+        BOTTLE_OUTER_SIZE.x * 0.5 + BOTTLE_CENTER.x,
+        -BOTTLE_OUTER_SIZE.y * 0.5 + BOTTLE_CENTER.y,
     );
 
 const PLAYER_GAP_WALL: f32 = 50.;
@@ -270,58 +275,96 @@ fn setup_bottle(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    assets: Res<GameAssets>,
 ) {
-    let outer_l_t = BOTTLE_OUTER_LEFT_TOP;
-    let bottom_l_t = Vec2::new(0., -BOTTLE_HEIGHT) + outer_l_t;
-    let left_bottle_l_t = outer_l_t;
-    let right_bottle_l_t = Vec2::new(BOTTLE_WIDTH + BOTTLE_THICKNESS, 0.) + outer_l_t;
 
-    fn inv_y(v: Vec2) -> Vec2 { Vec2::new(v.x, -v.y) }
-    let bottom_c = bottom_l_t + 0.5 * inv_y(BOTTLE_BOTTOM_SIZE);
-    let left_bottle_c = left_bottle_l_t + 0.5 * inv_y(BOTTLE_SIDE_SIZE);
-    let right_bottle_c = right_bottle_l_t + 0.5 * inv_y(BOTTLE_SIDE_SIZE);
 
-    let bottle_color = Color::rgb(0.9, 0.7, 0.1);
-    let bottle_material = materials.add(bottle_color);
-
-    // Bottom
+    // Spawn Bottle
     commands.spawn((
         Bottle,
         RigidBody::Static,
-        Collider::rectangle(BOTTLE_BOTTOM_SIZE.x, BOTTLE_BOTTOM_SIZE.y),
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Rectangle::from_size(BOTTLE_BOTTOM_SIZE)).into(),
-            transform: Transform::from_translation(bottom_c.extend(Z_WALL)),
-            material: bottle_material.clone(),
+        SpatialBundle {
+            transform: Transform::from_translation(BOTTLE_CENTER.extend(Z_WALL)),
             ..default()
         },
-    ));
+    ))
+    .with_children(|b| {
+        // fg
+        b.spawn((
+            SpriteBundle {
+                texture: assets.bottle_settings.h_fg_image.clone(),
+                sprite: Sprite {
+                    custom_size: Some(BOTTLE_OUTER_SIZE),
+                    ..default()
+                },
+                transform: Transform::from_translation(Vec2::ZERO.extend(0.02)),
+                ..default()
+            },
+            ImageScaleMode::Sliced(TextureSlicer {
+                border: BorderRect::square(30.),
+                center_scale_mode: SliceScaleMode::Stretch,
+                sides_scale_mode: SliceScaleMode::Stretch,
+                ..default()
+            }),
+        ));
 
-    // Left bottle
-    commands.spawn((
-        Bottle,
-        RigidBody::Static,
-        Collider::rectangle(BOTTLE_SIDE_SIZE.x, BOTTLE_SIDE_SIZE.y),
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Rectangle::from_size(BOTTLE_SIDE_SIZE)).into(),
-            transform: Transform::from_translation(left_bottle_c.extend(Z_WALL)),
-            material: bottle_material.clone(),
-            ..default()
-        },
-    ));
+        // bg
+        b.spawn((
+            SpriteBundle {
+                texture: assets.bottle_settings.h_bg_image.clone(),
+                sprite: Sprite {
+                    custom_size: Some(BOTTLE_OUTER_SIZE),
+                    ..default()
+                },
+                transform: Transform::from_translation(Vec2::ZERO.extend(0.01)),
+                ..default()
+            },
+            ImageScaleMode::Sliced(TextureSlicer {
+                border: BorderRect::square(30.),
+                center_scale_mode: SliceScaleMode::Stretch,
+                sides_scale_mode: SliceScaleMode::Stretch,
+                ..default()
+            }),
+        ));
 
-    // Right bottle
-    commands.spawn((
-        Bottle,
-        RigidBody::Static,
-        Collider::rectangle(BOTTLE_SIDE_SIZE.x, BOTTLE_SIDE_SIZE.y),
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Rectangle::from_size(BOTTLE_SIDE_SIZE)).into(),
-            transform: Transform::from_translation(right_bottle_c.extend(Z_WALL)),
-            material: bottle_material.clone(),
-            ..default()
-        },
-    ));
+        let bottom_c = Vec2::Y * -(0.5 * BOTTLE_OUTER_SIZE.y - BOTTLE_THICKNESS/2.);
+        let left_bottle_c = Vec2::X * -(0.5 * BOTTLE_OUTER_SIZE.x - BOTTLE_THICKNESS/2.);
+        let right_bottle_c = Vec2::X * (0.5 * BOTTLE_OUTER_SIZE.x - BOTTLE_THICKNESS/2.);
+
+        let len_bottom = BOTTLE_BOTTOM_SIZE.x - BOTTLE_BOTTOM_SIZE.y;
+        let r_bottom = BOTTLE_BOTTOM_SIZE.y/2.;
+        let len_side = BOTTLE_SIDE_SIZE.y - BOTTLE_SIDE_SIZE.x;
+        let r_side = BOTTLE_SIDE_SIZE.x/2.;
+
+        // Bottom
+        b.spawn((
+            Collider::capsule(len_bottom, r_bottom),
+            TransformBundle {
+                local: Transform::from_translation(bottom_c.extend(0.))
+                    .with_rotation(Quat::from_rotation_z(PI/2.)),
+                ..default()
+            },
+        ));
+
+        // Left bottle
+        b.spawn((
+            Collider::capsule(len_side, r_side),
+            TransformBundle {
+                local: Transform::from_translation(left_bottle_c.extend(0.)),
+                ..default()
+            },
+        ));
+
+        // Right bottle
+        b.spawn((
+            Collider::capsule(len_side, r_side),
+            TransformBundle {
+                local: Transform::from_translation(right_bottle_c.extend(0.)),
+                ..default()
+            },
+        ));
+    });
+
 
     // BACK
     commands.spawn((

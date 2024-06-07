@@ -83,6 +83,10 @@
 
         speed: 4.0,
     ),
+    bottle: (
+        fg_image_asset_path: "images/kao/kao_bottle_fg.png",
+        bg_image_asset_path: "images/kao/kao_bottle_bg.png",
+    ),
     sounds: (
         bgm_asset_path: "sounds/bgm.ogg",
         se_combine_asset_path: "sounds/se_combine.ogg",

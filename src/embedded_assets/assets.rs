@@ -26,6 +26,9 @@ impl Plugin for ScEmbeddedAssetsPlugin {
 
         embedded_asset!(app, "images/kao/player.png");
 
+        embedded_asset!(app, "images/kao/kao_bottle_fg.png");
+        embedded_asset!(app, "images/kao/kao_bottle_bg.png");
+
         embedded_asset!(app, "sounds/bgm.ogg");
         embedded_asset!(app, "sounds/se_combine.ogg");
 

@@ -30,6 +30,13 @@ pub struct PlayerRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct BottleRon {
+    pub fg_image_asset_path: String,
+    pub bg_image_asset_path: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct SoundRon {
     pub bgm_asset_path: String,
     pub se_combine_asset_path: String,
@@ -42,6 +49,7 @@ pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
     pub drop_ball_level_max: usize,
     pub player: PlayerRon,
+    pub bottle: BottleRon,
     pub sounds: SoundRon,
 }
 

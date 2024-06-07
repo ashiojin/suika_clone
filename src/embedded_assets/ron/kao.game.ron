@@ -82,6 +82,10 @@
         ),
         speed: 4.0,
     ),
+    bottle: (
+        fg_image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_bottle_fg.png",
+        bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_bottle_bg.png",
+    ),
     sounds: (
         bgm_asset_path: "embedded://suika_clone/embedded_assets/sounds/bgm.ogg",
         se_combine_asset_path: "embedded://suika_clone/embedded_assets/sounds/se_combine.ogg",

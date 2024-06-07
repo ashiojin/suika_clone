@@ -49,9 +49,9 @@ impl Default for Config {
     fn default() -> Self {
         let (game_ron_name, asset_path) = get_default_game_ron_name_and_asset_path();
         Self {
-            grow_time: 0.2,
+            grow_time: 0.5,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
-            max_velocity: 60. * 32. * (30./2.),
+            max_velocity: 60. * 32. * (30./(2. + 1.)),
 
             bgm_volume: 50,
             se_volume: 50,
