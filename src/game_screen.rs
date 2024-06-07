@@ -45,7 +45,7 @@ impl Plugin for ScGameScreenPlugin {
         ));
 
         app.add_systems(OnEnter(GameScreenState::Init), (
-            setup_bottle,
+            spawn_bottle,
             spawn_player,
             spawn_score_view,
             spwan_holding_ball_view,
@@ -70,6 +70,8 @@ impl Plugin for ScGameScreenPlugin {
             action_player
                 .after(read_keyboard_for_player_actions)
                 .after(check_dropping_ball),
+            shake_bottle
+                .after(read_keyboard_for_player_actions),
             combine_balls_touched
                 .after(check_ball_collisions),
             spawn_ball
@@ -133,7 +135,9 @@ fn inactivate_game_screen(
 
 
 #[derive(Component, Debug)]
-struct Bottle;
+struct Bottle {
+    origin: Vec2,
+}
 #[derive(Component, Debug)]
 struct Background;
 
@@ -273,7 +277,7 @@ fn physics_pause(
     physics_time.pause();
 }
 
-fn setup_bottle(
+fn spawn_bottle(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -283,8 +287,10 @@ fn setup_bottle(
 
     // Spawn Bottle
     commands.spawn((
-        Bottle,
-        RigidBody::Static,
+        Bottle {
+            origin: BOTTLE_CENTER,
+        },
+        RigidBody::Kinematic,
         SpatialBundle {
             transform: Transform::from_translation(BOTTLE_CENTER.extend(Z_WALL)),
             ..default()
@@ -513,6 +519,7 @@ enum PlayerInputEvent {
     Drop,
     Move(f32), // [-1, 1]
     Hold,
+    Shake(Vec2),
     Pause,
 }
 
@@ -531,6 +538,10 @@ fn read_keyboard_for_player_actions(
             lr += 1.;
         }
 
+        if lr != 0. {
+            ev_player_act.send(PlayerInputEvent::Move(lr));
+        }
+
         if keyboard.just_pressed(KeyCode::Space) {
             ev_player_act.send(PlayerInputEvent::Drop);
         }
@@ -539,12 +550,12 @@ fn read_keyboard_for_player_actions(
             ev_player_act.send(PlayerInputEvent::Hold);
         }
 
-        if keyboard.just_pressed(KeyCode::KeyP) {
-            ev_player_act.send(PlayerInputEvent::Pause);
+        if keyboard.just_pressed(KeyCode::KeyU) {
+            ev_player_act.send(PlayerInputEvent::Shake(Vec2::new(0., 1.)));
         }
 
-        if lr != 0. {
-            ev_player_act.send(PlayerInputEvent::Move(lr));
+        if keyboard.just_pressed(KeyCode::KeyP) {
+            ev_player_act.send(PlayerInputEvent::Pause);
         }
     }
 }
@@ -769,10 +780,56 @@ fn action_player(
                 }
                 PlayerInputEvent::Move(_lr) => {
                 },
+                PlayerInputEvent::Shake(_) => {
+                },
                 PlayerInputEvent::Pause => {
-                }
+                },
             }
         }
+    }
+}
+
+#[derive(Component, Debug)]
+struct Shaking(Vec<(Vec2, Timer)>);
+
+fn shake_y(s: f32) -> f32 {
+    let x = s*8. - 4.;
+    (1. / (2.*PI).sqrt()) * std::f32::consts::E.powf(- x*x / 2.)
+}
+
+fn shake_bottle(
+    mut commands: Commands,
+    mut q_bottle: Query<(Entity, &Bottle, &mut Transform, Option<&mut Shaking>)>,
+    mut ev_player_act: EventReader<PlayerInputEvent>,
+    time: Res<Time>,
+    config: Res<FixedConfig>,
+) {
+    let delta = time.delta();
+    let new_shakes = ev_player_act.read()
+        .filter_map(|ev| {
+            if let PlayerInputEvent::Shake(v) = ev {
+                Some(v)
+            } else {
+                None
+            }
+        })
+        .map(|&v| (v, Timer::from_seconds(1.0, TimerMode::Once)));
+    if let Ok((bottle_entity, bottle, mut bottle_trans, shaking)) = q_bottle.get_single_mut() {
+        let iter = if let Some(mut shaking) = shaking {
+            shaking.0.iter_mut().for_each(|t| {t.1.tick(delta);});
+            shaking.0.retain(|(_,t)| !t.finished());
+            shaking.0.append(&mut new_shakes.collect());
+            shaking.0.clone()
+        } else {
+            let shakes = new_shakes.collect_vec();
+            commands.entity(bottle_entity)
+                .insert(Shaking(shakes.clone()));
+            shakes
+        };
+
+        let max_y = config.shake_k * iter.iter().map(|(v,t)| shake_y(v.y * t.elapsed_secs())).reduce(f32::max).unwrap_or(0.);
+
+        bottle_trans.translation.y = bottle.origin.y - max_y;
     }
 }
 

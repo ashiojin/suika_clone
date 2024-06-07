@@ -53,7 +53,7 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [x] Guide for dropping a ball
 - More Player Actions.
   - [x] Holding a ball.
-  - [ ] Shaking the bottle.
+  - [x] Shaking the bottle.
 - Extend .ron
   - [x] player settings
     - [x] Guide color

@@ -38,6 +38,7 @@ pub struct FixedConfig {
     pub grow_time: f32,
     pub area: Area,
     pub max_velocity: f32,
+    pub shake_k: f32, // max move is about 0.4 * shake_k
 }
 impl Default for FixedConfig {
     fn default() -> Self {
@@ -45,6 +46,7 @@ impl Default for FixedConfig {
             grow_time: 0.5,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
             max_velocity: 60. * 32. * (30./(2. + 1.)),
+            shake_k: 30. / 0.4,
         }
     }
 }
