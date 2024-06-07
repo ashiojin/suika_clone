@@ -6,7 +6,7 @@ use super::common::*;
 //
 //    +----------------+    
 //    |                |    
-//    |    Pausing     |    
+//    |    Paused      |    
 //    |                |    
 //    |  press space.. |    
 //    |  press esc..   |    
@@ -14,7 +14,7 @@ use super::common::*;
 //    +----------------+    
 //
 const GO_POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
-const GO_POPUP_SIZE: Vec2 = Vec2::new(500., 500.);
+const GO_POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
 const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
 const GO_POPUP_STR_2_Y: f32 = 0. -  50.;
 const GO_POPUP_STR_3_Y: f32 = 0. - 100.;
@@ -40,7 +40,7 @@ pub fn setup_pause_popup(
         },
         SpriteBundle {
             sprite: Sprite {
-                color: Color::rgba(0.9, 0.9, 0.9, 0.5),
+                color: Color::rgba(0.9, 0.9, 0.9, 0.9),
                 custom_size: Some(GO_POPUP_SIZE),
                 ..default()
             },
@@ -56,7 +56,7 @@ pub fn setup_pause_popup(
         };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("PAUSING", text_style),
+                text: Text::from_section("Paused", text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP_GAMEOVER + 0.01)
                 ),
@@ -72,7 +72,7 @@ pub fn setup_pause_popup(
         b.spawn((
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Space] key to stop pausing.", text_style),
+                    "Press [Space] to resume", text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP_GAMEOVER + 0.01)
                 ),
@@ -89,7 +89,7 @@ pub fn setup_pause_popup(
             PausePopupMessageToRestart,
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Esc] key to return to the title.", text_style),
+                    "Press [Esc] to back to title", text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
                 ),

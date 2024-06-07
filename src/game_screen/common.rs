@@ -11,7 +11,7 @@ pub enum GameScreenState {
     Inactive,
     Init,
     Playing,
-    Pausing,
+    Paused,
     GameOver,
 }
 

@@ -102,17 +102,17 @@ impl Plugin for ScGameScreenPlugin {
             cleanup_ingame_entites
         ));
 
-        // pausing
-        app.add_systems(OnEnter(GameScreenState::Pausing), (
+        // paused
+        app.add_systems(OnEnter(GameScreenState::Paused), (
             physics_pause,
             setup_pause_popup,
         ));
 
         app.add_systems(Update, (
             read_keyboard_for_pause_popup,
-        ).run_if(in_state(GameScreenState::Pausing)));
+        ).run_if(in_state(GameScreenState::Paused)));
 
-        app.add_systems(OnExit(GameScreenState::Pausing), (
+        app.add_systems(OnExit(GameScreenState::Paused), (
             physics_restart,
             cleanup_pause_popup,
         ));
@@ -1242,7 +1242,7 @@ fn pause_game(
 ) {
     for event in events.read() {
         if matches!(event, PlayerInputEvent::Pause) {
-            next_state.set(GameScreenState::Pausing);
+            next_state.set(GameScreenState::Paused);
         }
     }
 }
