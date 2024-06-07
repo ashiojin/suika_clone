@@ -31,7 +31,7 @@ impl Area {
 const AREA_X_MIN: f32 = -500.0;
 const AREA_X_MAX: f32 =  500.0;
 const AREA_Y_MIN: f32 = -500.0;
-const AREA_Y_MAX: f32 =  500.0 + 99999.0;
+const AREA_Y_MAX: f32 =  500.0 + 9999.0;
 
 #[derive(Resource, Debug, Clone)]
 pub struct FixedConfig {

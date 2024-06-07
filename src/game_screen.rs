@@ -207,7 +207,7 @@ const BOTTLE_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
 
 const PLAYER_GAP_WALL: f32 = 50.;
 const PLAYER_Y: f32 = BOTTLE_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
-const PLAYER_GAP_TO_MAX: f32 = 99999.;
+const PLAYER_GAP_TO_MAX: f32 = 9999.;
 const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
 
 
@@ -318,7 +318,7 @@ fn setup_bottle(
                     custom_size: Some(BOTTLE_OUTER_SIZE),
                     ..default()
                 },
-                transform: Transform::from_translation(Vec2::ZERO.extend(0.01)),
+                transform: Transform::from_translation(Vec2::ZERO.extend(Z_BACK-Z_WALL+0.01)),
                 ..default()
             },
             ImageScaleMode::Sliced(TextureSlicer {
@@ -713,10 +713,11 @@ fn sync_guide(
         Query<(&Transform, &Player)>,
         Query<(&Transform, &ShapeCaster, &ShapeHits), Without<Player>>,
     )>,
+    assets: Res<GameAssets>,
 ) {
     // 1st: Origin/Visibility of Guide
-    let player_trans = set.p2().get_single().map(|(o, p)| (o.translation.x, o.translation.y, p.is_fakeball_exists()));
-    if let Ok((player_x, player_y, has_fake_ball)) = player_trans {
+    let player_trans = set.p2().get_single().map(|(o, p)| (o.translation.x, o.translation.y, p.is_fakeball_exists(), assets.get_ball_r(p.next_ball_level)));
+    if let Ok((player_x, player_y, has_fake_ball, _)) = player_trans {
         if let Ok((mut trans, mut vis)) = set.p0().get_single_mut() {
             trans.translation.x = player_x;
             trans.translation.y = player_y;
@@ -725,10 +726,10 @@ fn sync_guide(
     }
 
     // 2nd: Guide Body Length
-    let puppetter_data = set.p3().get_single().map(|(t, _, hits)| (t.translation.y, get_shortest_hit(hits).cloned()));
-    if let (Ok((puppetter_y, Some(hit))), Ok((_, player_y, _))) = (puppetter_data, player_trans) {
+    let puppetter_data = set.p3().get_single().map(|(t, _sc, hits)| (t.translation.y, get_shortest_hit(hits).cloned()));
+    if let (Ok((puppetter_y, Some(hit))), Ok((_, player_y, _, r))) = (puppetter_data, player_trans) {
         if let Ok(mut trans) = set.p1().get_single_mut() {
-            let len = hit.time_of_impact - (puppetter_y - player_y);
+            let len = hit.time_of_impact - (puppetter_y - player_y) + r;
             trans.translation.y = -0.5 * len;
             trans.scale.y = len;
         }
