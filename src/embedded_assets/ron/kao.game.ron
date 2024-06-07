@@ -74,7 +74,12 @@
         offset_x: 0.0,
         offset_y: 25.0,
         image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/player.png",
-
+        guide_color: Rgba(
+            red: 0.3,
+            blue: 0.9,
+            green: 0.9,
+            alpha: 0.7,
+        ),
         speed: 4.0,
     ),
     sounds: (

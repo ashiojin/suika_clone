@@ -31,6 +31,7 @@ pub struct PlayerDef {
     pub offset_x: f32,
     pub offset_y: f32,
     pub h_image: Handle<Image>,
+    pub guide_color: Color,
 
     pub speed: f32,
 }
@@ -42,6 +43,7 @@ impl PlayerDef {
             offset_x: ron.offset_x,
             offset_y: ron.offset_y,
             h_image: asset_server.load(&ron.image_asset_path),
+            guide_color: ron.guide_color,
             speed: ron.speed,
         }
     }

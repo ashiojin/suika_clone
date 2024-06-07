@@ -55,8 +55,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
   - [x] Holding a ball.
   - [ ] Shaking the bottle.
 - [ ] Extend .ron
-  - [ ] player settings
-    - [ ] Guide color
+  - [x] player settings
+    - [x] Guide color
   - [ ] bottle settings
   - [ ] background image
   - [ ] popup/messages
@@ -66,6 +66,8 @@ Makefileに追加してないですが、linux版もビルドできたはず・�
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
   - [ ] Player should be able to get more higher y-position.
+  - [ ] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
+- [ ] Gamepad supports
 - [ ] Set config from program args.
 - [ ] Save config.
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.

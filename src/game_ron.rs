@@ -23,6 +23,8 @@ pub struct PlayerRon {
     pub offset_x: f32,
     pub offset_y: f32,
     pub image_asset_path: String,
+
+    pub guide_color: Color,
     pub speed: f32,
 }
 

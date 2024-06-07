@@ -573,7 +573,7 @@ fn spawn_player(
     });
 
     // guide
-    let guide_material = materials.add(Color::rgba(0.3, 0.9, 0.3, 0.7));
+    let guide_material = materials.add(assets.player_settings.guide_color);
     commands.spawn((
         DroppingBallGuide,
         SpatialBundle {
@@ -1102,7 +1102,7 @@ fn cleanup_ingame_entites(
 
 
 
-pub fn start_play_bgm(
+fn start_play_bgm(
     mut commands: Commands,
     mut q_bgm: Query<&mut AudioSink, With<Bgm>>,
     sc_asset: Res<GameAssets>,
