@@ -41,6 +41,7 @@
   - [x] player settings
     - [x] Guide color
   - [x] bottle settings
+  - [x] Ui on game screen
   - [ ] background image
   - [ ] popup/messages
 - [x] Pause in playing game
