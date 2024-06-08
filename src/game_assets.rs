@@ -63,6 +63,48 @@ impl BottleDef {
     }
 }
 
+#[derive(Debug)]
+pub struct HoldViewDef {
+    pub h_bg_image: Handle<Image>,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug)]
+pub struct ScoreViewDef {
+    pub h_bg_image: Handle<Image>,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug)]
+pub struct UiDef {
+    pub hold_view: HoldViewDef,
+    pub score_view: ScoreViewDef,
+}
+impl UiDef {
+    pub fn create_with_loading(ron: &UiRon, asset_server: &AssetServer) -> Self {
+        Self {
+            hold_view: HoldViewDef {
+                h_bg_image: asset_server.load(&ron.hold_view.bg_image_asset_path),
+                border_width: ron.hold_view.border_width,
+                font_color: ron.hold_view.font_color,
+            },
+            score_view: ScoreViewDef {
+                h_bg_image: asset_server.load(&ron.score_view.bg_image_asset_path),
+                border_width: ron.score_view.border_width,
+                font_color: ron.score_view.font_color,
+            },
+        }
+    }
+
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+        vec![
+            self.hold_view.h_bg_image.clone().untyped(),
+            self.score_view.h_bg_image.clone().untyped(),
+        ]
+    }
+}
+
+
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
@@ -70,6 +112,8 @@ pub struct GameAssets {
     pub player_settings: PlayerDef,
     pub bottle_settings: BottleDef,
     pub h_font: Handle<Font>,
+
+    pub ui: UiDef,
 
     pub h_bgm: Handle<AudioSource>,
     pub h_se_combine: Handle<AudioSource>,
@@ -87,17 +131,21 @@ impl Loadable for GameAssets {
             self.h_bgm.clone().untyped(),
             self.h_se_combine.clone().untyped(),
         ];
+        let mut v3 = self.ui.get_untyped_handles();
         v.append(&mut v2);
+        v.append(&mut v3);
         v
     }
 }
 pub const BALL_LEVEL_MIN: usize = 1;
 impl GameAssets {
+    #[allow(clippy::too_many_arguments)] // FIXME: nicer api (take extra care of ball_level_settings)
     pub fn new(
         ball_level_settings: Vec<BallLevelDef>,
         drop_ball_level_max: BallLevel,
         player_settings: PlayerDef,
         bottle_settings: BottleDef,
+        ui: UiDef,
         h_font: Handle<Font>,
         h_bgm: Handle<AudioSource>,
         h_se_combine: Handle<AudioSource>,
@@ -108,6 +156,7 @@ impl GameAssets {
             player_settings,
             bottle_settings,
             h_font,
+            ui,
             h_bgm,
             h_se_combine,
         }

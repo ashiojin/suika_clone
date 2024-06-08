@@ -123,6 +123,7 @@ fn load_assets_game_assets(
         .collect();
     let player = PlayerDef::create_with_loading(&from_ron.player, &asset_server);
     let bottle = BottleDef::create_with_loading(&from_ron.bottle, &asset_server);
+    let ui = UiDef::create_with_loading(&from_ron.ui, &asset_server);
     let h_bgm =asset_server.load(&from_ron.sounds.bgm_asset_path);
     let h_se_combine = asset_server.load(&from_ron.sounds.se_combine_asset_path);
 
@@ -132,6 +133,7 @@ fn load_assets_game_assets(
             BallLevel(from_ron.drop_ball_level_max),
             player,
             bottle,
+            ui,
             asset_server.load("fonts/GL-CurulMinamoto.ttf"),
             h_bgm,
             h_se_combine,

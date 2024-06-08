@@ -21,7 +21,7 @@ pub struct ScGameScreenPlugin;
 
 // Physics Engine Settings
 const GRAVITY_SCALE: f32 = 9.81 * 100.;
-const XPBD_SUBSTEP: u32 = 24;
+const XPBD_SUBSTEP: u32 = 32;
 
 impl Plugin for ScGameScreenPlugin {
     fn build(&self, app: &mut App) {
@@ -148,11 +148,11 @@ struct Background;
 //                      v                      
 //--------------------------------------------- (height: 1080-120=960)
 //                                             
-//                                             
-//                      P                      
-//                               SCORE: xx     
-//                *         *    HOLDING-+     
-//                *         *    |       |     
+//                               +-------+     
+//                      P        |SCORE  |     
+//                               +-------+     
+//                *         *    +-------+     
+//                *         *    |HOLD   |     
 //                *         *    +-------+     
 //                *    +    *    sample--+     
 //                *         *    | ...   |     
@@ -165,12 +165,11 @@ struct Background;
 //                                             
 const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
 const MARGEN_Y_RIGHT_SIDE: f32 = 10.;
-const SCORE_TEXT_WEIGHT: f32 = 30.;
-const SCORE_WIDTH: f32 = 360.; // "Score: 12345" (12) 12 * 30.
-const SCORE_HEIGHT: f32 = 40.;
-const HOLDING_VIEW_TEXT_WEIGHT: f32 = 30.;
-const HOLDING_VIEW_WIDTH: f32 = 360.;
-const HOLDING_VIEW_HEIGHT: f32 = 360. + HOLDING_VIEW_TEXT_WEIGHT;
+const RIGHT_SIDE_UI_WIDTH: f32 = 240.;
+const SCORE_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
+const SCORE_HEIGHT: f32 = 120.;
+const HOLDING_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
+const HOLDING_VIEW_HEIGHT: f32 = 360.;
 
 
 
@@ -849,14 +848,17 @@ fn spawn_score_view(
     mut commands: Commands,
     my_assets: Res<GameAssets>,
 ) {
+    let border_width = my_assets.ui.score_view.border_width;
+    let inner_margin = 4.;
+    let label_weight = 30.;
     let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
     let score_center = SCORE_CENTER;
     commands
         .spawn((
             ScoreView,
             SpriteBundle { // as frame
+                texture: my_assets.ui.score_view.h_bg_image.clone(),
                 sprite: Sprite {
-                    color: Color::BLACK,
                     custom_size: Some(score_size),
                     ..default()
                 },
@@ -864,18 +866,43 @@ fn spawn_score_view(
                                score_center.extend(Z_UI)),
                 ..default()
             },
+            ImageScaleMode::Sliced(TextureSlicer {
+                border: BorderRect::square(border_width),
+                center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+                sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+                ..default()
+            }),
         ))
         .with_children(|b| {
+            let label_pos =
+                Vec2::new(
+                    0.,
+                    SCORE_HEIGHT/2.- label_weight/2. - border_width - inner_margin
+                );
+            let score_pos =
+                label_pos +
+                Vec2::new(
+                    0.,
+                    -label_weight - inner_margin,
+                );
+
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: SCORE_TEXT_WEIGHT,
-                color: Color::WHITE,
+                font_size: label_weight,
+                color: my_assets.ui.score_view.font_color,
             };
+            b.spawn((
+                Text2dBundle {
+                    text: Text::from_section("SCORE", text_style.clone()),
+                    transform: Transform::from_translation(label_pos.extend(0.01)),
+                    ..default()
+                },
+            ));
             b.spawn((
                 ScoreText,
                 Text2dBundle {
-                    text: Text::from_section("***", text_style.clone()),
-                    transform: Transform::from_translation(Vec3::Z * 0.01),
+                    text: Text::from_section("0", text_style.clone()),
+                    transform: Transform::from_translation(score_pos.extend(0.01)),
                     ..default()
                 },
             ));
@@ -891,34 +918,42 @@ fn spwan_holding_ball_view(
     mut commands: Commands,
     my_assets: Res<GameAssets>,
 ) {
+    let border_width = my_assets.ui.hold_view.border_width;
+    let inner_margin = 4.;
+    let label_weight = 30.;
     commands.spawn((
         HoldingBallView,
         SpriteBundle {
+            texture: my_assets.ui.hold_view.h_bg_image.clone(),
             sprite: Sprite {
-                color: Color::BLACK,
                 custom_size: Some(Vec2::new(HOLDING_VIEW_WIDTH, HOLDING_VIEW_HEIGHT)),
                 ..default()
             },
             transform: Transform::from_translation(
                            HOLDING_VIEW_CENTER.extend(Z_UI)),
             ..default()
-        }
-
+        },
+        ImageScaleMode::Sliced(TextureSlicer {
+            border: BorderRect::square(border_width),
+            center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+            sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+            ..default()
+        }),
     ))
     .with_children(|b| {
         let label_pos =
-            Vec2::new(0., HOLDING_VIEW_HEIGHT/2.- HOLDING_VIEW_TEXT_WEIGHT/2.)
+            Vec2::new(0., HOLDING_VIEW_HEIGHT/2.- label_weight/2. - border_width - inner_margin)
             ;
         let image_pos =
-            Vec2::new(0., -HOLDING_VIEW_TEXT_WEIGHT/2.);
+            Vec2::new(0., -label_weight/2.);
         let text_style = TextStyle {
             font: my_assets.h_font.clone(),
-            font_size: HOLDING_VIEW_TEXT_WEIGHT,
-            color: Color::WHITE,
+            font_size: label_weight,
+            color: my_assets.ui.hold_view.font_color,
         };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("Hold:", text_style.clone()),
+                text: Text::from_section("Hold", text_style.clone()),
                 transform: Transform::from_translation(label_pos.extend(0.02)),
                 ..default()
             },
@@ -1028,7 +1063,7 @@ fn update_player_view(
         // Score
         if let Ok(mut text) = q_score_text.get_single_mut() {
             if let Some(score_text) = text.sections.first_mut() {
-                score_text.value = format!("Score:{:>6}", player.score);
+                score_text.value = format!("{:>8}", player.score);
             }
         }
     }

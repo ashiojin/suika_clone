@@ -86,6 +86,28 @@
         fg_image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_bottle_fg.png",
         bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_bottle_bg.png",
     ),
+    ui: (
+        hold_view: (
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
+            border_width: 20.0,
+            font_color: Rgba(
+                red: 0.0,
+                blue: 0.0,
+                green: 0.0,
+                alpha: 1.0
+            ),
+        ),
+        score_view: (
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
+            border_width: 20.0,
+            font_color: Rgba(
+                red: 0.0,
+                blue: 0.0,
+                green: 0.0,
+                alpha: 1.0
+            ),
+        ),
+    ),
     sounds: (
         bgm_asset_path: "embedded://suika_clone/embedded_assets/sounds/bgm.ogg",
         se_combine_asset_path: "embedded://suika_clone/embedded_assets/sounds/se_combine.ogg",

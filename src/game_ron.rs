@@ -37,6 +37,27 @@ pub struct BottleRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct ScoreViewRon {
+    pub bg_image_asset_path: String,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
+pub struct HoldViewRon {
+    pub bg_image_asset_path: String,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
+pub struct UiRon {
+    pub hold_view: HoldViewRon,
+    pub score_view: ScoreViewRon,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct SoundRon {
     pub bgm_asset_path: String,
     pub se_combine_asset_path: String,
@@ -51,6 +72,7 @@ pub struct GameRon {
     pub player: PlayerRon,
     pub bottle: BottleRon,
     pub sounds: SoundRon,
+    pub ui: UiRon,
 }
 
 
