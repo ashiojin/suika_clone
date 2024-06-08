@@ -10,19 +10,42 @@ args = [
     "************************\n",
 ]
 
-[tasks.build]
-command = "cargo"
-args = ["build"]
-dependencies = ["copy-fonts"]
 
-[tasks.prepare-directories]
+[tasks.prepare-to-build]
+run_task = { name = ["copy-src", "copy-assets"] }
+
+[tasks.prepare-directories-src]
+command = "mkdir"
+args = ["-p", "src/embedded_assets/fonts"]
+
+[tasks.prepare-directories-assets]
 command = "mkdir"
 args = ["-p", "assets/fonts"]
 
-[tasks.copy-fonts]
+[tasks.copy-src]
 command = "cp"
-args = ["--update", "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf", "assets/fonts/"]
-dependencies = ["prepare-directories"]
+args = ["--update",
+    "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
+    "external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
+    "src/embedded_assets/fonts/",
+]
+dependencies = ["prepare-directories-src"]
+
+[tasks.copy-assets]
+command = "cp"
+args = ["--update",
+    "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
+    "external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
+    "assets/fonts/",
+]
+dependencies = ["prepare-directories-assets"]
+
+
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+dependencies = ["prepare-to-build"]
 
 [tasks.run]
 run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
@@ -39,11 +62,15 @@ command = "./suika_clone.exe"
 command = "rm"
 args = ["./suika_clone.exe"]
 
+
+
 [tasks.build-web]
 command = "cargo"
 args = ["build", "--target", "wasm32-unknown-unknown"]
+dependencies = ["prepare-to-build"]
 
 [tasks.run-web]
 command = "cargo"
 args = ["run", "--target", "wasm32-unknown-unknown"]
+dependencies = ["build-web"]
 

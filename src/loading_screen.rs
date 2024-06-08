@@ -134,7 +134,7 @@ fn load_assets_game_assets(
             player,
             bottle,
             ui,
-            asset_server.load("fonts/GL-CurulMinamoto.ttf"),
+            asset_server.load("embedded://suika_clone/embedded_assets/fonts/x12y12pxMaruMinyaM.ttf"),
             h_bgm,
             h_se_combine,
         )

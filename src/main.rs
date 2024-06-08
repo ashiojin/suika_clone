@@ -145,12 +145,12 @@ fn setup_egui(
     let mut txt_font = egui::FontDefinitions::default();
     txt_font.families.get_mut(&egui::FontFamily::Proportional)
         .unwrap()
-        .insert(0, "GL-CurulMinamo".to_owned());
+        .insert(0, "MaruMinyaM".to_owned());
 
 
-    let fd = egui::FontData::from_static(include_bytes!("../assets/fonts/GL-CurulMinamoto.ttf"));
+    let fd = egui::FontData::from_static(include_bytes!("./embedded_assets/fonts/x12y12pxMaruMinyaM.ttf"));
 
-    txt_font.font_data.insert("GL-CurulMinamo".to_owned(), fd);
+    txt_font.font_data.insert("MaruMinyaM".to_owned(), fd);
 
     context.ctx_mut().set_fonts(txt_font);
 }

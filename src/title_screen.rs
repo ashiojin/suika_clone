@@ -97,6 +97,7 @@ fn inactivate_title_screen(
 #[derive(Resource, Debug, Default)]
 struct TitleAssets {
     h_bg_image: Handle<Image>,
+    h_font: Handle<Font>,
     h_list_ron: Handle<ListRon>,
 }
 
@@ -120,6 +121,7 @@ fn start_loading(
 ) {
     asset.h_bg_image = asset_server.load("embedded://suika_clone/title_screen/title_bg_image.png");
     asset.h_list_ron = asset_server.load("ron/index.list.ron");
+    asset.h_font = asset_server.load("embedded://suika_clone/embedded_assets/fonts/x12y12pxMaruMinyaM.ttf");
 }
 
 fn spawn_loading_screen(
@@ -194,8 +196,9 @@ fn spawn_title_screen(
         },
     )).with_children(|b| {
         let text_style = TextStyle {
+            font: asset.h_font.clone(),
             font_size: 30.,
-            ..default()
+            color: Color::WHITE,
         };
         b.spawn((
             Text2dBundle {

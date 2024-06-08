@@ -1,5 +1,4 @@
 use bevy::{
-    prelude::info,
     prelude::Plugin,
     asset::embedded_asset,
 };
@@ -10,6 +9,8 @@ pub struct ScEmbeddedAssetsPlugin;
 
 impl Plugin for ScEmbeddedAssetsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        embedded_asset!(app, "fonts/x12y12pxMaruMinyaM.ttf");
+
         embedded_asset!(app, "ron/kao.game.ron");
 
         embedded_asset!(app, "images/kao/kao_01.png");
@@ -33,8 +34,6 @@ impl Plugin for ScEmbeddedAssetsPlugin {
 
         embedded_asset!(app, "sounds/bgm.ogg");
         embedded_asset!(app, "sounds/se_combine.ogg");
-
-        info!("{}", DEFAULT_GAME_RON_PATH);
     }
 }
 
