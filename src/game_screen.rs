@@ -1094,7 +1094,7 @@ fn update_player_view(
             if let Ok((fakeball_entity, FakeBall(fakeball_level))) = fakeball {
                 if *fakeball_level != player.next_ball_level { // Holding a ball cieses this.
                     // update
-                    let ball_view = create_ball_view(
+                    let ball_view = create_ball_view_for_fake(
                         &mut meshes, &mut materials, player.next_ball_level,
                         Vec2::ZERO, &my_assets);
                     commands.entity(fakeball_entity)
@@ -1106,7 +1106,7 @@ fn update_player_view(
             } else {
                 commands.entity(plyer_entity)
                     .with_children(|b| {
-                        let ball_view = create_ball_view(
+                        let ball_view = create_ball_view_for_fake(
                             &mut meshes, &mut materials, player.next_ball_level,
                             Vec2::ZERO, &my_assets);
                         b.spawn((
@@ -1184,6 +1184,41 @@ impl BallGrowing {
     }
 }
 
+fn create_ball_view_base(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+
+    level: BallLevel,
+    pos: Vec2,
+
+    my_assets: &Res<GameAssets>,
+) -> MaterialMesh2dBundle<ColorMaterial> {
+
+    let ball_material = materials.add(my_assets.get_ball_image(level).clone());
+    let (mesh_w, mesh_h) = my_assets.get_ball_mesh_wh(level);
+    MaterialMesh2dBundle {
+        mesh: meshes.add(Rectangle::new(mesh_w, mesh_h)).into(),
+        transform: Transform::from_translation(
+             pos.extend(0.0)
+        ),
+        material: ball_material,
+        ..default()
+    }
+}
+
+fn create_ball_view_for_fake(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+
+    level: BallLevel,
+    pos: Vec2,
+
+    my_assets: &Res<GameAssets>,
+) -> impl Bundle {
+    let mut b = create_ball_view_base(meshes, materials, level, pos, my_assets);
+    b.transform.translation.z = 0.1;
+    b
+}
 
 fn create_ball_view(
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -1194,17 +1229,9 @@ fn create_ball_view(
 
     my_assets: &Res<GameAssets>,
 ) -> impl Bundle {
-
-    let ball_material = materials.add(my_assets.get_ball_image(level).clone());
-    let (mesh_w, mesh_h) = my_assets.get_ball_mesh_wh(level);
-    MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::new(mesh_w, mesh_h)).into(),
-        transform: Transform::from_translation(
-             pos.extend(Z_BALL + Z_BALL_D_BY_LEVEL * level.0 as f32)
-        ),
-        material: ball_material,
-        ..default()
-    }
+    let mut b = create_ball_view_base(meshes, materials, level, pos, my_assets);
+    b.transform.translation.z = Z_BALL + Z_BALL_D_BY_LEVEL * level.0 as f32;
+    b
 }
 
 fn spawn_ball(

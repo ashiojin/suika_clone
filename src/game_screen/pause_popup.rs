@@ -47,7 +47,7 @@ pub fn setup_pause_popup(
                 ..default()
             },
             transform: Transform::from_translation(
-                           GO_POPUP_CENTER.extend(Z_POPUP_GAMEOVER)),
+                           GO_POPUP_CENTER.extend(Z_POPUP)),
             ..default()
         },
     )).with_children(|b| {
@@ -60,7 +60,7 @@ pub fn setup_pause_popup(
             Text2dBundle {
                 text: Text::from_section("Paused", text_style),
                 transform: Transform::from_translation(
-                    Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP + 0.01)
                 ),
                 text_anchor: bevy::sprite::Anchor::Center,
                 ..default()
@@ -76,7 +76,7 @@ pub fn setup_pause_popup(
                 text: Text::from_section(
                     "Press [Space] to resume", text_style),
                 transform: Transform::from_translation(
-                    Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
                 ),
                 text_anchor: bevy::sprite::Anchor::Center,
                 ..default()
@@ -93,7 +93,7 @@ pub fn setup_pause_popup(
                 text: Text::from_section(
                     "Press [Esc] to restart", text_style),
                 transform: Transform::from_translation(
-                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                 ),
                 visibility: Visibility::Hidden,
                 text_anchor: bevy::sprite::Anchor::Center,
@@ -111,7 +111,7 @@ pub fn setup_pause_popup(
                 text: Text::from_section(
                     "Press [Esc] for 3sec to back to title", text_style),
                 transform: Transform::from_translation(
-                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                 ),
                 visibility: Visibility::Hidden,
                 text_anchor: bevy::sprite::Anchor::Center,

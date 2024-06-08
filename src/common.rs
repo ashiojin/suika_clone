@@ -119,7 +119,7 @@ pub const Z_GUIDE: f32 = 00.;
 pub const Z_WALL: f32 = 10.;
 pub const Z_PLAYER: f32 = 20.;
 pub const Z_BALL: f32 = 30.;
-pub const Z_POPUP_GAMEOVER: f32 = 40.;
+pub const Z_POPUP: f32 = 40.;
 
 pub const Z_BALL_D_BY_LEVEL: f32 = 0.01;
 
