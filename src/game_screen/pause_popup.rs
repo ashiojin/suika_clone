@@ -18,6 +18,7 @@ const GO_POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
 const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
 const GO_POPUP_STR_2_Y: f32 = 0. -  50.;
 const GO_POPUP_STR_3_Y: f32 = 0. - 100.;
+const GO_POPUP_STR_4_Y: f32 = 0. - 150.;
 
 #[derive(Component, Debug)]
 pub struct PausePopup;
@@ -111,7 +112,7 @@ pub fn setup_pause_popup(
                 text: Text::from_section(
                     "Press [Esc] for 3sec to back to title", text_style),
                 transform: Transform::from_translation(
-                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
+                    Vec2::new(0., GO_POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
                 ),
                 visibility: Visibility::Hidden,
                 text_anchor: bevy::sprite::Anchor::Center,
@@ -149,7 +150,7 @@ pub fn update_pause_popup(
                 p.tick(time.delta());
             });
         if controller.input_suppresser.finished() {
-            if let Ok(mut vis_msg) = q_popup_message.get_single_mut() {
+            for mut vis_msg in q_popup_message.iter_mut() {
                 *vis_msg = Visibility::Inherited;
             }
         }
