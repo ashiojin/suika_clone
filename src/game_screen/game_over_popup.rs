@@ -140,10 +140,7 @@ pub fn cleanup_gameover_popup(
     }
 }
 
-pub fn read_keyboard_for_gameover_popup(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_screen_state: ResMut<NextState<GameScreenState>>,
-    mut next_state: ResMut<NextState<GameState>>,
+pub fn update_gameover_popup(
     mut q_controller: Query<&mut ControllerGameOverPopup>,
     mut q_popup_message: Query<&mut Visibility,
         (With<GameOverPopupMessageDelay>, Without<ControllerGameOverPopup>)>,
@@ -155,13 +152,65 @@ pub fn read_keyboard_for_gameover_popup(
             for mut vis_msg in q_popup_message.iter_mut() {
                 *vis_msg = Visibility::Inherited;
             }
-            if keyboard.just_pressed(KeyCode::Space) {
-                next_screen_state.set(GameScreenState::Init);
-            }
-            if keyboard.just_pressed(KeyCode::Escape) {
-                next_state.set(GameState::Title);
-            }
         }
     }
 }
 
+#[derive(Event, Debug)]
+pub enum GameOverPopupInput {
+    Restart,
+    GoToTitle,
+}
+
+pub fn read_keyboard_for_gameover_popup(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut ev_input: EventWriter<GameOverPopupInput>,
+) {
+    if keyboard.any_just_pressed(KEYBOARD_KEYS_START) {
+        ev_input.send(GameOverPopupInput::Restart);
+    }
+    if keyboard.any_just_pressed(KEYBOARD_KEYS_SELECT) {
+        ev_input.send(GameOverPopupInput::GoToTitle);
+    }
+}
+
+pub fn read_gamepad_for_gameover_popup(
+    connected_gamepad: Option<Res<ConnectedGamePad>>,
+    buttons: Res<ButtonInput<GamepadButton>>,
+    mut ev_input: EventWriter<GameOverPopupInput>,
+) {
+    if let Some(&ConnectedGamePad(gamepad)) = connected_gamepad.as_deref() {
+
+        if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_START)) {
+            ev_input.send(GameOverPopupInput::Restart);
+        }
+        if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_SELECT)) {
+            ev_input.send(GameOverPopupInput::GoToTitle);
+        }
+    }
+}
+
+pub fn act_gameover_popup(
+    mut next_screen_state: ResMut<NextState<GameScreenState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    q_controller: Query<&ControllerGameOverPopup>,
+    mut ev_input: EventReader<GameOverPopupInput>,
+) {
+    if let Ok(controller) = q_controller.get_single() {
+        for ev in ev_input.read() {
+            match ev {
+                GameOverPopupInput::Restart => {
+                    if controller.input_suppresser.finished() {
+                        next_screen_state.set(GameScreenState::Init);
+                        // FIXME: Should return?
+                    }
+                },
+                GameOverPopupInput::GoToTitle => {
+                    if controller.input_suppresser.finished() {
+                        next_state.set(GameState::Title);
+                    }
+                },
+            }
+        }
+    }
+}

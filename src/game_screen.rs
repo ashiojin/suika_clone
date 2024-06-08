@@ -56,21 +56,26 @@ impl Plugin for ScGameScreenPlugin {
 
         app.add_systems(Update, (
             read_keyboard_for_player_actions,
+            read_gamepad_for_player_actions,
             grow_ball_spawned,
             check_ball_collisions,
             check_dropping_ball,
             move_puppeteer
+                .after(read_gamepad_for_player_actions)
                 .after(read_keyboard_for_player_actions),
             puppet_player_pos.after(move_puppeteer),
             sync_guide.after(puppet_player_pos),
             sync_puppetter_shape_caster
                 .after(sync_guide),
             pause_game
+                .after(read_gamepad_for_player_actions)
                 .after(read_keyboard_for_player_actions),
             action_player
+                .after(read_gamepad_for_player_actions)
                 .after(read_keyboard_for_player_actions)
                 .after(check_dropping_ball),
             shake_bottle
+                .after(read_gamepad_for_player_actions)
                 .after(read_keyboard_for_player_actions),
             combine_balls_touched
                 .after(check_ball_collisions),
@@ -87,13 +92,19 @@ impl Plugin for ScGameScreenPlugin {
         ).run_if(in_state(GameScreenState::Playing)));
 
         // game over
+        app.add_event::<GameOverPopupInput>();
         app.add_systems(OnEnter(GameScreenState::GameOver), (
             physics_pause,
             setup_gameover_popup,
         ));
 
         app.add_systems(Update, (
+            update_gameover_popup,
             read_keyboard_for_gameover_popup,
+            read_gamepad_for_gameover_popup,
+            act_gameover_popup
+                .after(read_keyboard_for_gameover_popup)
+                .after(read_gamepad_for_gameover_popup),
         ).run_if(in_state(GameScreenState::GameOver)));
 
         app.add_systems(OnExit(GameScreenState::GameOver), (
@@ -102,14 +113,26 @@ impl Plugin for ScGameScreenPlugin {
             cleanup_ingame_entites
         ));
 
+        app.add_systems(OnEnter(GameScreenState::Restart), (
+            physics_restart,
+            cleanup_ingame_entites,
+            |mut next: ResMut<NextState<GameScreenState>>| { next.set(GameScreenState::Init); }, // FIXME: Re-design states
+        ));
+
         // paused
+        app.add_event::<PausePopupInput>();
         app.add_systems(OnEnter(GameScreenState::Paused), (
             physics_pause,
             setup_pause_popup,
         ));
 
         app.add_systems(Update, (
+            update_pause_popup,
             read_keyboard_for_pause_popup,
+            read_gamepad_for_pause_popup,
+            act_pause_popup
+                .after(read_keyboard_for_pause_popup)
+                .after(read_gamepad_for_pause_popup),
         ).run_if(in_state(GameScreenState::Paused)));
 
         app.add_systems(OnExit(GameScreenState::Paused), (
@@ -131,7 +154,6 @@ fn inactivate_game_screen(
 ) {
     next_state.set(GameScreenState::Inactive);
 }
-
 
 
 #[derive(Component, Debug)]
@@ -530,10 +552,10 @@ fn read_keyboard_for_player_actions(
 ) {
     if q_player.get_single().is_ok() {
         let mut lr = 0.;
-        if keyboard.pressed(KeyCode::ArrowLeft) {
+        if keyboard.any_pressed(KEYBOARD_KEYS_LEFT) {
             lr += -1.;
         }
-        if keyboard.pressed(KeyCode::ArrowRight) {
+        if keyboard.any_pressed(KEYBOARD_KEYS_RIGHT) {
             lr += 1.;
         }
 
@@ -541,20 +563,79 @@ fn read_keyboard_for_player_actions(
             ev_player_act.send(PlayerInputEvent::Move(lr));
         }
 
-        if keyboard.just_pressed(KeyCode::Space) {
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_MAIN) {
             ev_player_act.send(PlayerInputEvent::Drop);
         }
 
-        if keyboard.just_pressed(KeyCode::ArrowUp) {
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_SUB1) {
             ev_player_act.send(PlayerInputEvent::Hold);
         }
 
-        if keyboard.just_pressed(KeyCode::KeyU) {
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_SUB2) {
             ev_player_act.send(PlayerInputEvent::Shake(Vec2::new(0., 1.)));
         }
 
-        if keyboard.just_pressed(KeyCode::KeyP) {
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_START) {
             ev_player_act.send(PlayerInputEvent::Pause);
+        }
+    }
+}
+
+
+
+fn read_gamepad_for_player_actions(
+    q_player: Query<&Player>,
+    connected_gamepad: Option<Res<ConnectedGamePad>>,
+    axes: Res<Axis<GamepadAxis>>,
+    buttons: Res<ButtonInput<GamepadButton>>,
+
+    mut ev_player_act: EventWriter<PlayerInputEvent>,
+) {
+    if q_player.get_single().is_ok() {
+        if let Some(&ConnectedGamePad(gamepad)) = connected_gamepad.as_deref() {
+            let axis_lx = GamepadAxis {
+                gamepad,
+                axis_type: GamepadAxisType::LeftStickX,
+            };
+
+            let button = |btns: &[GamepadButtonType]| {
+                btns.iter().map(|btn|
+                    GamepadButton::new(gamepad, *btn)
+                ).collect_vec()
+            };
+
+            let mut lr = if let Some(lx) = axes.get(axis_lx) {
+                lx
+            } else {
+                0.
+            };
+
+            if buttons.any_pressed(button(&GAMEPAD_BTNS_LEFT)) {
+                lr -= 1.;
+            }
+            if buttons.any_pressed(button(&GAMEPAD_BTNS_RIGHT)) {
+                lr += 1.;
+            }
+
+            if lr != 0. {
+                ev_player_act.send(PlayerInputEvent::Move(lr.clamp(-1., 1.)));
+            }
+
+            if buttons.any_just_pressed(button(&GAMEPAD_BTNS_MAIN)) {
+                ev_player_act.send(PlayerInputEvent::Drop);
+            }
+
+            if buttons.any_just_pressed(button(&GAMEPAD_BTNS_SUB1)) {
+                ev_player_act.send(PlayerInputEvent::Hold);
+            }
+
+            if buttons.any_just_pressed(button(&GAMEPAD_BTNS_SUB2)) {
+                ev_player_act.send(PlayerInputEvent::Shake(Vec2::new(0., 1.)));
+            }
+
+            if buttons.any_just_pressed(button(&GAMEPAD_BTNS_START)) {
+                ev_player_act.send(PlayerInputEvent::Pause);
+            }
         }
     }
 }

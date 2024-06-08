@@ -1,7 +1,9 @@
 use bevy::{
-    prelude::*,
     audio::Volume,
+    input::gamepad::{GamepadConnection, GamepadEvent},
+    prelude::*
 };
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use bevy_pkv::PkvStore;
 
@@ -120,3 +122,55 @@ pub const Z_BALL: f32 = 30.;
 pub const Z_POPUP_GAMEOVER: f32 = 40.;
 
 pub const Z_BALL_D_BY_LEVEL: f32 = 0.01;
+
+#[derive(Resource, Debug)]
+pub struct ConnectedGamePad(pub Gamepad);
+
+pub fn detect_gamepad(
+    mut commands: Commands,
+    connected_gamepad: Option<Res<ConnectedGamePad>>,
+    mut ev_gamepad: EventReader<GamepadEvent>,
+) {
+    for ev in ev_gamepad.read() {
+        if let GamepadEvent::Connection(con_ev) = ev {
+            match con_ev.connection {
+                GamepadConnection::Connected(_) => {
+                    if connected_gamepad.is_none() {
+                        commands.insert_resource(ConnectedGamePad(con_ev.gamepad));
+                    }
+                },
+                GamepadConnection::Disconnected => {
+                    if let Some(ConnectedGamePad(old_id)) = connected_gamepad.as_deref() {
+
+                        if *old_id == con_ev.gamepad {
+                            commands.remove_resource::<ConnectedGamePad>();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+pub const KEYBOARD_KEYS_LEFT: [KeyCode; 2] = [KeyCode::ArrowLeft, KeyCode::KeyA];
+pub const KEYBOARD_KEYS_RIGHT: [KeyCode; 2] = [KeyCode::ArrowRight, KeyCode::KeyD];
+pub const KEYBOARD_KEYS_MAIN: [KeyCode; 2] = [KeyCode::Space, KeyCode::KeyZ];
+pub const KEYBOARD_KEYS_SUB1: [KeyCode; 3] = [KeyCode::ArrowUp, KeyCode::KeyW, KeyCode::KeyX];
+pub const KEYBOARD_KEYS_SUB2: [KeyCode; 2] = [KeyCode::KeyU, KeyCode::KeyC];
+pub const KEYBOARD_KEYS_START: [KeyCode; 2] = [KeyCode::KeyP, KeyCode::Backslash];
+pub const KEYBOARD_KEYS_SELECT: [KeyCode; 1] = [KeyCode::Escape];
+
+pub const GAMEPAD_BTNS_LEFT: [GamepadButtonType; 1] = [GamepadButtonType::DPadLeft];
+pub const GAMEPAD_BTNS_RIGHT: [GamepadButtonType; 1] = [GamepadButtonType::DPadRight];
+pub const GAMEPAD_BTNS_MAIN: [GamepadButtonType; 1] = [GamepadButtonType::East];
+pub const GAMEPAD_BTNS_SUB1: [GamepadButtonType; 1] = [GamepadButtonType::North];
+pub const GAMEPAD_BTNS_SUB2: [GamepadButtonType; 2] = [GamepadButtonType::RightTrigger, GamepadButtonType::LeftTrigger];
+pub const GAMEPAD_BTNS_START: [GamepadButtonType; 1] = [GamepadButtonType::Start];
+pub const GAMEPAD_BTNS_SELECT: [GamepadButtonType; 1] = [GamepadButtonType::Select];
+
+pub fn to_gamepad_btn(gamepad: Gamepad, btn_types: &[GamepadButtonType]) -> Vec<GamepadButton> {
+    btn_types.iter().map(|btn|
+        GamepadButton::new(gamepad, *btn)
+    ).collect_vec()
+}

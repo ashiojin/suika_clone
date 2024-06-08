@@ -13,6 +13,7 @@ pub enum GameScreenState {
     Playing,
     Paused,
     GameOver,
+    Restart,
 }
 
 #[derive(Component, Debug)]

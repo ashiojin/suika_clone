@@ -116,6 +116,7 @@ fn main() {
     ));
 
     app.add_systems(Update, (
+        detect_gamepad,
         force_single_bgm,
     ));
 

@@ -25,9 +25,10 @@ pub struct PausePopup;
 #[derive(Component, Debug)]
 pub struct ControllerPausePopup {
     input_suppresser: Timer,
+    long_press: Option<Timer>,
 }
 #[derive(Component, Debug)]
-pub struct PausePopupMessageToRestart;
+pub struct PausePopupMessageDelay;
 
 pub fn setup_pause_popup(
     mut commands: Commands,
@@ -36,7 +37,8 @@ pub fn setup_pause_popup(
     commands.spawn((
         PausePopup,
         ControllerPausePopup{
-            input_suppresser: Timer::from_seconds(1.5, TimerMode::Once)
+            input_suppresser: Timer::from_seconds(1.5, TimerMode::Once),
+            long_press: None,
         },
         SpriteBundle {
             sprite: Sprite {
@@ -86,10 +88,28 @@ pub fn setup_pause_popup(
             color: Color::BLACK,
         };
         b.spawn((
-            PausePopupMessageToRestart,
+            PausePopupMessageDelay,
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Esc] to back to title", text_style),
+                    "Press [Esc] to restart", text_style),
+                transform: Transform::from_translation(
+                    Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
+                ),
+                visibility: Visibility::Hidden,
+                text_anchor: bevy::sprite::Anchor::Center,
+                ..default()
+            },
+        ));
+        let text_style = TextStyle {
+            font: my_assets.h_font.clone(),
+            font_size: 30.0,
+            color: Color::BLACK,
+        };
+        b.spawn((
+            PausePopupMessageDelay,
+            Text2dBundle {
+                text: Text::from_section(
+                    "Press [Esc] for 3sec to back to title", text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP_GAMEOVER + 0.01)
                 ),
@@ -116,27 +136,110 @@ pub fn cleanup_pause_popup(
     }
 }
 
-pub fn read_keyboard_for_pause_popup(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_screen_state: ResMut<NextState<GameScreenState>>,
-    mut next_state: ResMut<NextState<GameState>>,
+pub fn update_pause_popup(
     mut q_controller: Query<&mut ControllerPausePopup>,
     mut q_popup_message: Query<&mut Visibility,
-        (With<PausePopupMessageToRestart>, Without<ControllerPausePopup>)>,
+        (With<PausePopupMessageDelay>, Without<ControllerPausePopup>)>,
     time: Res<Time>,
 ) {
     if let Ok(mut controller) = q_controller.get_single_mut() {
         controller.input_suppresser.tick(time.delta());
+        controller.long_press.iter_mut()
+            .for_each(|p| {
+                p.tick(time.delta());
+            });
         if controller.input_suppresser.finished() {
             if let Ok(mut vis_msg) = q_popup_message.get_single_mut() {
                 *vis_msg = Visibility::Inherited;
             }
-            if keyboard.just_pressed(KeyCode::Escape) {
-                next_state.set(GameState::Title);
-            }
-        }
-        if keyboard.just_pressed(KeyCode::Space) {
-            next_screen_state.set(GameScreenState::Playing);
         }
     }
+}
+
+#[derive(Event, Debug)]
+pub enum PausePopupInput {
+    Resume,
+    Restart,
+    GoToTitle,
+}
+
+pub fn read_keyboard_for_pause_popup(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut ev_input: EventWriter<PausePopupInput>,
+    mut q_controller: Query<&mut ControllerPausePopup>,
+) {
+    if let Ok(mut controller) = q_controller.get_single_mut() {
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_START) {
+            ev_input.send(PausePopupInput::Resume);
+        }
+
+        if keyboard.any_just_pressed(KEYBOARD_KEYS_SELECT)
+            && controller.long_press.is_none() {
+            controller.long_press = Some(Timer::from_seconds(3.0, TimerMode::Once));
+        }
+        if keyboard.any_just_released(KEYBOARD_KEYS_SELECT) {
+            ev_input.send(PausePopupInput::Restart);
+        }
+        if let Some(t) = controller.long_press.as_ref() {
+            if t.finished() {
+                ev_input.send(PausePopupInput::GoToTitle);
+            }
+        }
+    }
+}
+
+
+pub fn read_gamepad_for_pause_popup(
+    connected_gamepad: Option<Res<ConnectedGamePad>>,
+    buttons: Res<ButtonInput<GamepadButton>>,
+    mut ev_input: EventWriter<PausePopupInput>,
+    mut q_controller: Query<&mut ControllerPausePopup>,
+) {
+    if let Some(&ConnectedGamePad(gamepad)) = connected_gamepad.as_deref() {
+        if let Ok(mut controller) = q_controller.get_single_mut() {
+            if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_START)) {
+                ev_input.send(PausePopupInput::Resume);
+            }
+
+            if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_SELECT))
+                && controller.long_press.is_none() {
+                controller.long_press = Some(Timer::from_seconds(3.0, TimerMode::Once));
+            }
+            if buttons.any_just_released(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_SELECT)) {
+                ev_input.send(PausePopupInput::Restart);
+            }
+            if let Some(t) = controller.long_press.as_ref() {
+                if t.finished() {
+                    ev_input.send(PausePopupInput::GoToTitle);
+                }
+            }
+        }
+    }
+}
+pub fn act_pause_popup(
+    mut next_screen_state: ResMut<NextState<GameScreenState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    q_controller: Query<&ControllerPausePopup>,
+    mut ev_input: EventReader<PausePopupInput>,
+) {
+    if let Ok(controller) = q_controller.get_single() {
+        for ev in ev_input.read() {
+            match ev {
+                PausePopupInput::Resume => {
+                    next_screen_state.set(GameScreenState::Playing);
+                },
+                PausePopupInput::Restart => {
+                    if controller.input_suppresser.finished() {
+                        next_screen_state.set(GameScreenState::Restart);
+                    }
+                },
+                PausePopupInput::GoToTitle => {
+                    if controller.input_suppresser.finished() {
+                        next_state.set(GameState::Title);
+                    }
+                },
+            }
+        }
+    }
+
 }
