@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use bevy::prelude::*;
+use bevy_egui::egui::Align2;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui_kbgp::KbgpEguiResponseExt;
 
@@ -63,8 +64,10 @@ pub fn ui_popup(
     let (def_ron_name, _) = get_default_game_ron_name_and_asset_path();
     let ctx = contexts.ctx_mut();
     let ron_options = config_data.ron_options.clone();
-    egui::CentralPanel::default().show(ctx,
-        |ui| {
+    egui::Window::new("Config")
+        .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
+        .collapsible(false)
+        .show(ctx, |ui| {
             ui.heading("Game");
             for (idx, ron) in ron_options.iter().enumerate() {
                 let name = if let Some(ListRonItem { name, ..}) = ron {
