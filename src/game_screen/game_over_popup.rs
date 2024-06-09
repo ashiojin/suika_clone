@@ -94,7 +94,7 @@ pub fn setup_gameover_popup(
                 GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
-                        "Press [Space] to restart", text_style),
+                        "Press [P] to restart", text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                     ),

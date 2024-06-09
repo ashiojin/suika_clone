@@ -27,6 +27,9 @@ impl Plugin for ScTitleScreenPlugin {
         app.insert_state(TitleScreenState::Inactive);
         app.insert_resource(TitleAssets::default());
         app.insert_resource(config_popup::ConfigData::default());
+
+        app.add_event::<TitleInput>();
+
         app.add_systems(OnEnter(GameState::Title), (
             activate_title_screen,
         ));
@@ -55,6 +58,10 @@ impl Plugin for ScTitleScreenPlugin {
         app.add_systems(Update,
             (
                 read_keyboard,
+                read_gamepad,
+                action_title_input
+                    .after(read_keyboard)
+                    .after(read_gamepad),
             ).run_if(in_state(TitleScreenState::Idle))
         );
 
@@ -202,7 +209,7 @@ fn spawn_title_screen(
         };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("[Space] : Start, [c] : Config", text_style),
+                text: Text::from_section("[P] : Start, [Esc] : Config", text_style),
 
                 transform:
                     Transform::from_translation(
@@ -214,17 +221,53 @@ fn spawn_title_screen(
     });
 }
 
+#[derive(Event, Debug)]
+enum TitleInput {
+    StartGame,
+    OpenConfig,
+}
 
 fn read_keyboard(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_title_state: ResMut<NextState<TitleScreenState>>,
+    mut ev_input: EventWriter<TitleInput>,
 ) {
-    if keyboard.just_pressed(KeyCode::Space) {
-        next_title_state.set(TitleScreenState::End);
+    if keyboard.any_just_pressed(KEYBOARD_KEYS_START) {
+        ev_input.send(TitleInput::StartGame);
     }
 
-    if keyboard.just_pressed(KeyCode::KeyC) {
-        next_title_state.set(TitleScreenState::Config);
+    if keyboard.any_just_pressed(KEYBOARD_KEYS_SELECT) {
+        ev_input.send(TitleInput::OpenConfig);
+    }
+}
+
+fn read_gamepad(
+    connected_gamepad: Option<Res<ConnectedGamePad>>,
+    buttons: Res<ButtonInput<GamepadButton>>,
+    mut ev_input: EventWriter<TitleInput>,
+) {
+    if let Some(&ConnectedGamePad(gamepad)) = connected_gamepad.as_deref() {
+        if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_START)) {
+            ev_input.send(TitleInput::StartGame);
+        }
+        if buttons.any_just_pressed(to_gamepad_btn(gamepad, &GAMEPAD_BTNS_SELECT)) {
+            ev_input.send(TitleInput::OpenConfig);
+        }
+    }
+}
+
+fn action_title_input(
+    mut ev_input: EventReader<TitleInput>,
+    mut next_title_state: ResMut<NextState<TitleScreenState>>,
+) {
+    for ev in ev_input.read() {
+        match ev {
+            TitleInput::StartGame => {
+                next_title_state.set(TitleScreenState::End);
+            },
+            TitleInput::OpenConfig => {
+                next_title_state.set(TitleScreenState::Config);
+            }
+        }
     }
 }
 
@@ -239,4 +282,3 @@ fn end_title_screen(
     }
     next_state.set(GameState::Loading);
 }
-

@@ -75,7 +75,7 @@ pub fn setup_pause_popup(
         b.spawn((
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Space] to resume", text_style),
+                    "Press [P] to resume", text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
                 ),
