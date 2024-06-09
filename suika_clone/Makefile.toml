@@ -16,27 +16,27 @@ run_task = { name = ["copy-src", "copy-assets"] }
 
 [tasks.prepare-directories-src]
 command = "mkdir"
-args = ["-p", "src/embedded_assets/fonts"]
+args = ["-p", "${CARGO_MAKE_WORKING_DIRECTORY}/src/embedded_assets/fonts"]
 
 [tasks.prepare-directories-assets]
 command = "mkdir"
-args = ["-p", "assets/fonts"]
+args = ["-p", "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts"]
 
 [tasks.copy-src]
 command = "cp"
 args = ["--update",
-    "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
-    "external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
-    "src/embedded_assets/fonts/",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
+    "${CARGO_MAKE_WORKING_DIRECTORY}/src/embedded_assets/fonts/",
 ]
 dependencies = ["prepare-directories-src"]
 
 [tasks.copy-assets]
 command = "cp"
 args = ["--update",
-    "external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
-    "external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
-    "assets/fonts/",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
+    "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts/",
 ]
 dependencies = ["prepare-directories-assets"]
 
@@ -52,15 +52,15 @@ run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
 
 [tasks.prepare-to-run]
 command = "cp"
-args = ["target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "./"]
+args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
 dependencies = ["build"]
 
 [tasks.run-exe]
-command = "./suika_clone.exe"
+command = "${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"
 
 [tasks.post-run]
 command = "rm"
-args = ["./suika_clone.exe"]
+args = ["${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"]
 
 
 
