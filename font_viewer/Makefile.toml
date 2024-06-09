@@ -1,0 +1,64 @@
+[tasks.default]
+clear = true
+command = "echo"
+args = [
+    "\n",
+    "************************\n",
+    "USAGE:\n",
+    " build: Build the project.\n",
+    " run: Run the windows-exe file after building it.\n",
+    "************************\n",
+]
+
+
+[tasks.prepare-to-build]
+run_task = { name = ["copy-assets"] }
+
+[tasks.prepare-directories-assets]
+command = "mkdir"
+args = ["-p", "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts"]
+
+[tasks.copy-assets]
+command = "cp"
+args = ["--update",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
+    "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts/",
+]
+dependencies = ["prepare-directories-assets"]
+
+
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+dependencies = ["prepare-to-build"]
+
+[tasks.run]
+run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
+
+[tasks.prepare-to-run]
+command = "cp"
+args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/debug/font_viewer.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
+dependencies = ["build"]
+
+[tasks.run-exe]
+command = "${CARGO_MAKE_WORKING_DIRECTORY}/font_viewer.exe"
+
+[tasks.post-run]
+command = "rm"
+args = ["${CARGO_MAKE_WORKING_DIRECTORY}/font_viewer.exe"]
+
+
+
+[tasks.build-web]
+command = "cargo"
+args = ["build", "--target", "wasm32-unknown-unknown"]
+dependencies = ["prepare-to-build"]
+
+[tasks.run-web]
+command = "cargo"
+args = ["run", "--target", "wasm32-unknown-unknown"]
+dependencies = ["build-web"]
+
+

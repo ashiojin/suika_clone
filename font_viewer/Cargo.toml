@@ -1,0 +1,22 @@
+[package]
+name = "font_viewer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { version = "0.13", features = [] }
+
+egui = "0.13"
+bevy_egui = "0.25" # bevy_console depend on 0.25
+
+thiserror = "1.0"
+
+bevy_file_dialog = "0.5"
+
+######## WORKAROUND @2023/11/15 A: WSL->Windows Cross-Compilation Failed
+## see: https://github.com/bevyengine/bevy/issues/10425
+[dependencies.blake3]
+version = "1.5"
+features = ["pure"]
+######## WORKAROUND @2023/11/15 A
+
