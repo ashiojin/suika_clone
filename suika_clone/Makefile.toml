@@ -74,3 +74,21 @@ command = "cargo"
 args = ["run", "--target", "wasm32-unknown-unknown"]
 dependencies = ["build-web"]
 
+
+
+[tasks.build-release-web]
+command = "cargo"
+args = ["build", "--release", "--target", "wasm32-unknown-unknown"]
+dependencies = ["prepare-to-build"]
+
+[tasks.wasm-bindgen]
+command = "wasm-bindgen"
+args = [
+    "--no-typescript",
+    "--target", "web",
+    "--out-dir", "./out/",
+    "--out-name", "suika_clone",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/wasm32-unknown-unknown/release/suika_clone.wasm",
+]
+install_crate = "wasm-bindgen-cli"
+dependencies = ["build-release-web"]
