@@ -46,12 +46,12 @@
   - [ ] popup/messages
 - [x] Pause in playing game
   - [x] Return to Title
-  - [ ] Restart
+  - [x] Restart
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
   - [x] Player should be able to get more higher y-position.
   - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
-- [ ] Gamepad supports
+- [x] Gamepad supports
 - [ ] Set config from program args.
 - [x] Save config.
 - [x] Separate game states to 
