@@ -1,11 +1,15 @@
 (
     list: [
         (
-            name: "数字顔",
+            name: "Numbers",
             path: "ron/kao.game.ron",
         ),
         (
-            name: "数字顔s",
+            name: "いいゲ",
+            path: "ron/iig.game.ron",
+        ),
+        (
+            name: "only 5",
             path: "ron/kao_s.game.ron",
         )
     ]
