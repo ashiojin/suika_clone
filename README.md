@@ -12,7 +12,7 @@
 いろいろインストールが必要なものがあるはず・・・。
 
 [cargo-make](https://github.com/sagiegurari/cargo-make) が必要です。
-`makers build` / `makers run` はWindows版を開発ビルド／実行します。
+`cd suika_clone` した後に、`makers build` / `makers run` することでWindows版を開発ビルド／実行します。
 `makers build-web` / `makers run-web` はWeb版を開発ビルド／実行します。
 Makefileに追加してないですが、linux版もビルドできたはず・・・。
 
