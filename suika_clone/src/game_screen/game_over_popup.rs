@@ -94,7 +94,7 @@ pub fn setup_gameover_popup(
                 GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
-                        "Press [P] to restart", text_style),
+                        format!("Press [{}] to restart", GpKbInput::Start.get_str()), text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                     ),
@@ -112,7 +112,7 @@ pub fn setup_gameover_popup(
                 GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
-                        "Press [Esc] to back to title.", text_style),
+                        format!("Press [{}] to back to title.", GpKbInput::Select.get_str()), text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., GO_POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
                     ),

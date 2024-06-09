@@ -76,9 +76,16 @@ pub struct ScoreViewDef {
     pub font_color: Color,
 }
 #[derive(Debug)]
+pub struct ManualViewDef {
+    pub h_bg_image: Handle<Image>,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug)]
 pub struct UiDef {
     pub hold_view: HoldViewDef,
     pub score_view: ScoreViewDef,
+    pub manual_view: ManualViewDef,
 }
 impl UiDef {
     pub fn create_with_loading(ron: &UiRon, asset_server: &AssetServer) -> Self {
@@ -92,6 +99,11 @@ impl UiDef {
                 h_bg_image: asset_server.load(&ron.score_view.bg_image_asset_path),
                 border_width: ron.score_view.border_width,
                 font_color: ron.score_view.font_color,
+            },
+            manual_view: ManualViewDef {
+                h_bg_image: asset_server.load(&ron.manual_view.bg_image_asset_path),
+                border_width: ron.manual_view.border_width,
+                font_color: ron.manual_view.font_color,
             },
         }
     }

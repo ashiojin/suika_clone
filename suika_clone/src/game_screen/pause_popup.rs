@@ -75,7 +75,7 @@ pub fn setup_pause_popup(
         b.spawn((
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [P] to resume", text_style),
+                    format!("Press [{}] to resume", GpKbInput::Start.get_str()), text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
                 ),
@@ -92,7 +92,7 @@ pub fn setup_pause_popup(
             PausePopupMessageDelay,
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Esc] to restart", text_style),
+                    format!("Press [{}] to restart", GpKbInput::Select.get_str()), text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                 ),
@@ -110,7 +110,7 @@ pub fn setup_pause_popup(
             PausePopupMessageDelay,
             Text2dBundle {
                 text: Text::from_section(
-                    "Press [Esc] for 3sec to back to title", text_style),
+                    format!("Press [{}] for 3sec to back to title", GpKbInput::Select.get_str()), text_style),
                 transform: Transform::from_translation(
                     Vec2::new(0., GO_POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
                 ),

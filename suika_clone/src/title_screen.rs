@@ -209,7 +209,8 @@ fn spawn_title_screen(
         };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("[P] : Start, [Esc] : Config", text_style),
+                text: Text::from_section(
+                          format!("[{}] : Start, [{}] : Config", GpKbInput::Start.get_str(), GpKbInput::Select.get_str()), text_style),
 
                 transform:
                     Transform::from_translation(

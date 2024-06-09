@@ -49,6 +49,7 @@ impl Plugin for ScGameScreenPlugin {
             spawn_player,
             spawn_score_view,
             spwan_holding_ball_view,
+            spawn_manual_view,
             start_play_bgm,
 
             start_playing,
@@ -191,7 +192,13 @@ const RIGHT_SIDE_UI_WIDTH: f32 = 240.;
 const SCORE_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
 const SCORE_HEIGHT: f32 = 120.;
 const HOLDING_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
-const HOLDING_VIEW_HEIGHT: f32 = 360.;
+const HOLDING_VIEW_HEIGHT: f32 = 240.;
+const MANUAL_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
+const MANUAL_VIEW_HEIGHT: f32 = 180.;
+
+const FONT_WEIGHT_L: f32 = 32.;
+const FONT_WEIGHT_M: f32 = 24.;
+const FONT_WEIGHT_S: f32 = 16.;
 
 
 
@@ -246,6 +253,12 @@ const HOLDING_VIEW_CENTER: Vec2 =
     Vec2::new(
         BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + HOLDING_VIEW_WIDTH * 0.5,
         BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT - MARGEN_Y_RIGHT_SIDE - HOLDING_VIEW_HEIGHT * 0.5,
+    );
+
+const MANUAL_VIEW_CENTER: Vec2 =
+    Vec2::new(
+        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + MANUAL_VIEW_WIDTH * 0.5,
+        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT - MARGEN_Y_RIGHT_SIDE - HOLDING_VIEW_HEIGHT - MARGEN_Y_RIGHT_SIDE - MANUAL_VIEW_HEIGHT * 0.5,
     );
 
 
@@ -931,7 +944,7 @@ fn spawn_score_view(
 ) {
     let border_width = my_assets.ui.score_view.border_width;
     let inner_margin = 4.;
-    let label_weight = 30.;
+    let label_weight = FONT_WEIGHT_L;
     let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
     let score_center = SCORE_CENTER;
     commands
@@ -991,6 +1004,107 @@ fn spawn_score_view(
 }
 
 #[derive(Component, Debug)]
+struct ManualView;
+#[derive(Component, Debug)]
+struct ManualViewText;
+
+fn spawn_manual_view(
+    mut commands: Commands,
+    my_assets: Res<GameAssets>,
+) {
+    let border_width = my_assets.ui.manual_view.border_width;
+    let inner_margin = 4.;
+    let font_weight = FONT_WEIGHT_M;
+    let font_weight_p = FONT_WEIGHT_S;
+    let manual_size = Vec2::new(MANUAL_VIEW_WIDTH, MANUAL_VIEW_HEIGHT);
+    let manual_center = MANUAL_VIEW_CENTER;
+    commands
+        .spawn((
+            ManualView,
+            SpriteBundle { // as frame
+                texture: my_assets.ui.manual_view.h_bg_image.clone(),
+                sprite: Sprite {
+                    custom_size: Some(manual_size),
+                    ..default()
+                },
+                transform: Transform::from_translation(
+                               manual_center.extend(Z_UI)),
+                ..default()
+            },
+            ImageScaleMode::Sliced(TextureSlicer {
+                border: BorderRect::square(border_width),
+                center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+                sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+                ..default()
+            }),
+        ))
+        .with_children(|b| {
+            let pos1 =
+                Vec2::new(
+                    0.,
+                    SCORE_HEIGHT/2.- font_weight/2. - border_width - inner_margin
+                );
+            let pos2 =
+                pos1 +
+                Vec2::new(
+                    0.,
+                    -font_weight - inner_margin,
+                );
+            let pos3 =
+                pos2 +
+                Vec2::new(
+                    0.,
+                    -font_weight - inner_margin,
+                );
+
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: font_weight,
+                color: my_assets.ui.manual_view.font_color,
+            };
+            let text_style_p = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: font_weight_p,
+                color: my_assets.ui.manual_view.font_color,
+            };
+            b.spawn((
+                ManualViewText,
+                Text2dBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Move", text_style.clone()),
+                        TextSection::new(format!("[{}]", GpKbInput::MoveLeftRight.get_str()), text_style_p.clone()),
+                    ]),
+                    transform: Transform::from_translation(pos1.extend(0.01)),
+                    ..default()
+                },
+            ));
+            b.spawn((
+                ManualViewText,
+                Text2dBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Shake", text_style.clone()),
+                        TextSection::new(format!("[{}]", GpKbInput::Sub2.get_str()), text_style_p.clone()),
+                    ]),
+                    transform: Transform::from_translation(pos2.extend(0.01)),
+                    ..default()
+                },
+            ));
+            b.spawn((
+                ManualViewText,
+                Text2dBundle {
+                    text: Text::from_sections([
+                        TextSection::new("Pause", text_style.clone()),
+                        TextSection::new(format!("[{}]", GpKbInput::Start.get_str()), text_style_p.clone()),
+                    ]),
+                    transform: Transform::from_translation(pos3.extend(0.01)),
+                    ..default()
+                },
+            ));
+        });
+}
+
+
+#[derive(Component, Debug)]
 struct HoldingBallView;
 #[derive(Component, Debug)]
 struct HoldingBallImage(Option<BallLevel>);
@@ -1001,7 +1115,8 @@ fn spwan_holding_ball_view(
 ) {
     let border_width = my_assets.ui.hold_view.border_width;
     let inner_margin = 4.;
-    let label_weight = 30.;
+    let label_weight = FONT_WEIGHT_L;
+    let plus_weight = FONT_WEIGHT_S;
     commands.spawn((
         HoldingBallView,
         SpriteBundle {
@@ -1032,9 +1147,17 @@ fn spwan_holding_ball_view(
             font_size: label_weight,
             color: my_assets.ui.hold_view.font_color,
         };
+        let text_style_p = TextStyle {
+            font: my_assets.h_font.clone(),
+            font_size: plus_weight,
+            color: my_assets.ui.hold_view.font_color,
+        };
         b.spawn((
             Text2dBundle {
-                text: Text::from_section("Hold", text_style.clone()),
+                text: Text::from_sections([
+                    TextSection::new("Hold", text_style.clone()),
+                    TextSection::new(format!("[{}]", GpKbInput::Sub1.get_str()), text_style_p.clone()),
+                ]),
                 transform: Transform::from_translation(label_pos.extend(0.02)),
                 ..default()
             },
@@ -1348,6 +1471,7 @@ fn cleanup_ingame_entites(
             With<PlayerPuppeteer>,
             With<DroppingBallGuide>,
             With<HoldingBallView>,
+            With<ManualView>,
             With<Ball>,
             With<Bottle>,
             With<Background>,

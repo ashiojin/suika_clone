@@ -63,7 +63,17 @@
             ),
         ),
         score_view: (
-            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
+            bg_image_asset_path: "images/border1.png",
+            border_width: 20.,
+            font_color: Rgba(
+                red: 0.0,
+                blue: 0.0,
+                green: 0.0,
+                alpha: 1.0
+            ),
+        ),
+        manual_view: (
+            bg_image_asset_path: "images/border1.png",
             border_width: 20.,
             font_color: Rgba(
                 red: 0.0,

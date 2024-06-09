@@ -51,9 +51,17 @@ pub struct HoldViewRon {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct ManualViewRon {
+    pub bg_image_asset_path: String,
+    pub border_width: f32,
+    pub font_color: Color,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct UiRon {
     pub hold_view: HoldViewRon,
     pub score_view: ScoreViewRon,
+    pub manual_view: ManualViewRon,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

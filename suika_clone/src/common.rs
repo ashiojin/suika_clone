@@ -158,7 +158,7 @@ pub const KEYBOARD_KEYS_RIGHT: [KeyCode; 2] = [KeyCode::ArrowRight, KeyCode::Key
 pub const KEYBOARD_KEYS_MAIN: [KeyCode; 2] = [KeyCode::Space, KeyCode::KeyZ];
 pub const KEYBOARD_KEYS_SUB1: [KeyCode; 3] = [KeyCode::ArrowUp, KeyCode::KeyW, KeyCode::KeyX];
 pub const KEYBOARD_KEYS_SUB2: [KeyCode; 2] = [KeyCode::KeyU, KeyCode::KeyC];
-pub const KEYBOARD_KEYS_START: [KeyCode; 2] = [KeyCode::KeyP, KeyCode::Backslash];
+pub const KEYBOARD_KEYS_START: [KeyCode; 1] = [KeyCode::KeyP];
 pub const KEYBOARD_KEYS_SELECT: [KeyCode; 1] = [KeyCode::Escape];
 
 pub const GAMEPAD_BTNS_LEFT: [GamepadButtonType; 1] = [GamepadButtonType::DPadLeft];
@@ -176,3 +176,45 @@ pub fn to_gamepad_btn(gamepad: Gamepad, btn_types: &[GamepadButtonType]) -> Vec<
 }
 
 
+/// MaruMinyaMフォントの特殊文字（ゲームパッド系）
+#[allow(dead_code)]
+pub mod maru_minya_m {
+    pub const GP_LSTICK: &str = "\u{E014}";
+    pub const GP_DP_LEFT_RIGHT: &str = "\u{E006}";
+    pub const GP_BTN_S: &str = "\u{E010}";
+    pub const GP_BTN_E: &str = "\u{E011}";
+    pub const GP_BTN_W: &str = "\u{E012}";
+    pub const GP_BTN_N: &str = "\u{E013}";
+
+
+    // xb
+    pub const GP_BTN_LB: &str = "\u{E024}";
+    pub const GP_BTN_RB: &str = "\u{E025}";
+    pub const GP_BTN_START: &str = "\u{E02D}";
+    pub const GP_BTN_SELECT: &str = "\u{E02C}";
+}
+
+
+#[allow(dead_code)]
+pub enum GpKbInput {
+    MoveLeftRight,
+    Main,
+    Sub1,
+    Sub2,
+    Start,
+    Select,
+}
+
+impl GpKbInput {
+    pub fn get_str(&self) -> String {
+        use maru_minya_m::*;
+        match *self {
+            GpKbInput::MoveLeftRight => format!("{}/{}/{}/{}", GP_LSTICK, GP_DP_LEFT_RIGHT, "\u{21E6}\u{21E8}", "AD"),
+            GpKbInput::Main => format!("{}/{}/{}", GP_BTN_E, "Space", "Z"),
+            GpKbInput::Sub1 => format!("{}/{}/{}/{}", GP_BTN_N, "\u{21E7}", "W", "X"),
+            GpKbInput::Sub2 => format!("{}/{}/{}/{}", GP_BTN_LB, GP_BTN_RB, "U", "C"),
+            GpKbInput::Start => format!("{}/{}", GP_BTN_START, "P"),
+            GpKbInput::Select => format!("{}/{}", GP_BTN_SELECT, "Esc"),
+        }
+    }
+}
