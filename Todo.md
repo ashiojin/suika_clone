@@ -75,5 +75,6 @@
     - [ ] Linux
     - [ ] iOS ?
 - [ ] Github Actions
+  check: https://github.com/davidB/rust-cargo-make
 - ...
 
