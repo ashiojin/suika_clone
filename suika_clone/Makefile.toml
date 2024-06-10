@@ -96,6 +96,7 @@ dependencies = ["build-release-web"]
 [tasks.copy-assets-for-web]
 command = "cp"
 args = [
+    "--update",
     "-r",
     "${CARGO_MAKE_WORKING_DIRECTORY}/assets",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
@@ -104,8 +105,8 @@ args = [
 [tasks.copy-web-src]
 command = "cp"
 args = [
+    "--update",
     "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index.html",
-    "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index_2.html",
 
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
 ]

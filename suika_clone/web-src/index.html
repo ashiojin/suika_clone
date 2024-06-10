@@ -1,16 +1,36 @@
 <!doctype html>
 <html lang="en">
+<head>
+    <title>suika_clone</title>
+<style>
+    .big {
+        width: 640px;
+        height: 640px;
+    }
+</style>
+</head>
 
 <body style="margin: 0px;">
   <script type="module">
     import init from './suika_clone.js'
 
-    init().catch((error) => {
-      if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
-        throw error;
-      }
-    });
+    function start() {
+        init().catch((error) => {
+          if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+            throw error;
+          }
+        });
+    }
+
+    let btn = document.getElementById('open')
+    btn.addEventListener('click', (ev) => {
+        start()
+        btn.remove()
+    })
   </script>
+
+  <button id="open" type="button" class="big">Open suika_clone!</button>
 </body>
 
 </html>
+
