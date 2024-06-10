@@ -16,7 +16,7 @@ jobs:
           override: true
       - uses: davidB/rust-cargo-make@v1
       - name: Build release
-        run: makers release-web
+        run: cargo make release-web
       - uses: actions/upload-artifact@v4
         with:
           name: suika_clone
