@@ -59,7 +59,7 @@
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
 - [ ] Re-design States
-      See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
+  - See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 
 
