@@ -26,9 +26,9 @@
 - [x] Refine config screen & title screen.
   - [x] Loading state needed to read 'list.ron' and selected game ron
   - [x] Use `bevy_egui_kbgp`
-    But `bevy_egui_kbgp` (or my code) has some strange focus movement on slider.
-    And `A`, `D` on a slider are not work as to change value.
-    So I don't use slider now.
+    - But `bevy_egui_kbgp` (or my code) has some strange focus movement on slider.
+      And `A`, `D` on a slider are not work as to change value.
+      So I don't use slider now.
 - [x] Change some GameRon/Images/Audios to Embedded assets.
 - [x] Change timing of spawing fake ball to after previous ball is touched to other
 - [x] Player texture.
@@ -70,11 +70,11 @@
   - Release Build
     - [x] Wasm run environment
       - [ ] Fix an issue caused by browser caches.
-            It will be solved by adding the build number to the wasm name.
+         - It will be solved by adding the build number to the wasm name.
     - [ ] Windows
     - [ ] Linux
     - [ ] iOS ?
 - [ ] Github Actions
-  check: https://github.com/davidB/rust-cargo-make
+  - check: https://github.com/davidB/rust-cargo-make
 - ...
 
