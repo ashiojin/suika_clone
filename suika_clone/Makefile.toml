@@ -105,6 +105,7 @@ args = [
 command = "cp"
 args = [
     "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index.html",
+    "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index_2.html",
 
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
 ]
