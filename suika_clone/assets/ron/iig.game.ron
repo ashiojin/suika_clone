@@ -28,19 +28,19 @@
             physics_radius: 69.0,
             view_width: 168.22858,
             view_height: 168.22858,
-            image_asset_path: "images/kao/kao_05.png",
+            image_asset_path: "images/iig/iig_05.png",
         ),
         (
             physics_radius: 86.0,
             view_width: 209.6762,
             view_height: 209.6762,
-            image_asset_path: "images/kao/kao_06.png",
+            image_asset_path: "images/iig/iig_06.png",
         ),
         (
             physics_radius: 105.0,
             view_width: 256.0,
             view_height: 256.0,
-            image_asset_path: "images/kao/kao_07.png",
+            image_asset_path: "images/iig/iig_07.png",
         ),
         (
             physics_radius: 127.0,
