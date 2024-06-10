@@ -42,8 +42,8 @@ pub fn setup_pause_popup(
             long_press: None,
         },
         SpriteBundle {
+            texture: my_assets.ui.popup.h_bg_image.clone(),
             sprite: Sprite {
-                color: Color::rgba(0.9, 0.9, 0.9, 0.9),
                 custom_size: Some(GO_POPUP_SIZE),
                 ..default()
             },
@@ -51,11 +51,18 @@ pub fn setup_pause_popup(
                            GO_POPUP_CENTER.extend(Z_POPUP)),
             ..default()
         },
+        ImageScaleMode::Sliced(TextureSlicer {
+            border: BorderRect::square(my_assets.ui.popup.border_width),
+            center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+            sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
+            ..default()
+        }),
+
     )).with_children(|b| {
         let text_style = TextStyle {
             font: my_assets.h_font.clone(),
             font_size: 60.0,
-            color: Color::GREEN,
+            color: my_assets.ui.popup.font_color,
         };
         b.spawn((
             Text2dBundle {
@@ -70,7 +77,7 @@ pub fn setup_pause_popup(
         let text_style = TextStyle {
             font: my_assets.h_font.clone(),
             font_size: 30.0,
-            color: Color::BLACK,
+            color: my_assets.ui.popup.font_color_sub,
         };
         b.spawn((
             Text2dBundle {
@@ -86,7 +93,7 @@ pub fn setup_pause_popup(
         let text_style = TextStyle {
             font: my_assets.h_font.clone(),
             font_size: 30.0,
-            color: Color::BLACK,
+            color: my_assets.ui.popup.font_color_sub,
         };
         b.spawn((
             PausePopupMessageDelay,
@@ -104,7 +111,7 @@ pub fn setup_pause_popup(
         let text_style = TextStyle {
             font: my_assets.h_font.clone(),
             font_size: 30.0,
-            color: Color::BLACK,
+            color: my_assets.ui.popup.font_color_sub,
         };
         b.spawn((
             PausePopupMessageDelay,

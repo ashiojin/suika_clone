@@ -43,7 +43,8 @@
   - [x] bottle settings
   - [x] Ui on game screen
   - [ ] background image
-  - [ ] popup/messages
+  - [x] popup image
+  - [ ] messages
 - [x] Pause in playing game
   - [x] Return to Title
   - [x] Restart

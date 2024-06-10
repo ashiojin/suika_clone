@@ -82,10 +82,18 @@ pub struct ManualViewDef {
     pub font_color: Color,
 }
 #[derive(Debug)]
+pub struct PopupDef {
+    pub h_bg_image: Handle<Image>,
+    pub border_width: f32,
+    pub font_color: Color,
+    pub font_color_sub: Color,
+}
+#[derive(Debug)]
 pub struct UiDef {
     pub hold_view: HoldViewDef,
     pub score_view: ScoreViewDef,
     pub manual_view: ManualViewDef,
+    pub popup: PopupDef,
 }
 impl UiDef {
     pub fn create_with_loading(ron: &UiRon, asset_server: &AssetServer) -> Self {
@@ -105,6 +113,12 @@ impl UiDef {
                 border_width: ron.manual_view.border_width,
                 font_color: ron.manual_view.font_color,
             },
+            popup: PopupDef {
+                h_bg_image: asset_server.load(&ron.popup.bg_image_asset_path),
+                border_width: ron.popup.border_width,
+                font_color: ron.popup.font_color,
+                font_color_sub: ron.popup.font_color_sub,
+            },
         }
     }
 
@@ -112,6 +126,8 @@ impl UiDef {
         vec![
             self.hold_view.h_bg_image.clone().untyped(),
             self.score_view.h_bg_image.clone().untyped(),
+            self.manual_view.h_bg_image.clone().untyped(),
+            self.popup.h_bg_image.clone().untyped(),
         ]
     }
 }

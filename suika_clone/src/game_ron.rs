@@ -58,10 +58,19 @@ pub struct ManualViewRon {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct PopupViewRon {
+    pub bg_image_asset_path: String,
+    pub border_width: f32,
+    pub font_color: Color,
+    pub font_color_sub: Color,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct UiRon {
     pub hold_view: HoldViewRon,
     pub score_view: ScoreViewRon,
     pub manual_view: ManualViewRon,
+    pub popup: PopupViewRon,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
