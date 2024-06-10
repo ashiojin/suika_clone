@@ -24,7 +24,6 @@ mod game_screen;
 mod physics_custom;
 
 mod prelude {
-    pub use crate::debug::*;
     pub use crate::common::*;
     pub use crate::game_assets::*;
     pub use crate::resource_loader::*;
@@ -84,7 +83,9 @@ fn main() {
 
         EguiPlugin,
         KbgpPlugin,
-        ScDebugPlugin::new(true, true),
+
+        #[cfg(debug_assertions)]
+        debug::ScDebugPlugin::new(true, true),
 
         ScEmbeddedAssetsPlugin,
     ));

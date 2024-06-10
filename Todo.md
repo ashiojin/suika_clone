@@ -65,9 +65,14 @@
 
 ## Development Environments
 
-- [ ] Build Environments
-  - [ ] Release Build
-    - [ ] Wasm run environment
+- Build Environments
+  - Release Build
+    - [x] Wasm run environment
+      - [ ] Fix an issue caused by browser caches.
+            It will be solved by adding the build number to the wasm name.
+    - [ ] Windows
+    - [ ] Linux
+    - [ ] iOS ?
 - [ ] Github Actions
 - ...
 

@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), allow(dead_code))] // only for debugging
+
 use crate::prelude::*;
 
 use bevy::prelude::*;
