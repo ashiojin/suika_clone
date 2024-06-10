@@ -51,6 +51,10 @@
         fg_image_asset_path: "images/kao/kao_bottle_fg.png",
         bg_image_asset_path: "images/kao/kao_bottle_bg.png",
     ),
+    background: (
+        bg_image_asset_path: "images/bg_sample_1280x1024.png",
+        offset: (0.0, 0.0),
+    ),
     ui: (
         hold_view: (
             bg_image_asset_path: "images/border1.png",

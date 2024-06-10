@@ -37,6 +37,14 @@ pub struct BottleRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct BackgroundRon {
+    pub bg_image_asset_path: String,
+    pub offset: Vec2,
+}
+
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 pub struct ScoreViewRon {
     pub bg_image_asset_path: String,
     pub border_width: f32,
@@ -88,6 +96,7 @@ pub struct GameRon {
     pub drop_ball_level_max: usize,
     pub player: PlayerRon,
     pub bottle: BottleRon,
+    pub background: BackgroundRon,
     pub sounds: SoundRon,
     pub ui: UiRon,
 }

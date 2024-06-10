@@ -132,6 +132,26 @@ impl UiDef {
     }
 }
 
+#[derive(Debug)]
+pub struct BackgroundDef {
+    pub h_bg_image: Handle<Image>,
+    pub offset: Vec2,
+}
+impl BackgroundDef {
+    pub fn create_with_loading(ron: &BackgroundRon, asset_server: &AssetServer) -> Self {
+        Self {
+            h_bg_image: asset_server.load(&ron.bg_image_asset_path),
+            offset: ron.offset,
+        }
+    }
+
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+        vec![
+            self.h_bg_image.clone().untyped(),
+        ]
+    }
+}
+
 
 #[derive(Resource, Debug)]
 pub struct GameAssets {
@@ -140,6 +160,8 @@ pub struct GameAssets {
     pub player_settings: PlayerDef,
     pub bottle_settings: BottleDef,
     pub h_font: Handle<Font>,
+
+    pub background: BackgroundDef,
 
     pub ui: UiDef,
 
@@ -156,12 +178,15 @@ impl Loadable for GameAssets {
             self.bottle_settings.h_bg_image.clone().untyped(),
             self.h_font.clone().untyped(),
 
+
             self.h_bgm.clone().untyped(),
             self.h_se_combine.clone().untyped(),
         ];
         let mut v3 = self.ui.get_untyped_handles();
+        let mut v4 = self.background.get_untyped_handles();
         v.append(&mut v2);
         v.append(&mut v3);
+        v.append(&mut v4);
         v
     }
 }
@@ -173,6 +198,7 @@ impl GameAssets {
         drop_ball_level_max: BallLevel,
         player_settings: PlayerDef,
         bottle_settings: BottleDef,
+        background: BackgroundDef,
         ui: UiDef,
         h_font: Handle<Font>,
         h_bgm: Handle<AudioSource>,
@@ -184,6 +210,7 @@ impl GameAssets {
             player_settings,
             bottle_settings,
             h_font,
+            background,
             ui,
             h_bgm,
             h_se_combine,

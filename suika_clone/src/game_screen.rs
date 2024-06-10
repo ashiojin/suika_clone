@@ -45,6 +45,7 @@ impl Plugin for ScGameScreenPlugin {
         ));
 
         app.add_systems(OnEnter(GameScreenState::Init), (
+            spawn_background,
             spawn_bottle,
             spawn_player,
             spawn_score_view,
@@ -313,12 +314,8 @@ fn physics_pause(
 
 fn spawn_bottle(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     assets: Res<GameAssets>,
 ) {
-
-
     // Spawn Bottle
     commands.spawn((
         Bottle {
@@ -406,22 +403,25 @@ fn spawn_bottle(
             },
         ));
     });
+}
 
-
+fn spawn_background(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+) {
     // BACK
     commands.spawn((
         Background,
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Rectangle::from_size(Vec2::new(900., 900.))).into(),
-            transform: Transform::from_translation(
-                (Vec2::new(0., 0.))
-                    .extend(Z_BACK)
-            ),
-            material: materials.add(Color::WHITE),
+        SpriteBundle {
+            texture: assets.background.h_bg_image.clone(),
+            sprite: Sprite {
+                custom_size: None,
+                ..default()
+            },
+            transform: Transform::from_translation(assets.background.offset.extend(Z_BACK)),
             ..default()
         },
     ));
-
 }
 
 #[derive(Event, Clone, Copy, PartialEq, Debug)]
