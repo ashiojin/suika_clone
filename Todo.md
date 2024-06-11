@@ -70,7 +70,14 @@
   - Release Build
     - [x] Wasm run environment
       - [ ] Fix an issue caused by browser caches.
-         - It will be solved by adding the build number to the wasm name.
+         - There are 2 issues
+           - cash of .wasm
+             - It will be solved by adding the build number to the wasm names.
+           - cashes of assets/**
+             - It will be solved by:
+               - Changing `assets` directory to `assets_XXX` (XXX: assets version)
+               - Or create [custom AssertReader](https://bevyengine.org/examples/Assets/custom-asset-reader/) that appends `?v=xxx` to any pathes.
+      - [ ] Use [AssetMetaCheck::Never](https://github.com/bevyengine/bevy/pull/10623) to remove requests for `.meta` files of assets
     - [ ] Windows
     - [ ] Linux
     - [ ] iOS ?
