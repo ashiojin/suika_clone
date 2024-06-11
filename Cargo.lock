@@ -4413,6 +4413,7 @@ dependencies = [
  "bevy",
  "bevy-debug-text-overlay",
  "bevy-egui-kbgp",
+ "bevy_asset",
  "bevy_common_assets",
  "bevy_console",
  "bevy_egui",
@@ -4424,10 +4425,15 @@ dependencies = [
  "clap",
  "const_format",
  "egui 0.13.1",
+ "futures-lite",
  "itertools",
+ "js-sys",
  "rand_core",
  "ron",
  "serde",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

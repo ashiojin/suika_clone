@@ -6,6 +6,17 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.13", features = [] }
 
+##### Custom Asset Reader
+bevy_asset = { version = "0.13", features = [] }
+wasm-bindgen = { version = "0.2" }
+web-sys = { version = "0.3", features = ["Request", "Window", "Response"] }
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+
+futures-lite = "2.0.1"
+##### Custom Asset Reader
+
+
 bevy_common_assets = { version = "0.10", features = ["ron"] }
 
 bevy_xpbd_2d = "0.4" # Physics engine

@@ -69,7 +69,7 @@
 - Build Environments
   - Release Build
     - [x] Wasm run environment
-      - [ ] Fix an issue caused by browser caches.
+      - [x] Fix an issue caused by browser caches.
          - There are 2 issues
            - cash of .wasm
              - It will be solved by adding the build number to the wasm names.
@@ -81,7 +81,8 @@
     - [ ] Windows
     - [ ] Linux
     - [ ] iOS ?
-- [ ] Github Actions
+- [x] Github Actions
   - check: https://github.com/davidB/rust-cargo-make
+- [ ] Refactoring Makefile.toml
 - ...
 

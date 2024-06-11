@@ -13,6 +13,8 @@ use bevy_prng::ChaCha8Rng;
 
 mod debug;
 mod common;
+#[cfg(target_arch = "wasm32")]
+mod wasm;
 mod embedded_assets;
 mod game_assets;
 mod game_ron;
@@ -61,6 +63,11 @@ fn main() {
 
     app.add_plugins((
         EntropyPlugin::<ChaCha8Rng>::default(),
+
+        #[cfg(target_arch = "wasm32")]
+        wasm::HttpWithVersionQueryStringWasmAssetReaderPlugin::new(
+            env!("ASSETS_DIR_HASH")), // before DefaultPlugins
+
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: TITLE.into(),
@@ -77,6 +84,7 @@ fn main() {
             ..default()
         }),
 
+
         PhysicsPlugins::default()
             .build()
             .add(LimitVelocityPlugin),
@@ -88,6 +96,7 @@ fn main() {
         debug::ScDebugPlugin::new(true, true),
 
         ScEmbeddedAssetsPlugin,
+
     ));
 
     app.insert_resource(KbgpSettings {

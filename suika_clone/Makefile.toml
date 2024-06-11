@@ -63,10 +63,10 @@ command = "rm"
 args = ["${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"]
 
 
-
 [tasks.build-web]
 command = "cargo"
 args = ["build", "--target", "wasm32-unknown-unknown"]
+env = { "ASSETS_DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}/assets"]} }
 dependencies = ["prepare-to-build"]
 
 [tasks.run-web]
@@ -75,11 +75,18 @@ args = ["run", "--target", "wasm32-unknown-unknown"]
 dependencies = ["build-web"]
 
 
-
 [tasks.build-release-web]
 command = "cargo"
 args = ["build", "--release", "--target", "wasm32-unknown-unknown"]
+env = { "ASSETS_DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}/assets"]} }
 dependencies = ["prepare-to-build"]
+
+[tasks.clean-web-out]
+command = "rm"
+args = [
+    "-rf",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out",
+]
 
 [tasks.wasm-bindgen]
 command = "wasm-bindgen"
@@ -87,11 +94,12 @@ args = [
     "--no-typescript",
     "--target", "web",
     "--out-dir", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
-    "--out-name", "suika_clone",
+    "--out-name", "suika_clone_${DIR_HASH}",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/wasm32-unknown-unknown/release/suika_clone.wasm",
 ]
+env = { "DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}"]} }
 install_crate = "wasm-bindgen-cli"
-dependencies = ["build-release-web"]
+dependencies = ["build-release-web", "clean-web-out"]
 
 [tasks.copy-assets-for-web]
 command = "cp"
@@ -102,16 +110,23 @@ args = [
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
 ]
 
-[tasks.copy-web-src]
+[tasks.copy-index]
 command = "cp"
 args = [
-    "--update",
     "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index.html",
-
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
 ]
 
 
-[tasks.release-web]
-run_task = { name = ["build-release-web", "wasm-bindgen", "copy-assets-for-web", "copy-web-src"] }
+[tasks.make-index]
+command = "sed"
+env = { "DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}"]} }
+args = [
+    "-i",
+    "s/\\[JS_FILE_NAME\\]/suika_clone_${DIR_HASH}/g",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/index.html",
+]
+dependencies = ["copy-index"]
 
+[tasks.release-web]
+run_task = { name = ["build-release-web", "wasm-bindgen", "copy-assets-for-web", "make-index"] }
