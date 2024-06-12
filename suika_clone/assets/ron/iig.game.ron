@@ -58,7 +58,7 @@
             physics_radius: 177.5,
             view_width: 432.76193,
             view_height: 432.76193,
-            image_asset_path: "images/kao/kao_10.png",
+            image_asset_path: "images/iig/iig_10.png",
         ),
         (
             physics_radius: 207.0,
