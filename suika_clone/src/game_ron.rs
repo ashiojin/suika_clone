@@ -85,7 +85,9 @@ pub struct UiRon {
 #[derive(Reflect)]
 pub struct SoundRon {
     pub bgm_asset_path: String,
+    pub bgm_scale: f32,
     pub se_combine_asset_path: String,
+    pub se_combine_scale: f32,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

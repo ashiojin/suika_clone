@@ -105,6 +105,8 @@
     ),
     sounds: (
         bgm_asset_path: "sounds/bgm.ogg",
+        bgm_scale: 0.15,
         se_combine_asset_path: "sounds/se_combine.ogg",
+        se_combine_scale: 1.0,
     ),
 )

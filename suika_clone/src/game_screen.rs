@@ -1448,8 +1448,8 @@ fn play_se_combine_balls(
         if matches!(ev, Combine(_,_)) {
             spawn_se(
                 &mut commands,
-                sc_assets.h_se_combine.clone(),
-                config.get_se_volume(),
+                sc_assets.sound.h_se_combine.clone(),
+                config.get_se_volume(sc_assets.sound.se_combine_scale),
             );
         }
     }
@@ -1515,8 +1515,8 @@ fn start_play_bgm(
     } else {
         spawn_bgm(
             &mut commands,
-            sc_asset.h_bgm.clone(),
-            config.get_bgm_volume(),
+            sc_asset.sound.h_bgm.clone(),
+            config.get_bgm_volume(sc_asset.sound.bgm_scale),
         );
     }
 }

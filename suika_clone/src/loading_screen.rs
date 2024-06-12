@@ -125,8 +125,7 @@ fn load_assets_game_assets(
     let bottle = BottleDef::create_with_loading(&from_ron.bottle, &asset_server);
     let background = BackgroundDef::create_with_loading(&from_ron.background, &asset_server);
     let ui = UiDef::create_with_loading(&from_ron.ui, &asset_server);
-    let h_bgm =asset_server.load(&from_ron.sounds.bgm_asset_path);
-    let h_se_combine = asset_server.load(&from_ron.sounds.se_combine_asset_path);
+    let sound = SoundDef::create_with_loading(&from_ron.sounds, &asset_server);
 
     commands.insert_resource(
         GameAssets::new(
@@ -137,8 +136,7 @@ fn load_assets_game_assets(
             background,
             ui,
             asset_server.load("embedded://suika_clone/embedded_assets/fonts/x12y12pxMaruMinyaM.ttf"),
-            h_bgm,
-            h_se_combine,
+            sound,
         )
     );
 }

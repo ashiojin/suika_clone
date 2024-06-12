@@ -153,6 +153,32 @@ impl BackgroundDef {
 }
 
 
+#[derive(Debug)]
+pub struct SoundDef {
+    pub h_bgm: Handle<AudioSource>,
+    pub bgm_scale: f32,
+    pub h_se_combine: Handle<AudioSource>,
+    pub se_combine_scale: f32,
+}
+impl SoundDef {
+    pub fn create_with_loading(ron: &SoundRon, asset_server: &AssetServer) -> Self {
+        Self {
+            h_bgm: asset_server.load(&ron.bgm_asset_path),
+            bgm_scale: ron.bgm_scale,
+            h_se_combine: asset_server.load(&ron.se_combine_asset_path),
+            se_combine_scale: ron.se_combine_scale,
+        }
+    }
+
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+        vec![
+            self.h_bgm.clone().untyped(),
+            self.h_se_combine.clone().untyped(),
+        ]
+    }
+}
+
+
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
@@ -165,8 +191,7 @@ pub struct GameAssets {
 
     pub ui: UiDef,
 
-    pub h_bgm: Handle<AudioSource>,
-    pub h_se_combine: Handle<AudioSource>,
+    pub sound: SoundDef,
 }
 impl Loadable for GameAssets {
     fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
@@ -177,16 +202,14 @@ impl Loadable for GameAssets {
             self.bottle_settings.h_fg_image.clone().untyped(),
             self.bottle_settings.h_bg_image.clone().untyped(),
             self.h_font.clone().untyped(),
-
-
-            self.h_bgm.clone().untyped(),
-            self.h_se_combine.clone().untyped(),
         ];
         let mut v3 = self.ui.get_untyped_handles();
         let mut v4 = self.background.get_untyped_handles();
+        let mut v5 = self.sound.get_untyped_handles();
         v.append(&mut v2);
         v.append(&mut v3);
         v.append(&mut v4);
+        v.append(&mut v5);
         v
     }
 }
@@ -201,8 +224,7 @@ impl GameAssets {
         background: BackgroundDef,
         ui: UiDef,
         h_font: Handle<Font>,
-        h_bgm: Handle<AudioSource>,
-        h_se_combine: Handle<AudioSource>,
+        sound: SoundDef,
     ) -> Self {
         Self {
             ball_level_settings,
@@ -212,8 +234,7 @@ impl GameAssets {
             h_font,
             background,
             ui,
-            h_bgm,
-            h_se_combine,
+            sound,
         }
     }
     pub fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {

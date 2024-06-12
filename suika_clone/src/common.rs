@@ -86,16 +86,16 @@ impl Default for Config {
         }
     }
 }
-fn volume(v: i32) -> Volume {
-    Volume::new(1.0 * v as f32 / 100.)
+fn volume(v: i32, scale: f32) -> Volume {
+    Volume::new(scale * v  as f32 / 100.)
 }
 const STORE_NAME_CONFIG: &str = "config";
 impl Config {
-    pub fn get_se_volume(&self) -> Volume {
-        volume(self.se_volume)
+    pub fn get_se_volume(&self, scale:f32) -> Volume {
+        volume(self.se_volume, scale)
     }
-    pub fn get_bgm_volume(&self) -> Volume {
-        volume(self.bgm_volume)
+    pub fn get_bgm_volume(&self, scale:f32) -> Volume {
+        volume(self.bgm_volume, scale)
     }
 }
 
