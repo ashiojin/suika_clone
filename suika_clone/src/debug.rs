@@ -3,6 +3,7 @@
 use crate::prelude::*;
 
 use bevy::prelude::*;
+use bevy_xpbd_2d::prelude::*;
 use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
 use clap::Parser;
 
@@ -56,6 +57,7 @@ impl Plugin for ScDebugPlugin {
             app.add_console_command::<GrowCommand, _>(command_grow);
             app.add_console_command::<MaxVelCommand, _>(command_max_vel);
             app.add_console_command::<DispAreaCommand, _>(command_disp_area);
+            app.add_console_command::<RestitutionCommand, _>(command_restitution);
 
             app.insert_resource(DebugConfig {
                 display_area: true,
@@ -152,3 +154,23 @@ fn display_area(
         Color::RED);
 }
 
+
+#[derive(Parser, ConsoleCommand, Default)]
+#[command(name = "restitution")]
+struct RestitutionCommand {
+    coefficient: f32,
+}
+fn command_restitution(
+    mut log: ConsoleCommand<RestitutionCommand>,
+    mut q_col: Query<&mut Restitution, With<Collider>>,
+    mut fconfig: ResMut<FixedConfig>,
+) {
+    if let Some(Ok(RestitutionCommand { coefficient })) = log.take() {
+        fconfig.ball_restitution_coef = coefficient;
+        fconfig.bottle_restitution_coef = coefficient;
+        for mut rest in q_col.iter_mut() {
+            rest.coefficient = coefficient;
+        }
+        reply!(log, "set {} to {} colliders", coefficient, q_col.iter().len());
+    }
+}

@@ -48,6 +48,8 @@ pub struct FixedConfig {
     pub max_velocity: f32,
     pub shake_k: f32, // max move is about 0.4 * shake_k
     pub playing_cam_offset: Vec2,
+    pub ball_restitution_coef: f32,
+    pub bottle_restitution_coef: f32,
 }
 impl Default for FixedConfig {
     fn default() -> Self {
@@ -57,6 +59,8 @@ impl Default for FixedConfig {
             max_velocity: 60. * 32. * (30./(2. + 1.)),
             shake_k: 24. / 0.4,
             playing_cam_offset: Vec2::new(100., 0.),
+            ball_restitution_coef: 0.15,
+            bottle_restitution_coef: 0.15,
         }
     }
 }

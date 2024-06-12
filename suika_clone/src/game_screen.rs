@@ -175,6 +175,10 @@ fn inactivate_game_screen(
 struct Bottle {
     origin: Vec2,
 }
+
+#[derive(Component, Debug)]
+struct BottleWall;
+
 #[derive(Component, Debug)]
 struct Background;
 
@@ -330,6 +334,7 @@ fn physics_pause(
 fn spawn_bottle(
     mut commands: Commands,
     assets: Res<GameAssets>,
+    config: Res<FixedConfig>,
 ) {
     // Spawn Bottle
     commands.spawn((
@@ -392,7 +397,12 @@ fn spawn_bottle(
 
         // Bottom
         b.spawn((
+            BottleWall,
             Collider::capsule(len_bottom, r_bottom),
+            Restitution {
+                coefficient: config.bottle_restitution_coef,
+                ..default()
+            },
             TransformBundle {
                 local: Transform::from_translation(bottom_c.extend(0.))
                     .with_rotation(Quat::from_rotation_z(PI/2.)),
@@ -402,7 +412,12 @@ fn spawn_bottle(
 
         // Left bottle
         b.spawn((
+            BottleWall,
             Collider::capsule(len_side, r_side),
+            Restitution {
+                coefficient: config.bottle_restitution_coef,
+                ..default()
+            },
             TransformBundle {
                 local: Transform::from_translation(left_bottle_c.extend(0.)),
                 ..default()
@@ -411,7 +426,12 @@ fn spawn_bottle(
 
         // Right bottle
         b.spawn((
+            BottleWall,
             Collider::capsule(len_side, r_side),
+            Restitution {
+                coefficient: config.bottle_restitution_coef,
+                ..default()
+            },
             TransformBundle {
                 local: Transform::from_translation(right_bottle_c.extend(0.)),
                 ..default()
@@ -1396,6 +1416,10 @@ fn spawn_ball(
                     Ball::new(level),
                     RigidBody::Dynamic,
                     Collider::circle(my_assets.get_ball_r(level)),
+                    Restitution {
+                        coefficient: config.ball_restitution_coef,
+                        ..default()
+                    },
                     ball_view,
                 ));
             },
@@ -1408,6 +1432,10 @@ fn spawn_ball(
                     RigidBody::Dynamic,
                     Collider::circle(ball_r_start),
                     BallGrowing::new(config.grow_time),
+                    Restitution {
+                        coefficient: config.ball_restitution_coef,
+                        ..default()
+                    },
                     ball_view,
                 ));
             },
