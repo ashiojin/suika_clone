@@ -143,7 +143,8 @@ fn setup_camera(
     mut commands: Commands,
 ) {
     let mut camera_bundle = Camera2dBundle::default();
-    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(1040.);
+    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(960.);
+    camera_bundle.camera.order = CAM_ORDER_TITLE;
     commands.spawn((
         camera_bundle,
     ));

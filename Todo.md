@@ -3,6 +3,7 @@
 ## Game
 
 - (ALWAYS) Refactoring!
+  - [ ] Split `src/game_screen.rs` into player/ball/bottle/view related and others.
 - [x] Remove Max Level Balls Combined.
 - [x] Scoring:
   - [x] Combine Scores.

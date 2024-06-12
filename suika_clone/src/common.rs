@@ -9,6 +9,12 @@ use bevy_pkv::PkvStore;
 
 use crate::game_ron::get_default_game_ron_name_and_asset_path;
 
+
+pub const CAM_ORDER_PLAYING: isize = 10;
+pub const CAM_ORDER_TITLE: isize = 0;
+
+
+
 #[derive(States, Default, Hash, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameState {
     #[default]
@@ -41,6 +47,7 @@ pub struct FixedConfig {
     pub area: Area,
     pub max_velocity: f32,
     pub shake_k: f32, // max move is about 0.4 * shake_k
+    pub playing_cam_offset: Vec2,
 }
 impl Default for FixedConfig {
     fn default() -> Self {
@@ -48,7 +55,8 @@ impl Default for FixedConfig {
             grow_time: 0.5,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
             max_velocity: 60. * 32. * (30./(2. + 1.)),
-            shake_k: 30. / 0.4,
+            shake_k: 24. / 0.4,
+            playing_cam_offset: Vec2::new(100., 0.),
         }
     }
 }

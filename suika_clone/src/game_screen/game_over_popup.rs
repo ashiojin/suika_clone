@@ -2,6 +2,7 @@ use crate::prelude::*;
 use bevy::prelude::*;
 
 use super::common::*;
+use super::camera::*;
 
 //
 //    +----------------+    
@@ -40,6 +41,7 @@ pub fn setup_gameover_popup(
         let score = player.score;
         commands.spawn((
             GameOverPopup,
+            PinnedToPlayingCamera(GO_POPUP_CENTER),
             ControllerGameOverPopup{
                 input_suppresser: Timer::from_seconds(1.5, TimerMode::Once)
             },

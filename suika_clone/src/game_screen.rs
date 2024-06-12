@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use crate::prelude::*;
 use bevy::{
-    prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle}
+    prelude::*, sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle},
 };
 use bevy_xpbd_2d::prelude::*;
 use itertools::Itertools;
@@ -12,6 +12,7 @@ use bevy_prng::ChaCha8Rng;
 
 mod common;
 use common::*;
+mod camera;
 mod game_over_popup;
 use game_over_popup::*;
 mod pause_popup;
@@ -34,16 +35,27 @@ impl Plugin for ScGameScreenPlugin {
         app.add_event::<PlayerInputEvent>();
         app.add_event::<BallSpawnEvent>();
 
+        // GameState :: InGame
         app.add_systems(OnEnter(GameState::InGame), (
+            camera::spawn_camera,
+            camera::update_camera
+                .after(camera::spawn_camera), // FIXME: can i put it only in Update?
             activate_game_screen,
         ));
         app.add_systems(OnExit(GameState::InGame), (
+            camera::despawn_camera,
             cleanup_ingame_entites,
             cleanup_gameover_popup,
             stop_bgm,
             inactivate_game_screen,
         ));
+        app.add_systems(Update, (
+            camera::update_camera
+                .run_if(resource_changed::<FixedConfig>),
+            camera::update_pinned_to_camera,
+        ).run_if(in_state(GameState::InGame)));
 
+        // GameScreenState :: Init
         app.add_systems(OnEnter(GameScreenState::Init), (
             spawn_background,
             spawn_bottle,
@@ -56,6 +68,7 @@ impl Plugin for ScGameScreenPlugin {
             start_playing,
         ));
 
+        // GameScreenState :: Playing
         app.add_systems(Update, (
             read_keyboard_for_player_actions,
             read_gamepad_for_player_actions,
@@ -93,7 +106,7 @@ impl Plugin for ScGameScreenPlugin {
             check_game_over,
         ).run_if(in_state(GameScreenState::Playing)));
 
-        // game over
+        // GameScreenState :: GameOver
         app.add_event::<GameOverPopupInput>();
         app.add_systems(OnEnter(GameScreenState::GameOver), (
             physics_pause,
@@ -115,13 +128,7 @@ impl Plugin for ScGameScreenPlugin {
             cleanup_ingame_entites
         ));
 
-        app.add_systems(OnEnter(GameScreenState::Restart), (
-            physics_restart,
-            cleanup_ingame_entites,
-            |mut next: ResMut<NextState<GameScreenState>>| { next.set(GameScreenState::Init); }, // FIXME: Re-design states
-        ));
-
-        // paused
+        // GameScreenState :: Paused
         app.add_event::<PausePopupInput>();
         app.add_systems(OnEnter(GameScreenState::Paused), (
             physics_pause,
@@ -142,6 +149,12 @@ impl Plugin for ScGameScreenPlugin {
             cleanup_pause_popup,
         ));
 
+        // GameScreenState :: Restart
+        app.add_systems(OnEnter(GameScreenState::Restart), (
+            physics_restart,
+            cleanup_ingame_entites,
+            |mut next: ResMut<NextState<GameScreenState>>| { next.set(GameScreenState::Init); }, // FIXME: Re-design states
+        ));
     }
 }
 
@@ -285,6 +298,7 @@ impl BallLevel {
     }
 }
 
+/// Ball Tag
 #[derive(Component, Debug, Default, PartialEq, Eq)]
 struct Ball {
     level: BallLevel,
@@ -312,6 +326,7 @@ fn physics_pause(
     physics_time.pause();
 }
 
+/// Spawn bottle at the origin (x:0,y:0)
 fn spawn_bottle(
     mut commands: Commands,
     assets: Res<GameAssets>,
@@ -405,10 +420,14 @@ fn spawn_bottle(
     });
 }
 
+/// Spawn background image at the center of the default camera position with offset.
 fn spawn_background(
     mut commands: Commands,
     assets: Res<GameAssets>,
+    config: Res<FixedConfig>,
 ) {
+    let center_xy = config.playing_cam_offset;
+    let offset = center_xy + assets.background.offset;
     // BACK
     commands.spawn((
         Background,
@@ -418,7 +437,7 @@ fn spawn_background(
                 custom_size: None,
                 ..default()
             },
-            transform: Transform::from_translation(assets.background.offset.extend(Z_BACK)),
+            transform: Transform::from_translation(offset.extend(Z_BACK)),
             ..default()
         },
     ));
@@ -1215,7 +1234,7 @@ fn update_player_view(
             // - if there already is, check its level and update it if necessary.
             // - if there is not, spawn it.
             if let Ok((fakeball_entity, FakeBall(fakeball_level))) = fakeball {
-                if *fakeball_level != player.next_ball_level { // Holding a ball cieses this.
+                if *fakeball_level != player.next_ball_level { // Holding a ball causes this.
                     // update
                     let ball_view = create_ball_view_for_fake(
                         &mut meshes, &mut materials, player.next_ball_level,
@@ -1483,7 +1502,6 @@ fn cleanup_ingame_entites(
             .despawn_recursive();
     }
 }
-
 
 
 fn start_play_bgm(
