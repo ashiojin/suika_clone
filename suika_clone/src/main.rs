@@ -54,8 +54,18 @@ const WINDOW_MAX_WIDTH: f32 = 1920.;
 const WINDOW_MAX_HEIGHT: f32 = 1080.;
 
 
-
 fn main() {
+    #[cfg(not(target_arch = "wasm32"))]
+    run_app(None);
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn start(arg: &str) {
+    run_app(Some(arg));
+}
+
+fn run_app(arg: Option<&str>) {
     #[cfg(target_family = "windows")]
     std::env::set_var("RUST_BACKTRACE", "1"); // Can't read env values when running on WSL
 
@@ -118,6 +128,11 @@ fn main() {
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
     app.insert_resource(FixedConfig::default());
     app.insert_resource(Config::default());
+
+    app.insert_resource(AppArgs {
+        force_ron_file: arg.map(|x| x.to_string()),
+    });
+
     app.init_state::<GameState>();
     app.add_systems(Startup, (
         setup_egui,

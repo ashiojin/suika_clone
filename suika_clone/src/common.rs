@@ -23,6 +23,12 @@ pub enum GameState {
     InGame,
 }
 
+#[derive(Resource, Debug, Default)]
+pub struct AppArgs {
+    pub force_ron_file: Option<String>,
+}
+
+
 #[derive(Reflect, Debug, Clone)]
 #[derive(Deserialize, Serialize)]
 pub struct Area {

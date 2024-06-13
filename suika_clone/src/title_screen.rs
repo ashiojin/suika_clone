@@ -49,6 +49,12 @@ impl Plugin for ScTitleScreenPlugin {
             ).run_if(in_state(TitleScreenState::Loading))
         );
 
+        app.add_systems(OnExit(TitleScreenState::Loading),
+            (
+                load_args,
+            )
+        );
+
         app.add_systems(OnEnter(TitleScreenState::Idle),
             (
                 spawn_title_screen,
@@ -220,6 +226,23 @@ fn spawn_title_screen(
             },
         ));
     });
+}
+
+fn load_args(
+    mut config: ResMut<Config>,
+    title_asset: Res<TitleAssets>,
+    list_ron: Res<Assets<ListRon>>,
+    args: Res<AppArgs>,
+) {
+    if let Some(ron_name) = args.force_ron_file.as_deref() {
+        let list_ron = list_ron.get(title_asset.h_list_ron.id())
+            .expect("list.ron is not loaded yet.");
+
+        if let Some(item) = list_ron.list.iter().find(|&x| x.name == ron_name) {
+            config.game_ron_name = item.name.clone();
+            config.game_ron_asset_path = item.path.clone();
+        }
+    }
 }
 
 #[derive(Event, Debug)]

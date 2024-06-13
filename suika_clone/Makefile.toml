@@ -117,7 +117,6 @@ args = [
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
 ]
 
-
 [tasks.make-index]
 command = "sed"
 env = { "DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}"]} }
@@ -129,4 +128,9 @@ args = [
 dependencies = ["copy-index"]
 
 [tasks.release-web]
-run_task = { name = ["build-release-web", "wasm-bindgen", "copy-assets-for-web", "make-index"] }
+run_task = { name = [
+    "build-release-web",
+    "wasm-bindgen",
+    "copy-assets-for-web",
+    "make-index",
+] }

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <title>suika_clone</title>
+    <meta charset="UTF-8">
 <style>
     .big {
         width: 640px;
@@ -12,19 +13,29 @@
 
 <body style="margin: 0px;">
   <script type="module">
-    import init from './[JS_FILE_NAME].js'
+    import init, { start } from './[JS_FILE_NAME].js'
 
-    function start() {
-        init().catch((error) => {
-          if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
-            throw error;
-          }
-        });
+    let wasm = init().catch((error) => {
+      if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+        throw error;
+      }
+    })
+
+    async function open() {
+        await wasm
+
+        let url = new URL(window.location.href)
+        let select = url.searchParams.get('select')
+        if (select === null) {
+            start('')
+        } else {
+            start(select)
+        }
     }
 
     let btn = document.getElementById('open')
     btn.addEventListener('click', (ev) => {
-        start()
+        open()
         btn.remove()
     })
   </script>
