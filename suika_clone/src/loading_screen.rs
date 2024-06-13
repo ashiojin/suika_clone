@@ -126,6 +126,8 @@ fn load_assets_game_assets(
     let background = BackgroundDef::create_with_loading(&from_ron.background, &asset_server);
     let ui = UiDef::create_with_loading(&from_ron.ui, &asset_server);
     let sound = SoundDef::create_with_loading(&from_ron.sounds, &asset_server);
+    let ball_physics = PhysicsDef::from_ron(&from_ron.ball_physics);
+    let bottle_physics = PhysicsDef::from_ron(&from_ron.bottle_physics);
 
     commands.insert_resource(
         GameAssets::new(
@@ -137,6 +139,8 @@ fn load_assets_game_assets(
             ui,
             asset_server.load("embedded://suika_clone/embedded_assets/fonts/x12y12pxMaruMinyaM.ttf"),
             sound,
+            ball_physics,
+            bottle_physics,
         )
     );
 }

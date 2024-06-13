@@ -92,6 +92,26 @@ pub struct SoundRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct FrictionRon {
+    pub dynamic_coef: f32,
+    pub static_coef: f32,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
+pub struct RestitutionRon {
+    pub coef: f32,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
+pub struct PhysicsRon {
+    pub friction: FrictionRon,
+    pub restitution: RestitutionRon,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 #[derive(Asset)]
 pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
@@ -101,6 +121,8 @@ pub struct GameRon {
     pub background: BackgroundRon,
     pub sounds: SoundRon,
     pub ui: UiRon,
+    pub ball_physics: PhysicsRon,
+    pub bottle_physics: PhysicsRon,
 }
 
 

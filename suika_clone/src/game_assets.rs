@@ -178,6 +178,36 @@ impl SoundDef {
     }
 }
 
+#[derive(Debug)]
+pub struct FrictionDef {
+    pub dynamic_coef: f32,
+    pub static_coef: f32,
+}
+
+#[derive(Debug)]
+pub struct RestitutionDef {
+    pub coef: f32,
+}
+
+#[derive(Debug)]
+pub struct PhysicsDef {
+    pub friction: FrictionDef,
+    pub restitution: RestitutionDef,
+}
+impl PhysicsDef {
+    pub fn from_ron(ron: &PhysicsRon) -> Self {
+        Self {
+            friction: FrictionDef {
+                dynamic_coef: ron.friction.dynamic_coef,
+                static_coef: ron.friction.static_coef
+            },
+            restitution: RestitutionDef {
+                coef: ron.restitution.coef
+            },
+        }
+    }
+}
+
 
 #[derive(Resource, Debug)]
 pub struct GameAssets {
@@ -192,6 +222,9 @@ pub struct GameAssets {
     pub ui: UiDef,
 
     pub sound: SoundDef,
+
+    pub ball_physics: PhysicsDef,
+    pub bottle_physics: PhysicsDef,
 }
 impl Loadable for GameAssets {
     fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
@@ -225,6 +258,10 @@ impl GameAssets {
         ui: UiDef,
         h_font: Handle<Font>,
         sound: SoundDef,
+
+        ball_physics: PhysicsDef,
+        bottle_physics: PhysicsDef,
+
     ) -> Self {
         Self {
             ball_level_settings,
@@ -235,6 +272,8 @@ impl GameAssets {
             background,
             ui,
             sound,
+            ball_physics,
+            bottle_physics,
         }
     }
     pub fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {

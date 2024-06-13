@@ -144,4 +144,22 @@
         se_combine_asset_path: "embedded://suika_clone/embedded_assets/sounds/se_combine.ogg",
         se_combine_scale: 1.0,
     ),
+    ball_physics: (
+        friction: (
+            dynamic_coef: 0.1,
+            static_coef: 0.2,
+        ),
+        restitution: (
+            coef: 0.05,
+        ),
+    ),
+    bottle_physics: (
+        friction: (
+            dynamic_coef: 0.1,
+            static_coef: 0.2,
+        ),
+        restitution: (
+            coef: 0.05,
+        ),
+    ),
 )

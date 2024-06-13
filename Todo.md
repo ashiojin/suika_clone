@@ -4,6 +4,8 @@
 
 - (ALWAYS) Refactoring!
   - [ ] Split `src/game_screen.rs` into player/ball/bottle/view related and others.
+  - [ ] Re-design States
+    - See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
 - [x] Remove Max Level Balls Combined.
 - [x] Scoring:
   - [x] Combine Scores.
@@ -51,6 +53,10 @@
   - [x] Restart
 - [ ] Adjust game parameter/physics behavior
   - [ ] Spawned ball has too much impluse to bounce off the others.
+    - [x] Add methods to adjust Friction and Restitution of balls/bottle.
+    - [ ] Add methods to limit velocity that is too large for a ball
+      - Idea: Air friction
+    - [ ] Adjust parameters
   - [x] Player should be able to get more higher y-position.
   - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
 - [x] Gamepad supports
@@ -59,8 +65,6 @@
 - [x] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
-- [ ] Re-design States
-  - See: https://github.com/MiniaczQ/bevy-design-patterns/tree/main/patterns/
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
 
 

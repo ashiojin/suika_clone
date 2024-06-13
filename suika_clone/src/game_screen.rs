@@ -334,7 +334,6 @@ fn physics_pause(
 fn spawn_bottle(
     mut commands: Commands,
     assets: Res<GameAssets>,
-    config: Res<FixedConfig>,
 ) {
     // Spawn Bottle
     commands.spawn((
@@ -395,14 +394,23 @@ fn spawn_bottle(
         let len_side = BOTTLE_SIDE_SIZE.y - BOTTLE_SIDE_SIZE.x;
         let r_side = BOTTLE_SIDE_SIZE.x/2.;
 
+        let physics_param = (
+            Restitution {
+                coefficient: assets.bottle_physics.restitution.coef,
+                ..default()
+            },
+            Friction {
+                dynamic_coefficient: assets.bottle_physics.friction.dynamic_coef,
+                static_coefficient: assets.bottle_physics.friction.static_coef,
+                ..default()
+            },
+        );
+
         // Bottom
         b.spawn((
             BottleWall,
             Collider::capsule(len_bottom, r_bottom),
-            Restitution {
-                coefficient: config.bottle_restitution_coef,
-                ..default()
-            },
+            physics_param,
             TransformBundle {
                 local: Transform::from_translation(bottom_c.extend(0.))
                     .with_rotation(Quat::from_rotation_z(PI/2.)),
@@ -414,10 +422,7 @@ fn spawn_bottle(
         b.spawn((
             BottleWall,
             Collider::capsule(len_side, r_side),
-            Restitution {
-                coefficient: config.bottle_restitution_coef,
-                ..default()
-            },
+            physics_param,
             TransformBundle {
                 local: Transform::from_translation(left_bottle_c.extend(0.)),
                 ..default()
@@ -428,10 +433,7 @@ fn spawn_bottle(
         b.spawn((
             BottleWall,
             Collider::capsule(len_side, r_side),
-            Restitution {
-                coefficient: config.bottle_restitution_coef,
-                ..default()
-            },
+            physics_param,
             TransformBundle {
                 local: Transform::from_translation(right_bottle_c.extend(0.)),
                 ..default()
@@ -1407,6 +1409,17 @@ fn spawn_ball(
 ) {
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;
+        let physics_param = (
+            Restitution {
+                coefficient: my_assets.ball_physics.restitution.coef,
+                ..default()
+            },
+            Friction {
+                dynamic_coefficient: my_assets.ball_physics.friction.dynamic_coef,
+                static_coefficient: my_assets.ball_physics.friction.static_coef,
+                ..default()
+            },
+        );
         match *ev {
             Drop(pos, level) => {
                 let ball_view = create_ball_view(&mut meshes, &mut materials,
@@ -1416,10 +1429,7 @@ fn spawn_ball(
                     Ball::new(level),
                     RigidBody::Dynamic,
                     Collider::circle(my_assets.get_ball_r(level)),
-                    Restitution {
-                        coefficient: config.ball_restitution_coef,
-                        ..default()
-                    },
+                    physics_param,
                     ball_view,
                 ));
             },
@@ -1432,10 +1442,7 @@ fn spawn_ball(
                     RigidBody::Dynamic,
                     Collider::circle(ball_r_start),
                     BallGrowing::new(config.grow_time),
-                    Restitution {
-                        coefficient: config.ball_restitution_coef,
-                        ..default()
-                    },
+                    physics_param,
                     ball_view,
                 ));
             },

@@ -58,6 +58,8 @@ impl Plugin for ScDebugPlugin {
             app.add_console_command::<MaxVelCommand, _>(command_max_vel);
             app.add_console_command::<DispAreaCommand, _>(command_disp_area);
             app.add_console_command::<RestitutionCommand, _>(command_restitution);
+            app.add_console_command::<FrictionDynamicCommand, _>(command_friction_dynamic);
+            app.add_console_command::<FrictionStaticCommand, _>(command_friction_static);
 
             app.insert_resource(DebugConfig {
                 display_area: true,
@@ -154,7 +156,6 @@ fn display_area(
         Color::RED);
 }
 
-
 #[derive(Parser, ConsoleCommand, Default)]
 #[command(name = "restitution")]
 struct RestitutionCommand {
@@ -163,14 +164,66 @@ struct RestitutionCommand {
 fn command_restitution(
     mut log: ConsoleCommand<RestitutionCommand>,
     mut q_col: Query<&mut Restitution, With<Collider>>,
-    mut fconfig: ResMut<FixedConfig>,
+    mut asset: Option<ResMut<GameAssets>>,
 ) {
     if let Some(Ok(RestitutionCommand { coefficient })) = log.take() {
-        fconfig.ball_restitution_coef = coefficient;
-        fconfig.bottle_restitution_coef = coefficient;
-        for mut rest in q_col.iter_mut() {
-            rest.coefficient = coefficient;
+        if let Some(assets) = asset.as_deref_mut() {
+            assets.ball_physics.restitution.coef = coefficient;
+            assets.bottle_physics.restitution.coef = coefficient;
+            for mut rest in q_col.iter_mut() {
+                rest.coefficient = coefficient;
+            }
+            reply!(log, "set {} to {} colliders", coefficient, q_col.iter().len());
+        } else {
+            reply!(log, "ERROR: This command is available only during playing a game");
         }
-        reply!(log, "set {} to {} colliders", coefficient, q_col.iter().len());
+    }
+}
+
+#[derive(Parser, ConsoleCommand, Default)]
+#[command(name = "friction_dynamic")]
+struct FrictionDynamicCommand {
+    coefficient: f32,
+}
+fn command_friction_dynamic(
+    mut log: ConsoleCommand<FrictionDynamicCommand>,
+    mut q_col: Query<&mut Friction, With<Collider>>,
+    mut asset: Option<ResMut<GameAssets>>,
+) {
+    if let Some(Ok(FrictionDynamicCommand { coefficient })) = log.take() {
+        if let Some(assets) = asset.as_deref_mut() {
+            assets.ball_physics.friction.dynamic_coef = coefficient;
+            assets.bottle_physics.friction.dynamic_coef = coefficient;
+            for mut rest in q_col.iter_mut() {
+                rest.dynamic_coefficient = coefficient;
+            }
+            reply!(log, "set {} to {} colliders", coefficient, q_col.iter().len());
+        } else {
+            reply!(log, "ERROR: This command is available only during playing a game");
+        }
+    }
+}
+
+#[derive(Parser, ConsoleCommand, Default)]
+#[command(name = "friction_static")]
+struct FrictionStaticCommand {
+    coefficient: f32,
+}
+fn command_friction_static(
+    mut log: ConsoleCommand<FrictionDynamicCommand>,
+    mut q_col: Query<&mut Friction, With<Collider>>,
+    mut asset: Option<ResMut<GameAssets>>,
+) {
+    if let Some(Ok(FrictionDynamicCommand { coefficient })) = log.take() {
+        if let Some(assets) = asset.as_deref_mut() {
+            assets.ball_physics.friction.static_coef = coefficient;
+            assets.bottle_physics.friction.static_coef = coefficient;
+            for mut rest in q_col.iter_mut() {
+                rest.static_coefficient = coefficient;
+            }
+            reply!(log, "set {} to {} colliders", coefficient, q_col.iter().len());
+        } else {
+            reply!(log, "ERROR: This command is available only during playing a game");
+        }
     }
 }
