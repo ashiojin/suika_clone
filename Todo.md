@@ -60,7 +60,11 @@
   - [x] Player should be able to get more higher y-position.
   - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
 - [x] Gamepad supports
+- [ ] Move camera to a ball that is over the area at game over.
 - [ ] Set config from program args.
+- [ ] Ball Samples View
+- [ ] Refine loading screen
+- [ ] Refine the game over popup to show how the player played.
 - [x] Save config.
 - [x] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and
