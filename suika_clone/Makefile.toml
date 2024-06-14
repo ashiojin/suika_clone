@@ -139,3 +139,8 @@ run_task = { name = [
 command = "cargo"
 args = ["license"]
 install_crate = "cargo-license"
+
+[tasks.bundle-licenses]
+command = "cargo"
+args = ["bundle-licenses", "--format", "yaml", "--output", "${CARGO_MAKE_WORKING_DIRECTORY}/licenses.yml"]
+install_crate = "cargo-bundle-licenses"
