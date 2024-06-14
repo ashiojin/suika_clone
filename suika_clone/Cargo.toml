@@ -2,6 +2,8 @@
 name = "suika_clone"
 version = "0.1.0"
 edition = "2021"
+authors = ["MORI, Yuji <ashiojin@gmail.com>"]
+license = "MIT"
 
 [dependencies]
 bevy = { version = "0.13", features = [] }

@@ -134,3 +134,8 @@ run_task = { name = [
     "copy-assets-for-web",
     "make-index",
 ] }
+
+[tasks.license]
+command = "cargo"
+args = ["license"]
+install_crate = "cargo-license"

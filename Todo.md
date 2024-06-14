@@ -63,7 +63,7 @@
 - [x] Move camera to a ball that is over the area at game over.
 - [x] Fix issue: It can make "totem" by dropping balls in the same position.
 - [x] Set config from program args( `ron_name` for web build )
-- [ ] Show application version on screen
+- [x] Show application version on screen
 - [ ] Ball Samples View
 - [ ] Refine the game over popup to show how the player played.
 - [ ] Refine title screen

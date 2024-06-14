@@ -12,15 +12,18 @@ use super::camera::*;
 //    |  Score: XXXXXX |    
 //    |  press space.. |    
 //    |  press esc..   |    
-//    |                |    
+//    |       ver:xx   |    
+//    |       mode:xx  |    
 //    +----------------+    
 //
-const GO_POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
-const GO_POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
-const GO_POPUP_STR_1_Y: f32 = 0. + 100.;
-const GO_POPUP_STR_2_Y: f32 = 0. -  50.;
-const GO_POPUP_STR_3_Y: f32 = 0. - 100.;
-const GO_POPUP_STR_4_Y: f32 = 0. - 150.;
+const POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
+const POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
+const POPUP_STR_1_Y: f32 = 0. + 100.;
+const POPUP_STR_2_Y: f32 = POPUP_STR_1_Y - 60. - 8.;
+const POPUP_STR_3_Y: f32 = POPUP_STR_2_Y - 48. - 16.;
+const POPUP_STR_4_Y: f32 = POPUP_STR_3_Y - 36. - 8.;
+
+const POPUP_STR_5_1_Y: f32 = POPUP_STR_4_Y - 30.;
 
 #[derive(Component, Debug)]
 pub struct GameOverPopup;
@@ -36,23 +39,24 @@ pub fn setup_gameover_popup(
     mut commands: Commands,
     q_player: Query<&Player>,
     my_assets: Res<GameAssets>,
+    config: Res<Config>,
 ) {
     if let Ok(player) = q_player.get_single() {
         let score = player.score;
         commands.spawn((
             GameOverPopup,
-            PinnedToPlayingCamera(GO_POPUP_CENTER),
+            PinnedToPlayingCamera(POPUP_CENTER),
             ControllerGameOverPopup{
                 input_suppresser: Timer::from_seconds(1.5, TimerMode::Once)
             },
             SpriteBundle {
                 texture: my_assets.ui.popup.h_bg_image.clone(),
                 sprite: Sprite {
-                    custom_size: Some(GO_POPUP_SIZE),
+                    custom_size: Some(POPUP_SIZE),
                     ..default()
                 },
                 transform: Transform::from_translation(
-                               GO_POPUP_CENTER.extend(Z_POPUP)),
+                               POPUP_CENTER.extend(Z_POPUP)),
                 ..default()
             },
             ImageScaleMode::Sliced(TextureSlicer {
@@ -71,7 +75,7 @@ pub fn setup_gameover_popup(
                 Text2dBundle {
                     text: Text::from_section("GAME OVER", text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_1_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_1_Y).extend(Z_POPUP + 0.01)
                     ),
                     text_anchor: bevy::sprite::Anchor::Center,
                     ..default()
@@ -79,7 +83,7 @@ pub fn setup_gameover_popup(
             ));
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: 50.0,
+                font_size: 48.0,
                 color: my_assets.ui.popup.font_color,
             };
             b.spawn((
@@ -87,7 +91,7 @@ pub fn setup_gameover_popup(
                     text: Text::from_section(
                         format!("Score:{:>6}", score), text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
                     ),
                     text_anchor: bevy::sprite::Anchor::Center,
                     ..default()
@@ -95,7 +99,7 @@ pub fn setup_gameover_popup(
             ));
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: 30.0,
+                font_size: 36.0,
                 color: my_assets.ui.popup.font_color_sub,
             };
             b.spawn((
@@ -104,7 +108,7 @@ pub fn setup_gameover_popup(
                     text: Text::from_section(
                         format!("Press [{}] to restart", GpKbInput::Start.get_str()), text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
                     ),
                     visibility: Visibility::Hidden,
                     text_anchor: bevy::sprite::Anchor::Center,
@@ -113,7 +117,7 @@ pub fn setup_gameover_popup(
             ));
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: 30.0,
+                font_size: 36.0,
                 color: my_assets.ui.popup.font_color_sub,
             };
             b.spawn((
@@ -122,7 +126,25 @@ pub fn setup_gameover_popup(
                     text: Text::from_section(
                         format!("Press [{}] to back to title.", GpKbInput::Select.get_str()), text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., GO_POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
+                    ),
+                    visibility: Visibility::Hidden,
+                    text_anchor: bevy::sprite::Anchor::Center,
+                    ..default()
+                },
+            ));
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: 12.0,
+                color: my_assets.ui.popup.font_color_sub,
+            };
+            b.spawn((
+                GameOverPopupMessageDelay,
+                Text2dBundle {
+                    text: Text::from_section(
+                        format!("v{}, mode:{}", option_env!("CARGO_PKG_VERSION").unwrap_or("-"), config.game_ron_name), text_style),
+                    transform: Transform::from_translation(
+                        Vec2::new(0., POPUP_STR_5_1_Y).extend(Z_POPUP + 0.01)
                     ),
                     visibility: Visibility::Hidden,
                     text_anchor: bevy::sprite::Anchor::Center,

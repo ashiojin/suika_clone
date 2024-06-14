@@ -141,7 +141,7 @@ fn spawn_loading_screen(
     mut commands: Commands,
 ) {
     let text_style = TextStyle {
-        font_size: 30.,
+        font_size: 36.,
         ..default()
     };
     commands.spawn((
@@ -210,7 +210,7 @@ fn spawn_title_screen(
     )).with_children(|b| {
         let text_style = TextStyle {
             font: asset.h_font.clone(),
-            font_size: 30.,
+            font_size: 36.,
             color: Color::WHITE,
         };
         b.spawn((
@@ -221,6 +221,23 @@ fn spawn_title_screen(
                 transform:
                     Transform::from_translation(
                         Vec2::new(0., -30.).extend(0.1)
+                    ),
+                ..default()
+            },
+        ));
+        let text_style = TextStyle {
+            font: asset.h_font.clone(),
+            font_size: 12.,
+            color: Color::WHITE,
+        };
+        b.spawn((
+            Text2dBundle {
+                text: Text::from_section(
+                          format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("-")), text_style),
+
+                transform:
+                    Transform::from_translation(
+                        Vec2::new(0., -60.).extend(0.1)
                     ),
                 ..default()
             },

@@ -14,7 +14,6 @@ pub const CAM_ORDER_PLAYING: isize = 10;
 pub const CAM_ORDER_TITLE: isize = 0;
 
 
-
 #[derive(States, Default, Hash, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameState {
     #[default]
