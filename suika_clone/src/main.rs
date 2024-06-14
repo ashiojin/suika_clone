@@ -46,12 +46,6 @@ use crate::embedded_assets::assets::ScEmbeddedAssetsPlugin;
 
 // Window Settings
 const TITLE: &str = "Suikx clone";
-const LOGICAL_WIDTH: f32 = 1440.;
-const LOGICAL_HEIGHT: f32 = 1080. - 120./* for browser ui spaces*/;
-const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH / 2.;
-const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT / 2.;
-const WINDOW_MAX_WIDTH: f32 = 1920.;
-const WINDOW_MAX_HEIGHT: f32 = 1080.;
 
 
 fn main() {
@@ -158,7 +152,7 @@ fn setup_camera(
     mut commands: Commands,
 ) {
     let mut camera_bundle = Camera2dBundle::default();
-    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(960.);
+    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(LOGICAL_HEIGHT);
     camera_bundle.camera.order = CAM_ORDER_TITLE;
     commands.spawn((
         camera_bundle,

@@ -48,11 +48,11 @@
         speed: 4.0,
     ),
     bottle: (
-        fg_image_asset_path: "images/kao/kao_bottle_fg.png",
-        bg_image_asset_path: "images/kao/kao_bottle_bg.png",
+        fg_image_asset_path: "images/bottle_fg_toriaezu.png",
+        bg_image_asset_path: "images/bottle_bg_toriaezu.png",
     ),
     background: (
-        bg_image_asset_path: "images/bg_sample_1280x1024.png",
+        bg_image_asset_path: "images/bg_toriaezu_1280x840.png",
         offset: (0.0, 0.0),
     ),
     ui: (

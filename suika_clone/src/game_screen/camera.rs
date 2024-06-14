@@ -57,7 +57,7 @@ pub fn spawn_camera(
     config: Res<FixedConfig>,
 ) {
     let mut camera_bundle = Camera2dBundle::default();
-    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(960.);
+    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(LOGICAL_HEIGHT);
     camera_bundle.camera.order = CAM_ORDER_PLAYING;
     camera_bundle.transform.translation.x = config.playing_cam_offset.x;
     camera_bundle.transform.translation.y = config.playing_cam_offset.y;

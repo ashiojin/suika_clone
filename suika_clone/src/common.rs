@@ -9,6 +9,12 @@ use bevy_pkv::PkvStore;
 
 use crate::game_ron::get_default_game_ron_name_and_asset_path;
 
+pub const LOGICAL_WIDTH: f32 = 1280.;
+pub const LOGICAL_HEIGHT: f32 = 840.;
+pub const WINDOW_MIN_WIDTH: f32 = LOGICAL_WIDTH / 2.;
+pub const WINDOW_MIN_HEIGHT: f32 = LOGICAL_HEIGHT / 2.;
+pub const WINDOW_MAX_WIDTH: f32 = 1920.;
+pub const WINDOW_MAX_HEIGHT: f32 = 1080.;
 
 pub const CAM_ORDER_PLAYING: isize = 10;
 pub const CAM_ORDER_TITLE: isize = 0;
