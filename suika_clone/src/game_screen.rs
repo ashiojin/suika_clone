@@ -17,6 +17,7 @@ mod game_over_popup;
 use game_over_popup::*;
 mod pause_popup;
 use pause_popup::*;
+use rand_core::RngCore;
 
 pub struct ScGameScreenPlugin;
 
@@ -895,7 +896,11 @@ fn action_player(
                         let pos = trans.translation.xy();
                         let lv = player.next_ball_level;
 
-                        ev_ball_spawn.send(BallSpawnEvent::Drop(pos, lv));
+                        // Dropping balls in the same position makes them a "totem".
+                        // Therefore, we add a small random value to the drop position x.
+                        let jitter = -0.5 + rng.next_u32() as f32 / std::u32::MAX as f32;
+
+                        ev_ball_spawn.send(BallSpawnEvent::Drop(pos + Vec2::X * jitter, lv));
 
                         player.set_next_ball_level_from_rng(&mut rng);
                         player.can_drop = false;
