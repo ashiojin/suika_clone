@@ -76,7 +76,7 @@ fn run_app(arg: Option<&str>) {
 
         #[cfg(target_arch = "wasm32")]
         wasm::HttpWithVersionQueryStringWasmAssetReaderPlugin::new(
-            env!("ASSETS_DIR_HASH")), // before DefaultPlugins
+            option_env!("ASSETS_DIR_HASH").unwrap_or("---")), // before DefaultPlugins
 
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
