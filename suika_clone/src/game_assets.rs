@@ -246,7 +246,28 @@ impl Loadable for GameAssets {
         v
     }
 }
+
 pub const BALL_LEVEL_MIN: usize = 1;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BallLevel(pub usize);
+
+impl Default for BallLevel {
+    fn default() -> Self {
+        Self(BALL_LEVEL_MIN)
+    }
+}
+impl BallLevel {
+    pub const fn new(lv: usize) -> Self {
+        assert!(lv >= BALL_LEVEL_MIN);
+        Self(lv)
+    }
+    pub fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
+        Self::new(
+            (rnd as usize % (max.0-min.0+1)) + min.0
+        )
+    }
+}
+
 impl GameAssets {
     #[allow(clippy::too_many_arguments)] // FIXME: nicer api (take extra care of ball_level_settings)
     pub fn new(

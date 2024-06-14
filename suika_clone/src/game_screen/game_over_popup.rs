@@ -133,6 +133,63 @@ pub fn setup_gameover_popup(
     }
 }
 
+fn offset_to_go_to_inside(pos_cur: f32, half_w: f32, ball_pos: f32, ball_r: f32) -> f32 {
+    if pos_cur + half_w < ball_pos + ball_r {
+        pos_cur + (ball_pos + ball_r) - (pos_cur + half_w)
+    } else if pos_cur - half_w > ball_pos - ball_r {
+        pos_cur + (ball_pos - ball_r) - (pos_cur - half_w)
+    } else {
+        pos_cur
+    }
+}
+
+const MARGIN_CAM_INSIDE: f32 = 30.;
+pub fn move_camera_to_ball_protruded(
+    mut commands: Commands,
+    q_protruded: Query<(&Transform, &Ball), With<AreaProtruded>>,
+    q_cam: Query<(Entity, &Transform), With<PlayCamera>>,
+    window: Query<&Window>,
+    asset: Res<GameAssets>,
+) {
+    let window = window.get_single()
+        .expect("many window?");
+    if let Ok((cam_entity, cam_trans)) = q_cam.get_single() {
+        if let Ok((ball_trans, ball)) = q_protruded.get_single() {
+            let ball_r = asset.get_ball_r(*ball.get_level());
+
+            let x = offset_to_go_to_inside(
+                cam_trans.translation.x,
+                window.resolution.width() /2. - MARGIN_CAM_INSIDE,
+                ball_trans.translation.x,
+                ball_r,
+            );
+            let y = offset_to_go_to_inside(
+                cam_trans.translation.y,
+                window.resolution.height() /2. - MARGIN_CAM_INSIDE,
+                ball_trans.translation.y,
+                ball_r,
+            );
+
+            commands.entity(cam_entity)
+                .insert(CameraMoving::move_to(Vec2::new(x, y), 1.0));
+
+        } else {
+            warn!("a ball has AreaProtruded is not found or is duplicated");
+        }
+    }
+}
+
+pub fn move_camera_to_default(
+    mut commands: Commands,
+    q_cam: Query<Entity, With<PlayCamera>>,
+) {
+    if let Ok(cam_entity) = q_cam.get_single() {
+        commands.entity(cam_entity)
+            .insert(CameraMoving::back_to_default_immediately());
+    }
+}
+
+
 #[allow(clippy::complexity)]
 pub fn cleanup_gameover_popup(
     mut commands: Commands,

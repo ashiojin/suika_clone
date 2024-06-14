@@ -51,8 +51,7 @@ impl Plugin for ScGameScreenPlugin {
             inactivate_game_screen,
         ));
         app.add_systems(Update, (
-            camera::update_camera
-                .run_if(resource_changed::<FixedConfig>),
+            camera::update_camera,
             camera::update_pinned_to_camera,
         ).run_if(in_state(GameState::InGame)));
 
@@ -112,6 +111,7 @@ impl Plugin for ScGameScreenPlugin {
         app.add_systems(OnEnter(GameScreenState::GameOver), (
             physics_pause,
             setup_gameover_popup,
+            move_camera_to_ball_protruded,
         ));
 
         app.add_systems(Update, (
@@ -126,7 +126,8 @@ impl Plugin for ScGameScreenPlugin {
         app.add_systems(OnExit(GameScreenState::GameOver), (
             physics_restart,
             cleanup_gameover_popup,
-            cleanup_ingame_entites
+            cleanup_ingame_entites,
+            move_camera_to_default,
         ));
 
         // GameScreenState :: Paused
@@ -282,41 +283,6 @@ const MANUAL_VIEW_CENTER: Vec2 =
 
 
 
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BallLevel(pub usize);
-
-impl Default for BallLevel {
-    fn default() -> Self {
-        Self(BALL_LEVEL_MIN)
-    }
-}
-impl BallLevel {
-    pub const fn new(lv: usize) -> Self {
-        assert!(lv >= BALL_LEVEL_MIN);
-        Self(lv)
-    }
-    pub fn from_rand_u32(rnd: u32, min: BallLevel, max: BallLevel) -> Self {
-        Self::new(
-            (rnd as usize % (max.0-min.0+1)) + min.0
-        )
-    }
-}
-
-/// Ball Tag
-#[derive(Component, Debug, Default, PartialEq, Eq)]
-struct Ball {
-    level: BallLevel,
-}
-
-impl Ball {
-    fn new(level: BallLevel) -> Self {
-        Self { level }
-    }
-    fn get_level(&self) -> &BallLevel {
-        &self.level
-    }
-}
 
 
 fn physics_restart(
@@ -571,12 +537,13 @@ fn score_ball_events(
 }
 
 fn check_game_over(
-    q_balls: Query<&Transform, With<Ball>>,
+    mut commands: Commands,
     mut next_state: ResMut<NextState<GameScreenState>>,
+    q_balls: Query<(Entity, &Transform), With<Ball>>,
     config: Res<FixedConfig>,
 ) {
     let Area { min_x, max_x, min_y, max_y } = config.area;
-    if let Some(ball) = q_balls.iter().find(|t| {
+    if let Some((entity, ball)) = q_balls.iter().find(|(_, t)| {
         let t = t.translation;
         let x = t.x;
         let y = t.y;
@@ -584,6 +551,8 @@ fn check_game_over(
             !(min_y..=max_y).contains(&y)
     }) {
         info!("Game over: {:?} / {:?}", ball, config.area);
+        commands.entity(entity)
+            .insert(AreaProtruded);
         next_state.set(GameScreenState::GameOver);
     }
 }

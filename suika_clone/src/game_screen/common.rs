@@ -62,3 +62,22 @@ impl Player {
         self.can_drop
     }
 }
+
+
+/// Ball Tag
+#[derive(Component, Debug, Default, PartialEq, Eq)]
+pub struct Ball {
+    pub level: BallLevel,
+}
+
+impl Ball {
+    pub fn new(level: BallLevel) -> Self {
+        Self { level }
+    }
+    pub fn get_level(&self) -> &BallLevel {
+        &self.level
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct AreaProtruded;

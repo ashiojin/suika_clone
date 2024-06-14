@@ -42,9 +42,9 @@ impl Area {
         Self { min_x, max_x, min_y, max_y, }
     }
 }
-const AREA_X_MIN: f32 = -500.0;
-const AREA_X_MAX: f32 =  500.0;
-const AREA_Y_MIN: f32 = -500.0;
+const AREA_X_MIN: f32 = -700.0;
+const AREA_X_MAX: f32 =  700.0;
+const AREA_Y_MIN: f32 = -600.0;
 const AREA_Y_MAX: f32 =  500.0 + 9999.0;
 
 #[derive(Resource, Debug, Clone)]

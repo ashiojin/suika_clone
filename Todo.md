@@ -60,7 +60,7 @@
   - [x] Player should be able to get more higher y-position.
   - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
 - [x] Gamepad supports
-- [ ] Move camera to a ball that is over the area at game over.
+- [x] Move camera to a ball that is over the area at game over.
 - [x] Fix issue: It can make "totem" by dropping balls in the same position.
 - [x] Set config from program args( `ron_name` for web build )
 - [ ] Show application version on screen
@@ -69,6 +69,8 @@
 - [ ] Refine title screen
   - [ ] Show credits (on config popup?). Then link to their websites using [Hyperlink](https://docs.rs/egui/latest/egui/widgets/struct.Hyperlink.html).
 - [ ] Refine loading screen
+- [ ] Effect
+  - [ ] Combine balls (max or not)
 - [x] Save config.
 - [x] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and
