@@ -240,7 +240,7 @@ fn spawn_title_screen(
         ));
         let text_style = TextStyle {
             font: asset.h_font.clone(),
-            font_size: 12.,
+            font_size: 24.,
             color: Color::WHITE,
         };
         b.spawn((

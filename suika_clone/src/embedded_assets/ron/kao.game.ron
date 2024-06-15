@@ -80,7 +80,7 @@
             blue: 0.9,
             alpha: 0.7,
         ),
-        speed: 4.0,
+        speed: 6.0,
     ),
     bottle: (
         fg_image_asset_path: "embedded://suika_clone/embedded_assets/images/bottle_fg_toriaezu.png",
@@ -97,7 +97,7 @@
     ),
     sounds: (
         bgm_asset_path: "embedded://suika_clone/embedded_assets/sounds/bgm.ogg",
-        bgm_scale: 0.15,
+        bgm_scale: 0.50,
         se_combine_asset_path: "embedded://suika_clone/embedded_assets/sounds/se_combine.ogg",
         se_combine_scale: 1.0,
     ),

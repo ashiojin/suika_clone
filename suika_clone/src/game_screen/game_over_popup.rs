@@ -21,10 +21,10 @@ const POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
 const POPUP_STR_LABEL: f32 = 0. + 100.;
 const POPUP_STR_SCORE_Y: f32 = POPUP_STR_LABEL - 60. - 8.;
 const POPUP_STR_HIGH_SCORE_Y: f32 = POPUP_STR_SCORE_Y - 48. - 8.;
-const POPUP_STR_RESTART: f32 = POPUP_STR_HIGH_SCORE_Y - 12. - 32.;
+const POPUP_STR_RESTART: f32 = POPUP_STR_HIGH_SCORE_Y - 24. - 32.;
 const POPUP_STR_GOTO_TITLE: f32 = POPUP_STR_RESTART - 36. - 8.;
 
-const POPUP_STR_5_1_Y: f32 = POPUP_STR_GOTO_TITLE - 30.;
+const POPUP_STR_5_1_Y: f32 = POPUP_STR_GOTO_TITLE - 36. - 24.;
 
 #[derive(Component, Debug)]
 pub struct GameOverPopup;
@@ -118,7 +118,7 @@ pub fn setup_gameover_popup(
             ));
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: 12.0,
+                font_size: 24.0,
                 color: my_assets.ui.popup.font_color,
             };
             b.spawn((
@@ -170,7 +170,7 @@ pub fn setup_gameover_popup(
             ));
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
-                font_size: 12.0,
+                font_size: 24.0,
                 color: my_assets.ui.popup.font_color_sub,
             };
             b.spawn((
