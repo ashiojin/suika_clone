@@ -1074,6 +1074,12 @@ fn spawn_manual_view(
                     0.,
                     -font_weight - inner_margin,
                 );
+            let pos4 =
+                pos3 +
+                Vec2::new(
+                    0.,
+                    -font_weight - inner_margin,
+                );
 
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
@@ -1100,10 +1106,21 @@ fn spawn_manual_view(
                 ManualViewText,
                 Text2dBundle {
                     text: Text::from_sections([
+                        TextSection::new("Drop", text_style.clone()),
+                        TextSection::new(format!("[{}]", GpKbInput::Main.get_str()), text_style_p.clone()),
+                    ]),
+                    transform: Transform::from_translation(pos2.extend(0.01)),
+                    ..default()
+                },
+            ));
+            b.spawn((
+                ManualViewText,
+                Text2dBundle {
+                    text: Text::from_sections([
                         TextSection::new("Shake", text_style.clone()),
                         TextSection::new(format!("[{}]", GpKbInput::Sub2.get_str()), text_style_p.clone()),
                     ]),
-                    transform: Transform::from_translation(pos2.extend(0.01)),
+                    transform: Transform::from_translation(pos3.extend(0.01)),
                     ..default()
                 },
             ));
@@ -1114,7 +1131,7 @@ fn spawn_manual_view(
                         TextSection::new("Pause", text_style.clone()),
                         TextSection::new(format!("[{}]", GpKbInput::Start.get_str()), text_style_p.clone()),
                     ]),
-                    transform: Transform::from_translation(pos3.extend(0.01)),
+                    transform: Transform::from_translation(pos4.extend(0.01)),
                     ..default()
                 },
             ));

@@ -141,7 +141,7 @@ pub fn setup_gameover_popup(
                 GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
-                        format!("Press [{}] to restart", GpKbInput::Start.get_str()), text_style),
+                        format!("Press [{}] to restart.", GpKbInput::Start.get_str()), text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., POPUP_STR_RESTART).extend(Z_POPUP + 0.01)
                     ),
@@ -174,14 +174,12 @@ pub fn setup_gameover_popup(
                 color: my_assets.ui.popup.font_color_sub,
             };
             b.spawn((
-                GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
                         format!("v{}, mode:{}", game_cnd.app_ver, game_cnd.mode), text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., POPUP_STR_5_1_Y).extend(Z_POPUP + 0.01)
                     ),
-                    visibility: Visibility::Hidden,
                     text_anchor: bevy::sprite::Anchor::Center,
                     ..default()
                 },
