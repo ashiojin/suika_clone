@@ -179,11 +179,13 @@ impl GameCond {
 #[derive(Reflect)]
 #[derive(Deserialize, Serialize)]
 pub struct Scores {
-    scores: HashMap<GameCond, Vec<Score>>
+    /// app_ver -> mode -> scores
+    scores: HashMap<String, HashMap<String, Vec<Score>>>,
 }
 impl Scores {
     pub fn get(&self, key: &GameCond) -> Option<&Vec<Score>> {
-        self.scores.get(key)
+        self.scores.get(key.app_ver.as_str())
+            .and_then(|m| m.get(key.mode.as_str()))
     }
 
     pub fn get_highest(&self, key: &GameCond) -> Option<&Score> {
@@ -191,14 +193,20 @@ impl Scores {
     }
 
     pub fn push(&mut self, key: &GameCond, score: Score) {
-        if let Some(scores) = self.scores.get_mut(key) {
-            scores.push(score);
-            scores.sort_by(|l, r| l.cmp(r).reverse());
-            if scores.len() > SCORE_MAX_ENTRY_PER_SAME_COND {
-                scores.truncate(SCORE_MAX_ENTRY_PER_SAME_COND);
+        if let Some(per_mode) = self.scores.get_mut(&key.app_ver) {
+            if let Some(scores) = per_mode.get_mut(&key.mode) {
+                scores.push(score);
+                scores.sort_by(|l, r| l.cmp(r).reverse());
+                if scores.len() > SCORE_MAX_ENTRY_PER_SAME_COND {
+                    scores.truncate(SCORE_MAX_ENTRY_PER_SAME_COND);
+                }
+            } else {
+                per_mode.insert(key.mode.clone(), vec![score]);
             }
         } else {
-            self.scores.insert(key.clone(), vec![score]);
+            let mut m = HashMap::new();
+            m.insert(key.mode.clone(), vec![score]);
+            self.scores.insert(key.app_ver.clone(), m);
         }
     }
 }
@@ -219,7 +227,7 @@ pub fn save_scores(
     mut pkv: ResMut<PkvStore>,
 ) {
     pkv.set(STORE_NAME_SCORES, scores.into_inner())
-        .unwrap_or_else(|_| panic!("Failed to store `{}`", STORE_NAME_SCORES));
+        .unwrap_or_else(|e| panic!("Failed to store `{}`: [{:?}]", STORE_NAME_SCORES, e));
 }
 
 const SCORE_MAX_ENTRY_PER_SAME_COND: usize = 10;
