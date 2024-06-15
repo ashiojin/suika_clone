@@ -50,12 +50,18 @@
     bottle: (
         fg_image_asset_path: "images/bottle_fg_toriaezu.png",
         bg_image_asset_path: "images/bottle_bg_toriaezu.png",
+        inner_width: 740.0,
+        inner_height: 650.0,
+        thickness: 30.0,
+        offset: (0.0, -100.0),
     ),
     background: (
         bg_image_asset_path: "images/bg_toriaezu_1280x840.png",
         offset: (0.0, 0.0),
     ),
     ui: (
+        view_margin_left: 60.,
+        view_margin_y: 10.,
         hold_view: (
             bg_image_asset_path: "images/border1.png",
             border_width: 20.,
@@ -65,6 +71,8 @@
                 green: 0.0,
                 alpha: 1.0
             ),
+            width: 240.,
+            height: 240.,
         ),
         score_view: (
             bg_image_asset_path: "images/border1.png",
@@ -75,6 +83,8 @@
                 green: 0.0,
                 alpha: 1.0
             ),
+            width: 240.,
+            height: 160.,
         ),
         manual_view: (
             bg_image_asset_path: "images/border1.png",
@@ -85,6 +95,8 @@
                 green: 0.0,
                 alpha: 1.0
             ),
+            width: 240.,
+            height: 180.,
         ),
         popup: (
             bg_image_asset_path: "images/popup2_128x128_32.png",

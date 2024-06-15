@@ -221,15 +221,6 @@ struct Background;
 //---------------------------------------------
 //                                             
 //                                             
-const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
-const MARGEN_Y_RIGHT_SIDE: f32 = 10.;
-const RIGHT_SIDE_UI_WIDTH: f32 = 240.;
-const SCORE_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
-const SCORE_HEIGHT: f32 = 160.;
-const HOLDING_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
-const HOLDING_VIEW_HEIGHT: f32 = 240.;
-const MANUAL_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
-const MANUAL_VIEW_HEIGHT: f32 = 180.;
 
 const FONT_WEIGHT_L: f32 = 32.;
 const FONT_WEIGHT_M: f32 = 24.;
@@ -251,52 +242,9 @@ const FONT_WEIGHT_S: f32 = 16.;
 //  +------+   | : thickness
 //
 //   <~~~~> : width
-const BOTTLE_CENTER: Vec2 = Vec2::new(0., -100.0);
-const BOTTLE_WIDTH: f32 = 740.0;
-const BOTTLE_HEIGHT: f32 = 650.0;
-const BOTTLE_THICKNESS: f32 = 30.0;
-const BOTTLE_OUTER_SIZE: Vec2 = Vec2::new(
-    BOTTLE_WIDTH + BOTTLE_THICKNESS * 2.,
-    BOTTLE_HEIGHT + BOTTLE_THICKNESS,
-);
-
-const BOTTLE_BOTTOM_SIZE: Vec2 = Vec2::new(BOTTLE_OUTER_SIZE.x, BOTTLE_THICKNESS);
-const BOTTLE_SIDE_SIZE: Vec2 = Vec2::new(BOTTLE_THICKNESS, BOTTLE_OUTER_SIZE.y);
-
-const BOTTLE_OUTER_LEFT_TOP: Vec2 = Vec2::new(
-        -1. * BOTTLE_OUTER_SIZE.x * 0.5 + BOTTLE_CENTER.x,
-        -1. * -BOTTLE_OUTER_SIZE.y * 0.5 + BOTTLE_CENTER.y,
-    );
-const BOTTLE_OUTER_RIGHT_BOTTOM: Vec2 = Vec2::new(
-        BOTTLE_OUTER_SIZE.x * 0.5 + BOTTLE_CENTER.x,
-        -BOTTLE_OUTER_SIZE.y * 0.5 + BOTTLE_CENTER.y,
-    );
 
 const PLAYER_GAP_WALL: f32 = 50.;
-const PLAYER_Y: f32 = BOTTLE_OUTER_LEFT_TOP.y + PLAYER_GAP_WALL;
 const PLAYER_GAP_TO_MAX: f32 = 9999.;
-const PLAYER_Y_MAX: f32 = PLAYER_Y + PLAYER_GAP_TO_MAX;
-
-
-const SCORE_CENTER: Vec2 =
-    Vec2::new(
-        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + SCORE_WIDTH * 0.5,
-        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT * 0.5,
-    );
-
-const HOLDING_VIEW_CENTER: Vec2 =
-    Vec2::new(
-        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + HOLDING_VIEW_WIDTH * 0.5,
-        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT - MARGEN_Y_RIGHT_SIDE - HOLDING_VIEW_HEIGHT * 0.5,
-    );
-
-const MANUAL_VIEW_CENTER: Vec2 =
-    Vec2::new(
-        BOTTLE_OUTER_RIGHT_BOTTOM.x + BOTTOLE_MARGIN_RIGHT + MANUAL_VIEW_WIDTH * 0.5,
-        BOTTLE_OUTER_LEFT_TOP.y + 0.0 - SCORE_HEIGHT - MARGEN_Y_RIGHT_SIDE - HOLDING_VIEW_HEIGHT - MARGEN_Y_RIGHT_SIDE - MANUAL_VIEW_HEIGHT * 0.5,
-    );
-
-
 
 
 
@@ -317,14 +265,16 @@ fn spawn_bottle(
     mut commands: Commands,
     assets: Res<GameAssets>,
 ) {
+    let bottle_center = assets.bottle_center();
+    let bottle_outer_size = assets.bottle_outer_size();
     // Spawn Bottle
     commands.spawn((
         Bottle {
-            origin: BOTTLE_CENTER,
+            origin: bottle_center,
         },
         RigidBody::Kinematic,
         SpatialBundle {
-            transform: Transform::from_translation(BOTTLE_CENTER.extend(Z_WALL)),
+            transform: Transform::from_translation(bottle_center.extend(Z_WALL)),
             ..default()
         },
     ))
@@ -334,7 +284,7 @@ fn spawn_bottle(
             SpriteBundle {
                 texture: assets.bottle_settings.h_fg_image.clone(),
                 sprite: Sprite {
-                    custom_size: Some(BOTTLE_OUTER_SIZE),
+                    custom_size: Some(bottle_outer_size),
                     ..default()
                 },
                 transform: Transform::from_translation(Vec2::ZERO.extend(0.02)),
@@ -353,7 +303,7 @@ fn spawn_bottle(
             SpriteBundle {
                 texture: assets.bottle_settings.h_bg_image.clone(),
                 sprite: Sprite {
-                    custom_size: Some(BOTTLE_OUTER_SIZE),
+                    custom_size: Some(bottle_outer_size),
                     ..default()
                 },
                 transform: Transform::from_translation(Vec2::ZERO.extend(Z_BACK-Z_WALL+0.01)),
@@ -367,14 +317,16 @@ fn spawn_bottle(
             }),
         ));
 
-        let bottom_c = Vec2::Y * -(0.5 * BOTTLE_OUTER_SIZE.y - BOTTLE_THICKNESS/2.);
-        let left_bottle_c = Vec2::X * -(0.5 * BOTTLE_OUTER_SIZE.x - BOTTLE_THICKNESS/2.);
-        let right_bottle_c = Vec2::X * (0.5 * BOTTLE_OUTER_SIZE.x - BOTTLE_THICKNESS/2.);
+        let bottom_c = Vec2::Y * -(0.5 * bottle_outer_size.y - assets.bottle_settings.thickness/2.);
+        let left_bottle_c = Vec2::X * -(0.5 * bottle_outer_size.x - assets.bottle_settings.thickness/2.);
+        let right_bottle_c = Vec2::X * (0.5 * bottle_outer_size.x - assets.bottle_settings.thickness/2.);
 
-        let len_bottom = BOTTLE_BOTTOM_SIZE.x - BOTTLE_BOTTOM_SIZE.y;
-        let r_bottom = BOTTLE_BOTTOM_SIZE.y/2.;
-        let len_side = BOTTLE_SIDE_SIZE.y - BOTTLE_SIDE_SIZE.x;
-        let r_side = BOTTLE_SIDE_SIZE.x/2.;
+        let bottom_size = assets.bottle_settings.bottom_size();
+        let len_bottom = bottom_size.x - bottom_size.y;
+        let r_bottom = bottom_size.y/2.;
+        let side_size = assets.bottle_settings.side_size();
+        let len_side = side_size.y - side_size.x;
+        let r_side = side_size.x/2.;
 
         let physics_param = (
             Restitution {
@@ -697,11 +649,12 @@ fn spawn_player(
     mut global_ent: ResMut<GlobalEntropy<ChaCha8Rng>>,
     assets: Res<GameAssets>,
 ) {
+    let player_y_max = assets.bottle_settings.left_top().y + PLAYER_GAP_WALL + PLAYER_GAP_TO_MAX;
     // puppetter
     commands.spawn((
         PlayerPuppeteer{},
         TransformBundle::from_transform(
-            Transform::from_translation(Vec2::new(0., PLAYER_Y_MAX).extend(Z_PLAYER))
+            Transform::from_translation(Vec2::new(0., player_y_max).extend(Z_PLAYER))
         ),
         ShapeCaster::new(
             Collider::circle(10.),
@@ -712,7 +665,7 @@ fn spawn_player(
     ));
 
     // player
-    let player_y = PLAYER_Y;
+    let player_y = assets.bottle_settings.left_top().y + PLAYER_GAP_WALL;
     let mut player = Player::new(assets.player_settings.speed, BallLevel::new(1), assets.drop_ball_level_max);
     let mut rng = global_ent.fork_rng();
     player.set_next_ball_level_from_rng(&mut rng);
@@ -775,14 +728,16 @@ fn move_puppeteer(
     q_player: Query<&Player>,
     mut q_puppeteer: Query<(&mut Transform, &PlayerPuppeteer)>,
     mut ev_player_act: EventReader<PlayerInputEvent>,
+    assets: Res<GameAssets>,
 ) {
     if let Ok((mut trans, _)) = q_puppeteer.get_single_mut() {
         if let Ok(player) = q_player.get_single() {
             for ev in ev_player_act.read() {
                 if let PlayerInputEvent::Move(lr) = ev {
+                    let bottle_width = assets.bottle_settings.inner_width;
                     trans.translation.x =
                         (trans.translation.x + lr * player.speed)
-                            .clamp(-BOTTLE_WIDTH/2., BOTTLE_WIDTH/2.);
+                            .clamp(-bottle_width/2., bottle_width/2.);
                 }
             }
         }
@@ -808,7 +763,7 @@ fn puppet_player_pos(
                     0.
                 };
                 let player_y = f32::max(
-                    PLAYER_Y,
+                    sc_asset.bottle_settings.left_top().y + PLAYER_GAP_WALL,
                     trans.translation.y
                         - hit.time_of_impact
                         + ball_r
@@ -984,8 +939,8 @@ fn spawn_score_view(
     let label_weight = FONT_WEIGHT_L;
     let score_weight = FONT_WEIGHT_L;
     let high_score_weight = FONT_WEIGHT_S;
-    let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
-    let score_center = SCORE_CENTER;
+    let score_size = my_assets.score_size();
+    let score_center = my_assets.score_center();
     commands
         .spawn((
             ScoreView,
@@ -1010,7 +965,7 @@ fn spawn_score_view(
             let label_pos =
                 Vec2::new(
                     0.,
-                    SCORE_HEIGHT/2.- label_weight/2. - border_width - inner_margin
+                    score_size.y/2.- label_weight/2. - border_width - inner_margin
                 );
             let score_pos =
                 label_pos +
@@ -1078,8 +1033,8 @@ fn spawn_manual_view(
     let inner_margin = 4.;
     let font_weight = FONT_WEIGHT_M;
     let font_weight_p = FONT_WEIGHT_S;
-    let manual_size = Vec2::new(MANUAL_VIEW_WIDTH, MANUAL_VIEW_HEIGHT);
-    let manual_center = MANUAL_VIEW_CENTER;
+    let manual_size = my_assets.manual_view_size();
+    let manual_center = my_assets.manual_view_center();
     commands
         .spawn((
             ManualView,
@@ -1104,7 +1059,7 @@ fn spawn_manual_view(
             let pos1 =
                 Vec2::new(
                     0.,
-                    SCORE_HEIGHT/2.- font_weight/2. - border_width - inner_margin
+                    manual_size.y/2.- font_weight/2. - border_width - inner_margin
                 );
             let pos2 =
                 pos1 +
@@ -1179,16 +1134,17 @@ fn spwan_holding_ball_view(
     let inner_margin = 4.;
     let label_weight = FONT_WEIGHT_L;
     let plus_weight = FONT_WEIGHT_S;
+    let size = my_assets.hold_view_size();
     commands.spawn((
         HoldingBallView,
         SpriteBundle {
             texture: my_assets.ui.hold_view.h_bg_image.clone(),
             sprite: Sprite {
-                custom_size: Some(Vec2::new(HOLDING_VIEW_WIDTH, HOLDING_VIEW_HEIGHT)),
+                custom_size: Some(size),
                 ..default()
             },
             transform: Transform::from_translation(
-                           HOLDING_VIEW_CENTER.extend(Z_UI)),
+                           my_assets.hold_view_center().extend(Z_UI)),
             ..default()
         },
         ImageScaleMode::Sliced(TextureSlicer {
@@ -1200,7 +1156,7 @@ fn spwan_holding_ball_view(
     ))
     .with_children(|b| {
         let label_pos =
-            Vec2::new(0., HOLDING_VIEW_HEIGHT/2.- label_weight/2. - border_width - inner_margin)
+            Vec2::new(0., size.y/2.- label_weight/2. - border_width - inner_margin)
             ;
         let image_pos =
             Vec2::new(0., -label_weight/2.);

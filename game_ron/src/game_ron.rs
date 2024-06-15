@@ -30,6 +30,11 @@ pub struct PlayerRon {
 pub struct BottleRon {
     pub fg_image_asset_path: String,
     pub bg_image_asset_path: String,
+
+    pub inner_width: f32,
+    pub inner_height: f32,
+    pub thickness: f32,
+    pub offset: Vec2,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -46,6 +51,8 @@ pub struct ScoreViewRon {
     pub bg_image_asset_path: String,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
@@ -53,6 +60,8 @@ pub struct HoldViewRon {
     pub bg_image_asset_path: String,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
@@ -60,6 +69,8 @@ pub struct ManualViewRon {
     pub bg_image_asset_path: String,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
@@ -75,6 +86,8 @@ pub struct UiRon {
     pub hold_view: HoldViewRon,
     pub score_view: ScoreViewRon,
     pub manual_view: ManualViewRon,
+    pub view_margin_left: f32,
+    pub view_margin_y: f32,
     pub popup: PopupViewRon,
 }
 

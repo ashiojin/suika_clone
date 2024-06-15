@@ -53,33 +53,85 @@ impl PlayerDef {
 pub struct BottleDef {
     pub h_fg_image: Handle<Image>,
     pub h_bg_image: Handle<Image>,
+
+    pub inner_width: f32,
+    pub inner_height: f32,
+    pub thickness: f32,
+
+    pub offset: Vec2,
 }
 impl BottleDef {
     pub fn create_with_loading(ron: &BottleRon, asset_server: &AssetServer) -> Self {
         Self {
             h_fg_image: asset_server.load(&ron.fg_image_asset_path),
             h_bg_image: asset_server.load(&ron.bg_image_asset_path),
+            inner_width: ron.inner_width,
+            inner_height: ron.inner_height,
+            thickness: ron.thickness,
+            offset: ron.offset,
         }
     }
+
+    pub fn outer_size(&self) -> Vec2 {
+        Vec2::new(
+            self.inner_width + self.thickness * 2.,
+            self.inner_height + self.thickness,
+        )
+    }
+    pub fn bottom_size(&self) -> Vec2 {
+        let outer_size = self.outer_size();
+        Vec2::new(
+            outer_size.x,
+            self.thickness,
+        )
+    }
+    pub fn side_size(&self) -> Vec2 {
+        let outer_size = self.outer_size();
+        Vec2::new(
+            self.thickness,
+            outer_size.y,
+        )
+    }
+    pub fn left_top(&self) -> Vec2 {
+        let outer_size = self.outer_size();
+        Vec2::new(
+            -1. * outer_size.x * 0.5 + self.offset.x,
+            -1. * -outer_size.y * 0.5 + self.offset.y,
+        )
+    }
+    pub fn right_bottom(&self) -> Vec2 {
+        let outer_size = self.outer_size();
+        Vec2::new(
+            outer_size.x * 0.5 + self.offset.x,
+            -outer_size.y * 0.5 + self.offset.y,
+        )
+    }
 }
+
 
 #[derive(Debug)]
 pub struct HoldViewDef {
     pub h_bg_image: Handle<Image>,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug)]
 pub struct ScoreViewDef {
     pub h_bg_image: Handle<Image>,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug)]
 pub struct ManualViewDef {
     pub h_bg_image: Handle<Image>,
     pub border_width: f32,
     pub font_color: Color,
+    pub width: f32,
+    pub height: f32,
 }
 #[derive(Debug)]
 pub struct PopupDef {
@@ -93,6 +145,8 @@ pub struct UiDef {
     pub hold_view: HoldViewDef,
     pub score_view: ScoreViewDef,
     pub manual_view: ManualViewDef,
+    pub view_margin_left: f32,
+    pub view_margin_y: f32,
     pub popup: PopupDef,
 }
 impl UiDef {
@@ -102,17 +156,25 @@ impl UiDef {
                 h_bg_image: asset_server.load(&ron.hold_view.bg_image_asset_path),
                 border_width: ron.hold_view.border_width,
                 font_color: ron.hold_view.font_color,
+                width: ron.hold_view.width,
+                height: ron.hold_view.height,
             },
             score_view: ScoreViewDef {
                 h_bg_image: asset_server.load(&ron.score_view.bg_image_asset_path),
                 border_width: ron.score_view.border_width,
                 font_color: ron.score_view.font_color,
+                width: ron.score_view.width,
+                height: ron.score_view.height,
             },
             manual_view: ManualViewDef {
                 h_bg_image: asset_server.load(&ron.manual_view.bg_image_asset_path),
                 border_width: ron.manual_view.border_width,
                 font_color: ron.manual_view.font_color,
+                width: ron.manual_view.width,
+                height: ron.manual_view.height,
             },
+            view_margin_left: ron.view_margin_left,
+            view_margin_y: ron.view_margin_y,
             popup: PopupDef {
                 h_bg_image: asset_server.load(&ron.popup.bg_image_asset_path),
                 border_width: ron.popup.border_width,
@@ -348,5 +410,72 @@ impl GameAssets {
     pub fn get_ball_mesh_wh(&self, lv: BallLevel) -> (f32, f32) {
         let s = self.get_ball_setting(lv);
         (s.view_width, s.view_height)
+    }
+
+    pub fn bottle_center(&self) -> Vec2 {
+        self.bottle_settings.offset
+    }
+    pub fn bottle_outer_size(&self) -> Vec2 {
+        self.bottle_settings.outer_size()
+    }
+
+    pub fn _bottle_left_top(&self) -> Vec2 {
+        self.bottle_settings.left_top()
+    }
+    pub fn _bottle_right_bottom(&self) -> Vec2 {
+        self.bottle_settings.right_bottom()
+    }
+
+    pub fn score_size(&self) -> Vec2 {
+        Vec2::new(
+            self.ui.score_view.width,
+            self.ui.score_view.height,
+        )
+    }
+
+    pub fn score_center(&self) -> Vec2 {
+        Vec2::new(
+            self.bottle_settings.right_bottom().x
+                + self.ui.view_margin_left
+                + self.ui.score_view.width * 0.5,
+            self.bottle_settings.left_top().y
+                - self.ui.score_view.height * 0.5,
+        )
+    }
+
+    pub fn hold_view_size(&self) -> Vec2 {
+        Vec2::new(
+            self.ui.hold_view.width,
+            self.ui.hold_view.height,
+        )
+    }
+
+    pub fn hold_view_center(&self) -> Vec2 {
+        Vec2::new(
+            self.bottle_settings.right_bottom().x
+                + self.ui.view_margin_left + self.ui.hold_view.width * 0.5,
+            self.bottle_settings.left_top().y
+                - self.ui.score_view.height
+                - self.ui.hold_view.height * 0.5,
+        )
+    }
+
+    pub fn manual_view_size(&self) -> Vec2 {
+        Vec2::new(
+            self.ui.manual_view.width,
+            self.ui.manual_view.height,
+        )
+    }
+
+    pub fn manual_view_center(&self) -> Vec2 {
+        Vec2::new(
+            self.bottle_settings.right_bottom().x
+                + self.ui.view_margin_left
+                + self.ui.manual_view.width * 0.5,
+            self.bottle_settings.left_top().y
+                - self.ui.score_view.height
+                - self.ui.hold_view.height
+                - self.ui.manual_view.height * 0.5,
+        )
     }
 }

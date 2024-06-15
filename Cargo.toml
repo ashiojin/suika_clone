@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "font_viewer",
-    "game_ron",
+    "game_ron", "scale_ron",
     "suika_clone",
 ]
 resolver = "2"

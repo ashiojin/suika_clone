@@ -4238,6 +4238,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale_ron"
+version = "0.1.0"
+dependencies = [
+ "game_ron",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
