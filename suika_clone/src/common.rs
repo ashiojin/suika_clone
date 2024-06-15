@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bevy::{
     audio::Volume,
     input::gamepad::{GamepadConnection, GamepadEvent},
@@ -101,6 +103,7 @@ fn volume(v: i32, scale: f32) -> Volume {
     Volume::new(scale * v  as f32 / 100.)
 }
 const STORE_NAME_CONFIG: &str = "config";
+
 impl Config {
     pub fn get_se_volume(&self, scale:f32) -> Volume {
         volume(self.se_volume, scale)
@@ -128,6 +131,101 @@ pub fn save_config(
     pkv.set(STORE_NAME_CONFIG, config.into_inner())
         .expect("Failed to store `config`.");
 }
+
+
+const STORE_NAME_SCORES: &str = "scores";
+
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Default)]
+#[derive(Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct Score {
+    pub score: u32,
+}
+
+impl Score {
+    pub fn new(score: u32) -> Self {
+        Self {
+            score,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct GameCond {
+    pub mode: String,
+    pub app_ver: String,
+}
+
+impl GameCond {
+    pub fn _get_semver(&self) -> semver::Version {
+        semver::Version::parse(&self.app_ver)
+            .expect("Failed to parse app_ver")
+    }
+
+    pub fn new(mode: &str) -> Self {
+        Self {
+            mode: mode.to_string(),
+            app_ver: option_env!("CARGO_PKG_VERSION")
+                .unwrap_or("0.0.0")
+                .to_string(),
+        }
+    }
+}
+
+
+#[derive(Resource, Debug, Clone, Default)]
+#[derive(Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct Scores {
+    scores: HashMap<GameCond, Vec<Score>>
+}
+impl Scores {
+    pub fn get(&self, key: &GameCond) -> Option<&Vec<Score>> {
+        self.scores.get(key)
+    }
+
+    pub fn get_highest(&self, key: &GameCond) -> Option<&Score> {
+        self.get(key).and_then(|v| v.first())
+    }
+
+    pub fn push(&mut self, key: &GameCond, score: Score) {
+        if let Some(scores) = self.scores.get_mut(key) {
+            scores.push(score);
+            scores.sort_by(|l, r| l.cmp(r).reverse());
+            if scores.len() > SCORE_MAX_ENTRY_PER_SAME_COND {
+                scores.truncate(SCORE_MAX_ENTRY_PER_SAME_COND);
+            }
+        } else {
+            self.scores.insert(key.clone(), vec![score]);
+        }
+    }
+}
+
+pub fn load_scores(
+    mut scores: ResMut<Scores>,
+    pkv: Res<PkvStore>,
+) {
+    if let Ok(saved_scores) = pkv.get::<Scores>(STORE_NAME_SCORES) {
+        *scores = saved_scores;
+    } else {
+        *scores = default();
+    }
+}
+
+pub fn save_scores(
+    scores: Res<Scores>,
+    mut pkv: ResMut<PkvStore>,
+) {
+    pkv.set(STORE_NAME_SCORES, scores.into_inner())
+        .unwrap_or_else(|_| panic!("Failed to store `{}`", STORE_NAME_SCORES));
+}
+
+const SCORE_MAX_ENTRY_PER_SAME_COND: usize = 10;
+
+
+
 
 
 // Z-Order

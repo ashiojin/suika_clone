@@ -18,12 +18,13 @@ use super::camera::*;
 //
 const POPUP_CENTER: Vec2 = Vec2::new(0., 0.);
 const POPUP_SIZE: Vec2 = Vec2::new(700., 700.);
-const POPUP_STR_1_Y: f32 = 0. + 100.;
-const POPUP_STR_2_Y: f32 = POPUP_STR_1_Y - 60. - 8.;
-const POPUP_STR_3_Y: f32 = POPUP_STR_2_Y - 48. - 16.;
-const POPUP_STR_4_Y: f32 = POPUP_STR_3_Y - 36. - 8.;
+const POPUP_STR_LABEL: f32 = 0. + 100.;
+const POPUP_STR_SCORE_Y: f32 = POPUP_STR_LABEL - 60. - 8.;
+const POPUP_STR_HIGH_SCORE_Y: f32 = POPUP_STR_SCORE_Y - 48. - 8.;
+const POPUP_STR_RESTART: f32 = POPUP_STR_HIGH_SCORE_Y - 12. - 32.;
+const POPUP_STR_GOTO_TITLE: f32 = POPUP_STR_RESTART - 36. - 8.;
 
-const POPUP_STR_5_1_Y: f32 = POPUP_STR_4_Y - 30.;
+const POPUP_STR_5_1_Y: f32 = POPUP_STR_GOTO_TITLE - 30.;
 
 #[derive(Component, Debug)]
 pub struct GameOverPopup;
@@ -40,9 +41,27 @@ pub fn setup_gameover_popup(
     q_player: Query<&Player>,
     my_assets: Res<GameAssets>,
     config: Res<Config>,
+    scores: Res<Scores>,
 ) {
     if let Ok(player) = q_player.get_single() {
-        let score = player.score;
+        let game_cnd = GameCond::new(config.game_ron_name.as_str());
+        let highscore = scores.get_highest(&game_cnd);
+        let score = Score::new(player.score);
+        let score_is_highest = if let Some(highscore) = highscore {
+            score > *highscore
+        } else {
+            true
+        };
+
+        let highscore = highscore.map(|x| x.score).unwrap_or(0);
+        let high_score_txt = format!("high score: {}", highscore);
+
+        let score_txt = if score_is_highest {
+            format!("New High Score:{:>6}", score.score)
+        } else {
+            format!("Score:{:>6}", score.score)
+        };
+
         commands.spawn((
             GameOverPopup,
             PinnedToPlayingCamera(POPUP_CENTER),
@@ -75,7 +94,7 @@ pub fn setup_gameover_popup(
                 Text2dBundle {
                     text: Text::from_section("GAME OVER", text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., POPUP_STR_1_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_LABEL).extend(Z_POPUP + 0.01)
                     ),
                     text_anchor: bevy::sprite::Anchor::Center,
                     ..default()
@@ -89,11 +108,27 @@ pub fn setup_gameover_popup(
             b.spawn((
                 Text2dBundle {
                     text: Text::from_section(
-                        format!("Score:{:>6}", score), text_style),
+                        score_txt, text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., POPUP_STR_2_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_SCORE_Y).extend(Z_POPUP + 0.01)
                     ),
                     text_anchor: bevy::sprite::Anchor::Center,
+                    ..default()
+                },
+            ));
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: 12.0,
+                color: my_assets.ui.popup.font_color,
+            };
+            b.spawn((
+                Text2dBundle {
+                    text: Text::from_section(
+                        high_score_txt, text_style),
+                    transform: Transform::from_translation(
+                        Vec2::new(0., POPUP_STR_HIGH_SCORE_Y).extend(Z_POPUP + 0.01)
+                    ),
+                    text_anchor: bevy::sprite::Anchor::CenterLeft,
                     ..default()
                 },
             ));
@@ -108,7 +143,7 @@ pub fn setup_gameover_popup(
                     text: Text::from_section(
                         format!("Press [{}] to restart", GpKbInput::Start.get_str()), text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., POPUP_STR_3_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_RESTART).extend(Z_POPUP + 0.01)
                     ),
                     visibility: Visibility::Hidden,
                     text_anchor: bevy::sprite::Anchor::Center,
@@ -126,7 +161,7 @@ pub fn setup_gameover_popup(
                     text: Text::from_section(
                         format!("Press [{}] to back to title.", GpKbInput::Select.get_str()), text_style),
                     transform: Transform::from_translation(
-                        Vec2::new(0., POPUP_STR_4_Y).extend(Z_POPUP + 0.01)
+                        Vec2::new(0., POPUP_STR_GOTO_TITLE).extend(Z_POPUP + 0.01)
                     ),
                     visibility: Visibility::Hidden,
                     text_anchor: bevy::sprite::Anchor::Center,
@@ -142,7 +177,7 @@ pub fn setup_gameover_popup(
                 GameOverPopupMessageDelay,
                 Text2dBundle {
                     text: Text::from_section(
-                        format!("v{}, mode:{}", option_env!("CARGO_PKG_VERSION").unwrap_or("-"), config.game_ron_name), text_style),
+                        format!("v{}, mode:{}", game_cnd.app_ver, game_cnd.mode), text_style),
                     transform: Transform::from_translation(
                         Vec2::new(0., POPUP_STR_5_1_Y).extend(Z_POPUP + 0.01)
                     ),

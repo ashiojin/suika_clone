@@ -64,8 +64,10 @@
 - [x] Fix issue: It can make "totem" by dropping balls in the same position.
 - [x] Set config from program args( `ron_name` for web build )
 - [x] Show application version on screen
+- [x] Record/Show high score
 - [ ] Ball Samples View
 - [ ] Refine the game over popup to show how the player played.
+  - show the numbers of balls combined
 - [ ] Refine title screen
   - [ ] Show credits (on config popup?). Then link to their websites using [Hyperlink](https://docs.rs/egui/latest/egui/widgets/struct.Hyperlink.html).
 - [ ] Refine loading screen

@@ -58,6 +58,8 @@ impl Plugin for ScTitleScreenPlugin {
         app.add_systems(OnEnter(TitleScreenState::Idle),
             (
                 spawn_title_screen,
+                update_info_text
+                    .after(spawn_title_screen),
             )
         );
 
@@ -196,12 +198,23 @@ fn check_loading(
     }
 }
 
+#[derive(Component, Debug)]
+struct TitleView;
+
+#[derive(Component, Debug)]
+struct InfoText;
+
 fn spawn_title_screen(
     mut commands: Commands,
+    q_old: Query<Entity, With<TitleView>>,
     asset: Res<TitleAssets>,
 ) {
+    for old in q_old.iter() {
+        commands.entity(old).despawn_recursive();
+    }
     commands.spawn((
         InTitleScreen,
+        TitleView,
         SpriteBundle {
             texture: asset.h_bg_image.clone(),
             transform: Transform::from_translation(Vec2::new(0., 0.).extend(0.0)),
@@ -231,18 +244,36 @@ fn spawn_title_screen(
             color: Color::WHITE,
         };
         b.spawn((
+            InfoText,
             Text2dBundle {
                 text: Text::from_section(
                           format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("-")), text_style),
-
                 transform:
                     Transform::from_translation(
-                        Vec2::new(0., -60.).extend(0.1)
+                        Vec2::new(
+                            0.,
+                            -60. - 120.
+                        ).extend(0.1)
                     ),
                 ..default()
             },
         ));
     });
+}
+
+fn update_info_text(
+    mut q_text: Query<&mut Text, With<InfoText>>,
+    config: Res<Config>,
+    scores: Res<Scores>,
+) {
+    let game_cnd = GameCond::new(&config.game_ron_name);
+    let highscore = scores.get_highest(&game_cnd).cloned().unwrap_or(default());
+    let info = format!("v{}, mode:{}, high-score:{}", game_cnd.app_ver, game_cnd.mode, highscore.score);
+    if let Ok(mut text) = q_text.get_single_mut() {
+        if let Some(section) = text.sections.first_mut(){
+            section.value = info;
+        }
+    }
 }
 
 fn load_args(

@@ -4430,6 +4430,7 @@ dependencies = [
  "js-sys",
  "rand_core",
  "ron",
+ "semver",
  "serde",
  "wasm-bindgen",
  "wasm-bindgen-futures",

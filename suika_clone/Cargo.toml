@@ -47,6 +47,7 @@ serde = { version = "1", features = ["derive"] }
 itertools = "0.12" # TODO: Shold find a suitable version of the library for our purpose and for other library dependencies.
 
 const_format = "0.2"
+semver = "1.0.23"
 
 ######## WORKAROUND @2023/11/15 A: WSL->Windows Cross-Compilation Failed
 ## see: https://github.com/bevyengine/bevy/issues/10425

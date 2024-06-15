@@ -111,6 +111,10 @@ impl Plugin for ScGameScreenPlugin {
         app.add_systems(OnEnter(GameScreenState::GameOver), (
             physics_pause,
             setup_gameover_popup,
+            record_score
+                .after(setup_gameover_popup),
+            save_scores
+                .after(record_score),
             move_camera_to_ball_protruded,
         ));
 
@@ -172,6 +176,17 @@ fn inactivate_game_screen(
     next_state.set(GameScreenState::Inactive);
 }
 
+fn record_score(
+    q_player: Query<&Player>,
+    config: Res<Config>,
+    mut scores: ResMut<Scores>,
+) {
+    if let Ok(player) = q_player.get_single() {
+        let game_cnd = GameCond::new(&config.game_ron_name);
+        scores.push(&game_cnd, Score::new(player.score));
+    }
+}
+
 
 #[derive(Component, Debug)]
 struct Bottle {
@@ -210,7 +225,7 @@ const BOTTOLE_MARGIN_RIGHT: f32 = 60.;
 const MARGEN_Y_RIGHT_SIDE: f32 = 10.;
 const RIGHT_SIDE_UI_WIDTH: f32 = 240.;
 const SCORE_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
-const SCORE_HEIGHT: f32 = 120.;
+const SCORE_HEIGHT: f32 = 160.;
 const HOLDING_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
 const HOLDING_VIEW_HEIGHT: f32 = 240.;
 const MANUAL_VIEW_WIDTH: f32 = RIGHT_SIDE_UI_WIDTH;
@@ -956,10 +971,19 @@ struct ScoreText;
 fn spawn_score_view(
     mut commands: Commands,
     my_assets: Res<GameAssets>,
+    config: Res<Config>,
+    scores: Res<Scores>,
 ) {
+    let game_cnd = GameCond::new(&config.game_ron_name);
+    let highscore = scores.get_highest(&game_cnd);
+    let high_score_txt = format!("high score:{:>8}", highscore.unwrap_or(&default()).score);
+
+
     let border_width = my_assets.ui.score_view.border_width;
     let inner_margin = 4.;
     let label_weight = FONT_WEIGHT_L;
+    let score_weight = FONT_WEIGHT_L;
+    let high_score_weight = FONT_WEIGHT_S;
     let score_size = Vec2::new(SCORE_WIDTH, SCORE_HEIGHT);
     let score_center = SCORE_CENTER;
     commands
@@ -994,6 +1018,12 @@ fn spawn_score_view(
                     0.,
                     -label_weight - inner_margin,
                 );
+            let high_score_pos =
+                score_pos +
+                Vec2::new(
+                    0.,
+                    - score_weight - inner_margin,
+                );
 
             let text_style = TextStyle {
                 font: my_assets.h_font.clone(),
@@ -1007,11 +1037,28 @@ fn spawn_score_view(
                     ..default()
                 },
             ));
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: score_weight,
+                color: my_assets.ui.score_view.font_color,
+            };
             b.spawn((
                 ScoreText,
                 Text2dBundle {
                     text: Text::from_section("0", text_style.clone()),
                     transform: Transform::from_translation(score_pos.extend(0.01)),
+                    ..default()
+                },
+            ));
+            let text_style = TextStyle {
+                font: my_assets.h_font.clone(),
+                font_size: high_score_weight,
+                color: my_assets.ui.score_view.font_color,
+            };
+            b.spawn((
+                Text2dBundle {
+                    text: Text::from_section(high_score_txt, text_style.clone()),
+                    transform: Transform::from_translation(high_score_pos.extend(0.01)),
                     ..default()
                 },
             ));

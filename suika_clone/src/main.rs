@@ -122,6 +122,7 @@ fn run_app(arg: Option<&str>) {
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
     app.insert_resource(FixedConfig::default());
     app.insert_resource(Config::default());
+    app.insert_resource(Scores::default());
 
     app.insert_resource(AppArgs {
         force_ron_file: arg.map(|x| x.to_string()),
@@ -132,6 +133,7 @@ fn run_app(arg: Option<&str>) {
         setup_egui,
         setup_camera,
         load_config,
+        load_scores,
     ));
 
     app.add_systems(Update, (
