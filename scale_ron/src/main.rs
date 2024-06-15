@@ -1,15 +1,29 @@
-use std::env;
+use clap::Parser;
+
 use std::io;
 use std::io::Read;
-
 
 use game_ron::*;
 use ron::ser::PrettyConfig;
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cmd {
+    scale: f32,
 
-    let scale: f32 = args[1].parse::<f32>().expect("Failed to read arg (`scale`)");
+    #[arg(long)]
+    balls: bool,
+
+    #[arg(long)]
+    bottle: bool,
+
+    #[arg(short, long)]
+    all: bool,
+
+}
+
+fn main() {
+    let args = Cmd::parse();
 
     let mut buf: String = String::new();
     io::stdin()
@@ -20,10 +34,20 @@ fn main() {
         .expect("");
 
 
-    for s in ron.balls.iter_mut() {
-        s.physics_radius *= scale;
-        s.view_width *= scale;
-        s.view_height *= scale;
+    if args.balls || args.all {
+        for s in ron.balls.iter_mut() {
+            s.physics_radius *= args.scale;
+            s.view_width *= args.scale;
+            s.view_height *= args.scale;
+        }
+    }
+
+    if args.bottle || args.all {
+        let bottle = &mut ron.bottle;
+
+        bottle.inner_width *= args.scale;
+        bottle.inner_height *= args.scale;
+        bottle.thickness *= args.scale;
     }
 
 

@@ -9,3 +9,5 @@ edition = "2021"
 game_ron = { path = "../game_ron" }
 ron = { workspace = true }
 serde = { workspace = true}
+
+clap = { workspace = true }

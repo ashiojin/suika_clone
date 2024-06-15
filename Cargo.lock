@@ -4241,6 +4241,7 @@ dependencies = [
 name = "scale_ron"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "game_ron",
  "ron",
  "serde",

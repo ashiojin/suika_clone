@@ -53,6 +53,7 @@ impl PlayerDef {
 pub struct BottleDef {
     pub h_fg_image: Handle<Image>,
     pub h_bg_image: Handle<Image>,
+    pub image_border: f32,
 
     pub inner_width: f32,
     pub inner_height: f32,
@@ -65,6 +66,7 @@ impl BottleDef {
         Self {
             h_fg_image: asset_server.load(&ron.fg_image_asset_path),
             h_bg_image: asset_server.load(&ron.bg_image_asset_path),
+            image_border: ron.image_border,
             inner_width: ron.inner_width,
             inner_height: ron.inner_height,
             thickness: ron.thickness,

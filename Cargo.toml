@@ -18,3 +18,4 @@ bevy = { version = "0.13", features = [] }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 
+clap = { version = "4.5.4", features = ["derive"] }

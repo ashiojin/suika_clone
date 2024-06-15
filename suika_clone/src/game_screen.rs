@@ -267,6 +267,7 @@ fn spawn_bottle(
 ) {
     let bottle_center = assets.bottle_center();
     let bottle_outer_size = assets.bottle_outer_size();
+    let image_border = assets.bottle_settings.image_border;
     // Spawn Bottle
     commands.spawn((
         Bottle {
@@ -291,7 +292,7 @@ fn spawn_bottle(
                 ..default()
             },
             ImageScaleMode::Sliced(TextureSlicer {
-                border: BorderRect::square(30.),
+                border: BorderRect::square(image_border),
                 center_scale_mode: SliceScaleMode::Stretch,
                 sides_scale_mode: SliceScaleMode::Stretch,
                 ..default()
@@ -310,7 +311,7 @@ fn spawn_bottle(
                 ..default()
             },
             ImageScaleMode::Sliced(TextureSlicer {
-                border: BorderRect::square(30.),
+                border: BorderRect::square(image_border),
                 center_scale_mode: SliceScaleMode::Stretch,
                 sides_scale_mode: SliceScaleMode::Stretch,
                 ..default()

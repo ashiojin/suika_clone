@@ -30,6 +30,7 @@ pub struct PlayerRon {
 pub struct BottleRon {
     pub fg_image_asset_path: String,
     pub bg_image_asset_path: String,
+    pub image_border: f32,
 
     pub inner_width: f32,
     pub inner_height: f32,
