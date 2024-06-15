@@ -17,7 +17,7 @@ mod common;
 mod wasm;
 mod embedded_assets;
 mod game_assets;
-mod game_ron;
+mod game_ron_loadable;
 mod resource_loader;
 mod audios;
 mod loading_screen;
@@ -28,6 +28,7 @@ mod physics_custom;
 mod prelude {
     pub use crate::common::*;
     pub use crate::game_assets::*;
+    pub use crate::game_ron_loadable::*;
     pub use crate::resource_loader::*;
     pub use crate::audios::*;
     pub use crate::loading_screen::*;

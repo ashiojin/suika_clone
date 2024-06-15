@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 
-use crate::game_ron::*;
+use game_ron::*;
 
 #[derive(Debug)]
 pub struct BallLevelDef {

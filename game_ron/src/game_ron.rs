@@ -1,8 +1,5 @@
-use crate::prelude::*;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-
-use crate::embedded_assets::assets::DEFAULT_GAME_RON_PATH;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
@@ -124,21 +121,3 @@ pub struct GameRon {
     pub ball_physics: PhysicsRon,
     pub bottle_physics: PhysicsRon,
 }
-
-
-#[derive(Resource, Debug, Clone)]
-#[derive(Reflect)]
-pub struct CurrentGameRon(pub Handle<GameRon>);
-
-impl Loadable for CurrentGameRon {
-    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
-        vec![self.0.clone().untyped()]
-    }
-}
-
-const DEFAULT_GAME_RON_NAME: &str = "(default)";
-pub fn get_default_game_ron_name_and_asset_path() -> (&'static str, &'static str) {
-    (DEFAULT_GAME_RON_NAME, DEFAULT_GAME_RON_PATH)
-}
-
-

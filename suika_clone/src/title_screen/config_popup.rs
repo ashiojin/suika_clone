@@ -8,7 +8,7 @@ use super::TitleAssets;
 use super::TitleScreenState;
 use super::list_ron::*;
 
-use crate::game_ron::get_default_game_ron_name_and_asset_path;
+use crate::game_ron_loadable::get_default_game_ron_name_and_asset_path;
 
 
 #[derive(Resource, Debug, Default)]

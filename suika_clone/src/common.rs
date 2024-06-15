@@ -9,7 +9,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use bevy_pkv::PkvStore;
 
-use crate::game_ron::get_default_game_ron_name_and_asset_path;
+use crate::game_ron_loadable::get_default_game_ron_name_and_asset_path;
 
 pub const LOGICAL_WIDTH: f32 = 1280.;
 pub const LOGICAL_HEIGHT: f32 = 840.;

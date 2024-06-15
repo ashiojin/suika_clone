@@ -2480,6 +2480,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "game_ron"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4426,6 +4435,7 @@ dependencies = [
  "const_format",
  "egui 0.13.1",
  "futures-lite",
+ "game_ron",
  "itertools",
  "js-sys",
  "rand_core",
