@@ -216,7 +216,7 @@ fn update_loading_screen(
     mut gizmos: Gizmos<MyLoadingScreenGizmos>,
     time: Res<Time>,
 ) {
-    let second_hand = (time.elapsed_seconds() % 1.0) * TAU;
+    let second_hand = -1. * (time.elapsed_seconds() % 1.0) * TAU;
     gizmos.arrow_2d(
         Vec2::ZERO,
         Vec2::from_angle(second_hand) * 100.,
