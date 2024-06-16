@@ -50,6 +50,44 @@ dependencies = ["prepare-to-build"]
 [tasks.run]
 run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
 
+[tasks.build-release]
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.clear-win-out]
+command = "rm"
+args = ["-rf", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/"]
+
+[tasks.prepare-win-out]
+command = "mkdir"
+args = ["-p", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/"]
+
+[tasks.copy-exe-to-win-out]
+command = "cp"
+args = [
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/release/suika_clone.exe",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/",
+]
+dependencies = ["build-release"]
+
+[tasks.copy-assets-to-win-out]
+command = "cp"
+args = [
+    "-r",
+    "${CARGO_MAKE_WORKING_DIRECTORY}/assets",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/",
+]
+
+[tasks.release]
+run_task = { name = [
+    "clear-win-out",
+    "prepare-win-out",
+    "build-release",
+    "copy-exe-to-win-out",
+    "copy-assets-to-win-out",
+]}
+
+
 [tasks.prepare-to-run]
 command = "cp"
 args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
