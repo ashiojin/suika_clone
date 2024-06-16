@@ -137,7 +137,7 @@ pub fn update_effect(
             commands.entity(entity)
                 .despawn_recursive();
         } else {
-            let fraction = effect.0.fraction_remaining();
+            let fraction = effect.0.fraction();
             if let Some(accelation) = accelation {
                 velocity.0 += accelation.0 * delta_second;
             }

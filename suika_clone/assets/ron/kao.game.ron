@@ -67,6 +67,80 @@
             image_asset_path: "images/kao/kao_11.png",
         ),
     ],
+    effects: [
+        Scattering(
+            (
+                image_asset_paths: [
+                    "images/effects/rectangle_16x16.png",
+                ],
+                alpha: ([0.5, 1.0, 1.0, 0.7, 0.0]),
+                red:   ([1.0, 1.0, 0.3, 0.3, 0.3]),
+                green: ([0.0, 0.3, 1.0, 0.3, 0.3]),
+                blue:  ([0.0, 0.3, 0.3, 1.0, 1.0]),
+                image_scale: 0.5,
+                theta: (-45.0, 45.0),
+                velocity: (0.0, 10.0),
+                rotation: (1.0, 3.0),
+                accelation: ((0.0, -30.0), (0.0, -30.0)),
+                num: (6, 10),
+                time: (0.3, 1.2),
+            )
+        ),
+        Scattering(
+            (
+                image_asset_paths: [
+                    "images/effects/rectangle_16x16.png",
+                ],
+                alpha: ([0.5, 1.0, 1.0, 0.7, 0.0]),
+                red:   ([1.0, 1.0, 0.3, 0.3, 0.3]),
+                green: ([0.0, 0.3, 1.0, 0.3, 0.3]),
+                blue:  ([0.0, 0.3, 0.3, 1.0, 1.0]),
+                image_scale: 1.0,
+                theta: (-45.0, 45.0),
+                velocity: (0.0, 20.0),
+                rotation: (1.0, 3.0),
+                accelation: ((0.0, -30.0), (0.0, -30.0)),
+                num: (8, 12),
+                time: (0.3, 1.2),
+            )
+        ),
+        Scattering(
+            (
+                image_asset_paths: [
+                    "images/effects/rectangle_16x16.png",
+                ],
+                alpha: ([0.5, 1.0, 1.0, 0.7, 0.0]),
+                red:   ([1.0, 1.0, 0.3, 0.3, 0.3]),
+                green: ([0.0, 0.3, 1.0, 0.3, 0.3]),
+                blue:  ([0.0, 0.3, 0.3, 1.0, 1.0]),
+                image_scale: 2.0,
+                theta: (-45.0, 45.0),
+                velocity: (0.0, 40.0),
+                rotation: (1.0, 3.0),
+                accelation: ((0.0, -30.0), (0.0, -30.0)),
+                num: (12, 16),
+                time: (0.3, 1.2),
+            )
+        ),
+        Scattering(
+            (
+                image_asset_paths: [
+                    "images/effects/rectangle_16x16.png",
+                ],
+                alpha: ([0.5, 1.0, 1.0, 0.7, 0.0]),
+                red:   ([1.0, 1.0, 0.3, 0.3, 0.3]),
+                green: ([0.0, 0.3, 1.0, 0.3, 0.3]),
+                blue:  ([0.0, 0.3, 0.3, 1.0, 1.0]),
+                image_scale: 5.0,
+                theta: (-45.0, 45.0),
+                velocity: (0.0, 60.0),
+                rotation: (0.1, 1.0),
+                accelation: ((0.0, -30.0), (0.0, -30.0)),
+                num: (12, 16),
+                time: (0.3, 2.4),
+            )
+        ),
+    ],
     drop_ball_level_max: 4,
     player: (
         view_width: 128.0,

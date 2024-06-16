@@ -1564,6 +1564,7 @@ fn cleanup_ingame_entites(
             With<Bottle>,
             With<Background>,
             With<ScoreView>,
+            With<effects::Effect>,
         )>>,
 ) {
     for e in q_entites.iter() {

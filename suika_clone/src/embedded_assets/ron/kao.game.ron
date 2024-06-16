@@ -5,7 +5,7 @@
             view_width: 61.440002,
             view_height: 61.440002,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_01.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 31.05,
@@ -19,7 +19,7 @@
             view_width: 95.45142,
             view_height: 95.45142,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_03.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 49.5,
@@ -33,7 +33,7 @@
             view_width: 151.40572,
             view_height: 151.40572,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_05.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 77.4,
@@ -47,7 +47,7 @@
             view_width: 230.4,
             view_height: 230.4,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_07.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 114.299995,
@@ -61,7 +61,7 @@
             view_width: 331.33716,
             view_height: 331.33716,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_09.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 159.75,
@@ -75,7 +75,7 @@
             view_width: 454.21713,
             view_height: 454.21713,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_11.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
     ],
     effects: [
@@ -101,18 +101,17 @@
                 image_asset_paths: [
                     "embedded://suika_clone/embedded_assets/images/effects/circle_16x16.png",
                     "embedded://suika_clone/embedded_assets/images/effects/rectangle_16x16.png",
-                    "embedded://suika_clone/embedded_assets/images/effects/buzz_16x16.png",
                 ],
-                alpha: ([0.5, 1.0, 0.5, 0.0]),
-                red:   ([1.0, 1.0, 0.5, 0.0]),
-                green: ([0.3, 0.3, 0.3, 0.0]),
-                blue:  ([0.3, 0.3, 0.3, 0.0]),
+                alpha: ([0.5, 1.0, 1.0, 0.7, 0.0]),
+                red:   ([1.0, 1.0, 0.3, 0.3, 0.3]),
+                green: ([0.0, 0.3, 1.0, 0.3, 0.3]),
+                blue:  ([0.0, 0.3, 0.3, 1.0, 1.0]),
                 image_scale: 1.0,
                 theta: (-45.0, 45.0),
-                velocity: (10.0, 20.0),
+                velocity: (0.0, 20.0),
                 rotation: (1.0, 3.0),
                 accelation: ((0.0, -30.0), (0.0, -30.0)),
-                num: (5, 10),
+                num: (8, 12),
                 time: (0.5, 1.0),
             )
         ),

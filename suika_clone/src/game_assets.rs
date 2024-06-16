@@ -75,7 +75,7 @@ pub mod effects {
             } else {
                 let len = self.0.len();
                 let idx_l = (fraction * (len-1) as f32).floor() as usize;
-                let remain = fraction - idx_l as f32 / (len-1) as f32;
+                let remain = (fraction - idx_l as f32 / (len-1) as f32) * (len-1) as f32;
                 let l = self.0[idx_l];
                 let r = self.0[idx_l + 1];
 
