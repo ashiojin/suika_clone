@@ -593,6 +593,7 @@ impl GameAssets {
                 + self.ui.view_margin_left + self.ui.hold_view.width * 0.5,
             self.bottle_settings.left_top().y
                 - self.ui.score_view.height
+                - self.ui.view_margin_y
                 - self.ui.hold_view.height * 0.5,
         )
     }
@@ -611,7 +612,9 @@ impl GameAssets {
                 + self.ui.manual_view.width * 0.5,
             self.bottle_settings.left_top().y
                 - self.ui.score_view.height
+                - self.ui.view_margin_y
                 - self.ui.hold_view.height
+                - self.ui.view_margin_y
                 - self.ui.manual_view.height * 0.5,
         )
     }
