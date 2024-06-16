@@ -71,8 +71,9 @@
 - [ ] Refine title screen
   - [ ] Show credits (on config popup?). Then link to their websites using [Hyperlink](https://docs.rs/egui/latest/egui/widgets/struct.Hyperlink.html).
 - [ ] Refine loading screen
-- [ ] Effect
-  - [ ] Combine balls (max or not)
+- Effect
+  - [x] Combine balls (at each levels)
+  - [ ] ball protruded
 - [x] Save config.
 - [x] Separate game states to 
       application state (pre-load/title/config/loading/in-game) and

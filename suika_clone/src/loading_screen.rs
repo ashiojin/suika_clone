@@ -121,6 +121,9 @@ fn load_assets_game_assets(
     let balls = from_ron.balls.iter()
         .map(|n| BallLevelDef::create_with_loading(n, &asset_server))
         .collect();
+    let effects = from_ron.effects.iter()
+        .map(|r| EffectDef::create_with_loading(r, &asset_server))
+        .collect();
     let player = PlayerDef::create_with_loading(&from_ron.player, &asset_server);
     let bottle = BottleDef::create_with_loading(&from_ron.bottle, &asset_server);
     let background = BackgroundDef::create_with_loading(&from_ron.background, &asset_server);
@@ -132,6 +135,7 @@ fn load_assets_game_assets(
     commands.insert_resource(
         GameAssets::new(
             balls,
+            effects,
             BallLevel(from_ron.drop_ball_level_max),
             player,
             bottle,

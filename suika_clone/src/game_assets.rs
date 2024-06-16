@@ -11,6 +11,8 @@ pub struct BallLevelDef {
     pub view_height: f32,
 
     pub h_image: Handle<Image>,
+
+    pub effect_index: Option<usize>,
 }
 
 impl BallLevelDef {
@@ -20,6 +22,89 @@ impl BallLevelDef {
             view_width: n.view_width,
             view_height: n.view_height,
             h_image: asset_server.load(&n.image_asset_path),
+            effect_index: n.effect_index,
+        }
+    }
+}
+
+pub mod effects {
+    use bevy::prelude::*;
+    use bevy_prng::ChaCha8Rng;
+    use bevy_rand::component::EntropyComponent;
+    use rand_core::RngCore;
+
+    #[derive(Debug, Clone)]
+    pub struct RandRange<T>(pub T, pub T);
+
+    impl<T: Clone> RandRange<T> {
+        pub fn from(ron: &game_ron::effects::RandRange<T>) -> Self {
+            Self(ron.0.clone(), ron.1.clone())
+        }
+    }
+    impl RandRange<f32> {
+        pub fn rand(&self, rnd: &mut EntropyComponent<ChaCha8Rng>) -> f32 {
+            let t = rnd.next_u32() as f32 / std::u32::MAX as f32;
+            (self.1 - self.0) * t + self.0
+        }
+    }
+    impl RandRange<Vec2> {
+        pub fn rand(&self, rnd: &mut EntropyComponent<ChaCha8Rng>) -> Vec2 {
+            let t = rnd.next_u32() as f32 / std::u32::MAX as f32;
+            self.0.lerp(self.1, t)
+        }
+    }
+    impl RandRange<usize> {
+        pub fn rand(&self, rnd: &mut EntropyComponent<ChaCha8Rng>) -> usize {
+            (rnd.next_u32() % (self.1 - self.0 + 1) as u32) as usize + self.0
+        }
+    }
+
+
+    #[derive(Debug, Clone)]
+    pub struct Scattering {
+        pub h_images: Vec<Handle<Image>>,
+        pub image_scale: f32,
+        pub theta: RandRange<f32>,
+        pub velocity: RandRange<f32>,
+        pub rotation: RandRange<f32>,
+        pub accelation: RandRange<Vec2>,
+        pub num: RandRange<usize>,
+        pub time: RandRange<f32>,
+    }
+}
+
+
+#[derive(Debug)]
+pub enum EffectDef {
+    Scattering(effects::Scattering),
+}
+
+impl EffectDef {
+    pub fn create_with_loading(ron: &EffectRon, asset_server: &AssetServer) -> Self {
+        match ron {
+            game_ron::EffectRon::Scattering(s) => {
+                let h_images = s.image_asset_paths.iter().map(|p|
+                    asset_server.load(p)
+                ).collect();
+
+                Self::Scattering(effects::Scattering{
+                    h_images,
+                    image_scale: s.image_scale,
+                    theta: effects::RandRange::from(&s.theta),
+                    velocity: effects::RandRange::from(&s.velocity),
+                    rotation: effects::RandRange::from(&s.rotation),
+                    accelation: effects::RandRange::from(&s.accelation),
+                    num: effects::RandRange::from(&s.num),
+                    time: effects::RandRange::from(&s.time),
+                })
+            }
+        }
+    }
+    fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
+        match self {
+            EffectDef::Scattering(s) => {
+                s.h_images.iter().map(|h| h.clone().untyped()).collect()
+            }
         }
     }
 }
@@ -276,6 +361,7 @@ impl PhysicsDef {
 #[derive(Resource, Debug)]
 pub struct GameAssets {
     ball_level_settings: Vec<BallLevelDef>,
+    effects: Vec<EffectDef>,
     pub drop_ball_level_max: BallLevel,
     pub player_settings: PlayerDef,
     pub bottle_settings: BottleDef,
@@ -303,10 +389,14 @@ impl Loadable for GameAssets {
         let mut v3 = self.ui.get_untyped_handles();
         let mut v4 = self.background.get_untyped_handles();
         let mut v5 = self.sound.get_untyped_handles();
+        let mut v6 = self.effects.iter()
+            .flat_map(|x| x.get_untyped_handles())
+            .collect();
         v.append(&mut v2);
         v.append(&mut v3);
         v.append(&mut v4);
         v.append(&mut v5);
+        v.append(&mut v6);
         v
     }
 }
@@ -336,6 +426,7 @@ impl GameAssets {
     #[allow(clippy::too_many_arguments)] // FIXME: nicer api (take extra care of ball_level_settings)
     pub fn new(
         ball_level_settings: Vec<BallLevelDef>,
+        effects: Vec<EffectDef>,
         drop_ball_level_max: BallLevel,
         player_settings: PlayerDef,
         bottle_settings: BottleDef,
@@ -350,6 +441,7 @@ impl GameAssets {
     ) -> Self {
         Self {
             ball_level_settings,
+            effects,
             drop_ball_level_max,
             player_settings,
             bottle_settings,
@@ -381,6 +473,16 @@ impl GameAssets {
     #[inline]
     pub fn get_ball_r(&self, lv: BallLevel) -> f32 {
         self.get_ball_setting(lv).physics_radius
+    }
+
+    pub fn get_ball_effect(&self, lv_combined: BallLevel) -> Option<&EffectDef> {
+        if let Some(idx) = self.get_ball_setting(lv_combined).effect_index {
+            Some(
+                &self.effects[idx]
+            )
+        } else {
+            None
+        }
     }
 
     #[inline]

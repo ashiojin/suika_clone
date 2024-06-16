@@ -19,6 +19,9 @@ mod pause_popup;
 use pause_popup::*;
 use rand_core::RngCore;
 
+mod effects;
+
+
 pub struct ScGameScreenPlugin;
 
 // Physics Engine Settings
@@ -29,6 +32,7 @@ impl Plugin for ScGameScreenPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Gravity(Vec2::NEG_Y * GRAVITY_SCALE));
         app.insert_resource(SubstepCount(XPBD_SUBSTEP));
+
 
         app.insert_state(GameScreenState::Inactive);
 
@@ -57,6 +61,7 @@ impl Plugin for ScGameScreenPlugin {
 
         // GameScreenState :: Init
         app.add_systems(OnEnter(GameScreenState::Init), (
+            effects::spawn_effect_manager, // FIXME: can i initialize in building app ?
             spawn_background,
             spawn_bottle,
             spawn_player,
@@ -104,6 +109,9 @@ impl Plugin for ScGameScreenPlugin {
                 .after(action_player),
             score_ball_events,
             check_game_over,
+            spwan_effects_balls_touched
+                .after(check_ball_collisions),
+            effects::update_effect,
         ).run_if(in_state(GameScreenState::Playing)));
 
         // GameScreenState :: GameOver
@@ -475,6 +483,37 @@ fn combine_balls_touched(
                     }
                 }
 
+            }
+        }
+    }
+}
+
+fn spwan_effects_balls_touched( // FIXME: common logic! see: combine_balls_touched()
+    mut commands: Commands,
+    mut ev_ball: EventReader<BallEvent>,
+    mut effect_manager: ResMut<effects::EffectManager>,
+    q_ball: Query<(Entity, &Transform, &Ball)>,
+    sc_asset: Res<GameAssets>,
+) {
+    for ev in ev_ball.read() {
+        match ev {
+            BallEvent::TouchSameLevel(e1, e2) => {
+                let b1 = q_ball.get(*e1);
+                let b2 = q_ball.get(*e2);
+
+                if let (Ok((_, t1, b1)), Ok((_, t2, _))) = (b1, b2) {
+                    let pos = (t1.translation.xy() + t2.translation.xy()) / 2.;
+                    let cur_lv = b1.get_level();
+
+                    if let Some(effect) = sc_asset.get_ball_effect(*cur_lv) {
+                        effects::spawn_effect(
+                            pos,
+                            &mut commands,
+                            effect,
+                            effect_manager.as_mut()
+                        );
+                    }
+                }
             }
         }
     }
@@ -1561,3 +1600,7 @@ fn pause_game(
         }
     }
 }
+
+
+
+

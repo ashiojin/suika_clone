@@ -1,6 +1,42 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+
+pub mod effects {
+    use bevy::prelude::*;
+    use serde::{Deserialize, Serialize};
+
+
+    #[derive(Debug, Clone, Deserialize, Serialize)]
+    #[derive(Reflect)]
+    pub struct RandRange<T: Clone>(pub T, pub T);
+
+    #[derive(Debug, Clone, Deserialize, Serialize)]
+    #[derive(Reflect)]
+    pub struct Scattering {
+        pub image_asset_paths: Vec<String>,
+        pub image_scale: f32,
+        /// angle
+        pub theta: RandRange<f32>,
+        /// px/sec
+        pub velocity: RandRange<f32>,
+        /// rotations/sec
+        pub rotation: RandRange<f32>,
+        /// px/sec * 2
+        pub accelation: RandRange<Vec2>,
+        ///
+        pub num: RandRange<usize>,
+        ///
+        pub time: RandRange<f32>,
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
+pub enum EffectRon {
+    Scattering(effects::Scattering),
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
 pub struct BallLevelSettingRon {
@@ -10,6 +46,10 @@ pub struct BallLevelSettingRon {
     pub view_height: f32,
 
     pub image_asset_path: String,
+
+    /// Index of `effects`.
+    #[serde(default)]
+    pub effect_index: Option<usize>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -126,6 +166,8 @@ pub struct PhysicsRon {
 #[derive(Asset)]
 pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
+    #[serde(default)]
+    pub effects: Vec<EffectRon>,
     pub drop_ball_level_max: usize,
     pub player: PlayerRon,
     pub bottle: BottleRon,

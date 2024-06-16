@@ -27,6 +27,10 @@ impl Plugin for ScEmbeddedAssetsPlugin {
 
         embedded_asset!(app, "images/kao/player.png");
 
+        embedded_asset!(app, "images/effects/effect_small_1.png");
+        embedded_asset!(app, "images/effects/effect_small_2.png");
+        embedded_asset!(app, "images/effects/effect_small_3.png");
+
         embedded_asset!(app, "images/bottle_fg_toriaezu.png");
         embedded_asset!(app, "images/bottle_bg_toriaezu.png");
 
