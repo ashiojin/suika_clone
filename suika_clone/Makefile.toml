@@ -25,7 +25,6 @@ args = ["-p", "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts"]
 [tasks.copy-src]
 command = "cp"
 args = ["--update",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
     "${CARGO_MAKE_WORKING_DIRECTORY}/src/embedded_assets/fonts/",
 ]
@@ -34,7 +33,6 @@ dependencies = ["prepare-directories-src"]
 [tasks.copy-assets]
 command = "cp"
 args = ["--update",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/GL-CurulMinamoto/fonts/ttf/GL-CurulMinamoto.ttf",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/external/x12y12pxMaruMinyaM/x12y12pxMaruMinyaM.ttf",
     "${CARGO_MAKE_WORKING_DIRECTORY}/assets/fonts/",
 ]
