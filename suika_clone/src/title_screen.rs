@@ -1,8 +1,5 @@
 use crate::prelude::*;
-use bevy::{
-    prelude::*,
-    asset::embedded_asset,
-};
+use bevy::prelude::*;
 
 use bevy_common_assets::ron::RonAssetPlugin;
 
@@ -17,8 +14,6 @@ pub struct ScTitleScreenPlugin;
 
 impl Plugin for ScTitleScreenPlugin {
     fn build(&self, app: &mut App) {
-
-        embedded_asset!(app, "title_screen/title_bg_image.png");
 
         app.add_plugins((
             RonAssetPlugin::<ListRon>::new(&["list.ron"]),
@@ -134,8 +129,8 @@ fn start_loading(
     mut asset: ResMut<TitleAssets>,
     asset_server: Res<AssetServer>,
 ) {
-    asset.h_bg_image = asset_server.load("embedded://suika_clone/title_screen/title_bg_image.png");
-    asset.h_list_ron = asset_server.load("ron/index.list.ron");
+    asset.h_bg_image = asset_server.load("embedded://suika_clone/embedded_assets/images/title_1280x840.png");
+    asset.h_list_ron = asset_server.load("ron/index.list.ron"); // should read from assets/
     asset.h_font = asset_server.load("embedded://suika_clone/embedded_assets/fonts/x12y12pxMaruMinyaM.ttf");
 }
 
