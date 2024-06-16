@@ -98,9 +98,11 @@
       - [x] Use [AssetMetaCheck::Never](https://github.com/bevyengine/bevy/pull/10623) to remove requests for `.meta` files of assets
         - [ ] There are still Requests for .meta.
     - [ ] Windows
+      - [x] release task
+      - [ ] github workflow
     - [ ] Linux
     - [ ] macOS ?
-  - Make (App Bundle)[https://github.com/burtonageo/cargo-bundle]
+  - Make [App Bundle](https://github.com/burtonageo/cargo-bundle)
 - [x] Github Actions
   - check: https://github.com/davidB/rust-cargo-make
 - [ ] Refactoring Makefile.toml
