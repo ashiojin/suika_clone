@@ -291,8 +291,8 @@ pub const KEYBOARD_KEYS_SELECT: [KeyCode; 1] = [KeyCode::Escape];
 
 pub const GAMEPAD_BTNS_LEFT: [GamepadButtonType; 1] = [GamepadButtonType::DPadLeft];
 pub const GAMEPAD_BTNS_RIGHT: [GamepadButtonType; 1] = [GamepadButtonType::DPadRight];
-pub const GAMEPAD_BTNS_MAIN: [GamepadButtonType; 1] = [GamepadButtonType::East];
-pub const GAMEPAD_BTNS_SUB1: [GamepadButtonType; 1] = [GamepadButtonType::North];
+pub const GAMEPAD_BTNS_MAIN: [GamepadButtonType; 1] = [GamepadButtonType::South];
+pub const GAMEPAD_BTNS_SUB1: [GamepadButtonType; 1] = [GamepadButtonType::East];
 pub const GAMEPAD_BTNS_SUB2: [GamepadButtonType; 2] = [GamepadButtonType::RightTrigger, GamepadButtonType::LeftTrigger];
 pub const GAMEPAD_BTNS_START: [GamepadButtonType; 1] = [GamepadButtonType::Start];
 pub const GAMEPAD_BTNS_SELECT: [GamepadButtonType; 1] = [GamepadButtonType::Select];
@@ -338,8 +338,8 @@ impl GpKbInput {
         use maru_minya_m::*;
         match *self {
             GpKbInput::MoveLeftRight => format!("{}/{}/{}/{}", GP_LSTICK, GP_DP_LEFT_RIGHT, "\u{21E6}\u{21E8}", "AD"),
-            GpKbInput::Main => format!("{}/{}/{}", GP_BTN_E, "Space", "Z"),
-            GpKbInput::Sub1 => format!("{}/{}/{}/{}", GP_BTN_N, "\u{21E7}", "W", "X"),
+            GpKbInput::Main => format!("{}/{}/{}", GP_BTN_S, "Space", "Z"),
+            GpKbInput::Sub1 => format!("{}/{}/{}/{}", GP_BTN_E, "\u{21E7}", "W", "X"),
             GpKbInput::Sub2 => format!("{}/{}/{}/{}", GP_BTN_LB, GP_BTN_RB, "U", "C"),
             GpKbInput::Start => format!("{}/{}", GP_BTN_START, "P"),
             GpKbInput::Select => format!("{}/{}", GP_BTN_SELECT, "Esc"),

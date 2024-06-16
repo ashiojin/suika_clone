@@ -95,7 +95,8 @@
              - It will be solved by:
                - Changing `assets` directory to `assets_XXX` (XXX: assets version)
                - Or create [custom AssertReader](https://bevyengine.org/examples/Assets/custom-asset-reader/) that appends `?v=xxx` to any pathes.
-      - [ ] Use [AssetMetaCheck::Never](https://github.com/bevyengine/bevy/pull/10623) to remove requests for `.meta` files of assets
+      - [x] Use [AssetMetaCheck::Never](https://github.com/bevyengine/bevy/pull/10623) to remove requests for `.meta` files of assets
+        - [ ] There are still Requests for .meta.
     - [ ] Windows
     - [ ] Linux
     - [ ] macOS ?

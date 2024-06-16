@@ -1,5 +1,8 @@
 use bevy::{
-    prelude::*, render::camera::ScalingMode, window::WindowResolution
+    prelude::*,
+    asset::AssetMetaCheck,
+    render::camera::ScalingMode,
+    window::WindowResolution
 };
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_egui_kbgp::KbgpNavBindings;
@@ -119,6 +122,8 @@ fn run_app(arg: Option<&str>) {
         allow_mouse_buttons: true,
         allow_mouse_wheel_sideways: true,
     });
+
+    app.insert_resource(AssetMetaCheck::Never);
 
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
     app.insert_resource(FixedConfig::default());
