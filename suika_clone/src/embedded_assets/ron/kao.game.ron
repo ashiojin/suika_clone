@@ -12,7 +12,7 @@
             view_width: 75.70286,
             view_height: 75.70286,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_02.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 39.149998,
@@ -26,7 +26,7 @@
             view_width: 120.685715,
             view_height: 120.685715,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_04.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 62.1,
@@ -40,7 +40,7 @@
             view_width: 188.70857,
             view_height: 188.70857,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_06.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 94.5,
@@ -54,7 +54,7 @@
             view_width: 278.6743,
             view_height: 278.6743,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_08.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 135.9,
@@ -68,7 +68,7 @@
             view_width: 389.48572,
             view_height: 389.48572,
             image_asset_path: "embedded://suika_clone/embedded_assets/images/kao/kao_10.png",
-            effect_index: Some(0),
+            effect_index: Some(1),
         ),
         (
             physics_radius: 186.29999,
@@ -88,6 +88,26 @@
                 ],
                 alpha: ([0.5, 1.0, 0.5, 0.0]),
                 image_scale: 0.3,
+                theta: (-45.0, 45.0),
+                velocity: (10.0, 20.0),
+                rotation: (1.0, 3.0),
+                accelation: ((0.0, -30.0), (0.0, -30.0)),
+                num: (5, 10),
+                time: (0.5, 1.0),
+            )
+        ),
+        Scattering(
+            (
+                image_asset_paths: [
+                    "embedded://suika_clone/embedded_assets/images/effects/circle_16x16.png",
+                    "embedded://suika_clone/embedded_assets/images/effects/rectangle_16x16.png",
+                    "embedded://suika_clone/embedded_assets/images/effects/buzz_16x16.png",
+                ],
+                alpha: ([0.5, 1.0, 0.5, 0.0]),
+                red:   ([1.0, 1.0, 0.5, 0.0]),
+                green: ([0.3, 0.3, 0.3, 0.0]),
+                blue:  ([0.3, 0.3, 0.3, 0.0]),
+                image_scale: 1.0,
                 theta: (-45.0, 45.0),
                 velocity: (10.0, 20.0),
                 rotation: (1.0, 3.0),

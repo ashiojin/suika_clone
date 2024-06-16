@@ -68,8 +68,10 @@ pub mod effects {
     }
     impl Linear<f32> {
         pub fn get(&self, fraction: f32) -> f32 {
-            if fraction >= 1.0 {
-                *self.0.last().expect("at least one element is needed")
+            if self.0.len() == 1 {
+                self.0[0]
+            } else if fraction >= 1.0 {
+                *self.0.last().unwrap()
             } else {
                 let len = self.0.len();
                 let idx_l = (fraction * (len-1) as f32).floor() as usize;
@@ -88,6 +90,9 @@ pub mod effects {
         pub h_images: Vec<Handle<Image>>,
         pub image_scale: f32,
         pub alpha: Linear<f32>,
+        pub red: Linear<f32>,
+        pub green: Linear<f32>,
+        pub blue: Linear<f32>,
         pub theta: RandRange<f32>,
         pub velocity: RandRange<f32>,
         pub rotation: RandRange<f32>,
@@ -115,6 +120,9 @@ impl EffectDef {
                     h_images,
                     image_scale: s.image_scale,
                     alpha: effects::Linear::from(&s.alpha),
+                    red: effects::Linear::from(&s.red),
+                    green: effects::Linear::from(&s.green),
+                    blue: effects::Linear::from(&s.blue),
                     theta: effects::RandRange::from(&s.theta),
                     velocity: effects::RandRange::from(&s.velocity),
                     rotation: effects::RandRange::from(&s.rotation),

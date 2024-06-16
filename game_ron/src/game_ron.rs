@@ -29,6 +29,15 @@ pub mod effects {
         /// list of alpha [0.0, 1.0]. at least 1 element.
         #[serde(default)]
         pub alpha: Linear<f32>,
+        /// list of red [0.0, 1.0]. at least 1 element.
+        #[serde(default)]
+        pub red: Linear<f32>,
+        /// list of green [0.0, 1.0]. at least 1 element.
+        #[serde(default)]
+        pub green: Linear<f32>,
+        /// list of blue [0.0, 1.0]. at least 1 element.
+        #[serde(default)]
+        pub blue: Linear<f32>,
 
         /// degree
         pub theta: RandRange<f32>,

@@ -19,6 +19,15 @@ pub struct EffectRotation(f32);
 #[derive(Component, Debug)]
 pub struct EffectAlpha(effects::Linear<f32>);
 
+#[derive(Component, Debug)]
+pub struct EffectRed(effects::Linear<f32>);
+
+#[derive(Component, Debug)]
+pub struct EffectGreen(effects::Linear<f32>);
+
+#[derive(Component, Debug)]
+pub struct EffectBlue(effects::Linear<f32>);
+
 #[derive(Resource, Debug)]
 pub struct EffectManager {
     rand: EntropyComponent<ChaCha8Rng>,
@@ -45,10 +54,23 @@ fn make_scattering_effect(
         let rot = effect.rotation.rand(rnd);
         let acc = effect.accelation.rand(rnd);
         let alpha = effect.alpha.clone();
+        let red = effect.red.clone();
+        let green = effect.green.clone();
+        let blue = effect.blue.clone();
+        let init_color = Color::rgba(
+            red.get(0.),
+            green.get(0.),
+            blue.get(0.),
+            alpha.get(0.),
+        );
         (
             Effect(Timer::from_seconds(time, TimerMode::Once)),
             SpriteBundle {
                 texture: h_img,
+                sprite: Sprite {
+                    color: init_color,
+                    ..default()
+                },
                 transform: Transform::from_translation(pos.extend(Z_EFFECT))
                     .with_scale(Vec2::splat(img_scale).extend(1.)),
                 ..default()
@@ -57,6 +79,9 @@ fn make_scattering_effect(
             EffectRotation(rot),
             EffectAccelation(acc),
             EffectAlpha(alpha),
+            EffectRed(red),
+            EffectGreen(green),
+            EffectBlue(blue),
         )
     }).collect()
 }
@@ -98,12 +123,15 @@ pub fn update_effect(
         Option<&EffectAccelation>,
         Option<&EffectRotation>,
         Option<&EffectAlpha>,
+        Option<&EffectRed>,
+        Option<&EffectGreen>,
+        Option<&EffectBlue>,
         )>,
     time: Res<Time>,
 ) {
     let delta = time.delta();
     let delta_second = time.delta_seconds();
-    for (entity, mut sprite, mut trans, mut effect, mut velocity, accelation, rotation, alpha) in q_effects.iter_mut() {
+    for (entity, mut sprite, mut trans, mut effect, mut velocity, accelation, rotation, alpha, red, green, blue) in q_effects.iter_mut() {
         effect.0.tick(delta);
         if effect.0.finished() {
             commands.entity(entity)
@@ -124,11 +152,26 @@ pub fn update_effect(
             } else {
                 1.
             };
+            let red = if let Some(red) = red {
+                red.0.get(fraction)
+            } else {
+                1.
+            };
+            let green = if let Some(green) = green {
+                green.0.get(fraction)
+            } else {
+                1.
+            };
+            let blue = if let Some(blue) = blue {
+                blue.0.get(fraction)
+            } else {
+                1.
+            };
 
             let cur_pos = trans.translation.xy();
             let next_pos = cur_pos + velocity.0;
 
-            sprite.color = Color::WHITE.with_a(alpha);
+            sprite.color = Color::rgba(red, green, blue, alpha);
 
             trans.translation.x = next_pos.x;
             trans.translation.y = next_pos.y;
