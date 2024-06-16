@@ -55,11 +55,14 @@ const VOLUME_OPTIONS: [i32; 11] = [
     60, 70, 80, 90, 100,
 ];
 
+const LICENSES: &str = include_str!("licenses.yml");
+
 pub fn ui_popup(
     mut contexts: EguiContexts,
     mut config: ResMut<Config>,
     mut config_data: ResMut<ConfigData>,
     mut next_state: ResMut<NextState<TitleScreenState>>,
+    mut is_open_licenses: Local<bool>,
 ) {
     let (def_ron_name, _) = get_default_game_ron_name_and_asset_path();
     let ctx = contexts.ctx_mut();
@@ -126,8 +129,44 @@ pub fn ui_popup(
                 }
             });
 
+            ui.separator();
+            let text = "This game was made possible thanks to the following libraries. I deeply appreciate all the developers.";
+            let list = [
+                ("Bevy", "https://bevyengine.org/", "a game engine"),
+                ("bevy_xpbd", "https://github.com/Jondolf/bevy_xpbd", "a physics engine"),
+            ];
+            ui.label(text);
+            ui.vertical(|ui| {
+                for (name, url, description) in list.iter() {
+                    ui.horizontal(|ui| {
+                        ui.label(" - ");
+                        ui.hyperlink_to(format!("{}: {}", name, description), url);
+                    });
+                }
+                ui.horizontal(|ui| {
+                    ui.label(" - ");
+                    if ui.link("...and many more great libraries").clicked() {
+                        *is_open_licenses = true;
+                    }
+                });
+            })
+
         }
     );
+    if *is_open_licenses {
+        egui::Window::new("Licenses")
+            .min_size(egui::Vec2::new(640., 640.))
+            .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
+            .show(ctx, |ui| {
+
+                if ui.button("Close").clicked() {
+                    *is_open_licenses = false;
+                }
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.label(LICENSES);
+                });
+            });
+    }
 }
 
 

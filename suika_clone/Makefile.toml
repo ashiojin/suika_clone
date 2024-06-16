@@ -12,7 +12,7 @@ args = [
 
 
 [tasks.prepare-to-build]
-run_task = { name = ["copy-src", "copy-assets"] }
+run_task = { name = ["copy-src", "copy-assets", "bundle-licenses"] }
 
 [tasks.prepare-directories-src]
 command = "mkdir"
@@ -142,5 +142,5 @@ install_crate = "cargo-license"
 
 [tasks.bundle-licenses]
 command = "cargo"
-args = ["bundle-licenses", "--format", "yaml", "--output", "${CARGO_MAKE_WORKING_DIRECTORY}/licenses.yml"]
+args = ["bundle-licenses", "--format", "yaml", "--output", "${CARGO_MAKE_WORKING_DIRECTORY}/src/title_screen/licenses.yml"]
 install_crate = "cargo-bundle-licenses"
