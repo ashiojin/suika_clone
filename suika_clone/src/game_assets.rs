@@ -59,11 +59,35 @@ pub mod effects {
         }
     }
 
+    #[derive(Debug, Clone, Default)]
+    pub struct Linear<T: Clone>(pub Vec<T>);
+    impl<T:Clone> Linear<T> {
+        pub fn from(ron: &game_ron::effects::Linear<T>) -> Self {
+            Self(ron.0.clone())
+        }
+    }
+    impl Linear<f32> {
+        pub fn get(&self, fraction: f32) -> f32 {
+            if fraction >= 1.0 {
+                *self.0.last().expect("at least one element is needed")
+            } else {
+                let len = self.0.len();
+                let idx_l = (fraction * (len-1) as f32).floor() as usize;
+                let remain = fraction - idx_l as f32 / (len-1) as f32;
+                let l = self.0[idx_l];
+                let r = self.0[idx_l + 1];
+
+                l.lerp(r, remain)
+            }
+        }
+    }
+
 
     #[derive(Debug, Clone)]
     pub struct Scattering {
         pub h_images: Vec<Handle<Image>>,
         pub image_scale: f32,
+        pub alpha: Linear<f32>,
         pub theta: RandRange<f32>,
         pub velocity: RandRange<f32>,
         pub rotation: RandRange<f32>,
@@ -90,6 +114,7 @@ impl EffectDef {
                 Self::Scattering(effects::Scattering{
                     h_images,
                     image_scale: s.image_scale,
+                    alpha: effects::Linear::from(&s.alpha),
                     theta: effects::RandRange::from(&s.theta),
                     velocity: effects::RandRange::from(&s.velocity),
                     rotation: effects::RandRange::from(&s.rotation),

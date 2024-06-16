@@ -13,20 +13,34 @@ pub mod effects {
 
     #[derive(Debug, Clone, Deserialize, Serialize)]
     #[derive(Reflect)]
+    pub struct Linear<T: Clone>(pub Vec<T>);
+    impl Default for Linear<f32> {
+        fn default() -> Self {
+            Self(vec![1.])
+        }
+    }
+
+    #[derive(Debug, Clone, Deserialize, Serialize)]
+    #[derive(Reflect)]
     pub struct Scattering {
         pub image_asset_paths: Vec<String>,
         pub image_scale: f32,
-        /// angle
+
+        /// list of alpha [0.0, 1.0]. at least 1 element.
+        #[serde(default)]
+        pub alpha: Linear<f32>,
+
+        /// degree
         pub theta: RandRange<f32>,
         /// px/sec
         pub velocity: RandRange<f32>,
-        /// rotations/sec
+        /// rotation times/sec
         pub rotation: RandRange<f32>,
         /// px/sec * 2
         pub accelation: RandRange<Vec2>,
         ///
         pub num: RandRange<usize>,
-        ///
+        /// sec
         pub time: RandRange<f32>,
     }
 }

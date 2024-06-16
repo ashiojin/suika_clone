@@ -16,10 +16,14 @@ pub struct EffectVelocity(Vec2);
 #[derive(Component, Debug)]
 pub struct EffectRotation(f32);
 
+#[derive(Component, Debug)]
+pub struct EffectAlpha(effects::Linear<f32>);
+
 #[derive(Resource, Debug)]
 pub struct EffectManager {
     rand: EntropyComponent<ChaCha8Rng>,
 }
+
 
 fn make_scattering_effect(
     pos: Vec2,
@@ -40,6 +44,7 @@ fn make_scattering_effect(
         let init_velocity = init_rot.mul_vec3(Vec3::Y * vel).xy();
         let rot = effect.rotation.rand(rnd);
         let acc = effect.accelation.rand(rnd);
+        let alpha = effect.alpha.clone();
         (
             Effect(Timer::from_seconds(time, TimerMode::Once)),
             SpriteBundle {
@@ -51,6 +56,7 @@ fn make_scattering_effect(
             EffectVelocity(init_velocity),
             EffectRotation(rot),
             EffectAccelation(acc),
+            EffectAlpha(alpha),
         )
     }).collect()
 }
@@ -85,21 +91,25 @@ pub fn update_effect(
     mut commands: Commands,
     mut q_effects: Query<(
         Entity,
+        &mut Sprite,
         &mut Transform,
         &mut Effect,
         &mut EffectVelocity,
         Option<&EffectAccelation>,
-        Option<&EffectRotation>)>,
+        Option<&EffectRotation>,
+        Option<&EffectAlpha>,
+        )>,
     time: Res<Time>,
 ) {
     let delta = time.delta();
     let delta_second = time.delta_seconds();
-    for (entity, mut trans, mut effect, mut velocity, accelation, rotation) in q_effects.iter_mut() {
+    for (entity, mut sprite, mut trans, mut effect, mut velocity, accelation, rotation, alpha) in q_effects.iter_mut() {
         effect.0.tick(delta);
         if effect.0.finished() {
             commands.entity(entity)
                 .despawn_recursive();
         } else {
+            let fraction = effect.0.fraction_remaining();
             if let Some(accelation) = accelation {
                 velocity.0 += accelation.0 * delta_second;
             }
@@ -109,9 +119,16 @@ pub fn update_effect(
             } else {
                 0.
             }.to_radians();
+            let alpha = if let Some(alpha) = alpha {
+                alpha.0.get(fraction)
+            } else {
+                1.
+            };
 
             let cur_pos = trans.translation.xy();
             let next_pos = cur_pos + velocity.0;
+
+            sprite.color = Color::WHITE.with_a(alpha);
 
             trans.translation.x = next_pos.x;
             trans.translation.y = next_pos.y;

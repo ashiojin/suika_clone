@@ -86,6 +86,7 @@
                     "embedded://suika_clone/embedded_assets/images/effects/effect_small_2.png",
                     "embedded://suika_clone/embedded_assets/images/effects/effect_small_3.png",
                 ],
+                alpha: ([0.5, 1.0, 0.5, 0.0]),
                 image_scale: 0.3,
                 theta: (-45.0, 45.0),
                 velocity: (10.0, 20.0),
