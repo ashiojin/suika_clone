@@ -39,8 +39,11 @@ impl Plugin for ScEmbeddedAssetsPlugin {
         embedded_asset!(app, "images/bottle_bg_toriaezu.png");
 
         embedded_asset!(app, "images/bg_toriaezu_1280x840.png");
+        embedded_asset!(app, "images/bg_aozora_1280x840.png");
         embedded_asset!(app, "images/border1.png");
+        embedded_asset!(app, "images/border2.png");
         embedded_asset!(app, "images/popup2_128x128_32.png");
+        embedded_asset!(app, "images/popup3_128x128_32.png");
 
         embedded_asset!(app, "sounds/bgm.ogg");
         embedded_asset!(app, "sounds/se_combine.ogg");

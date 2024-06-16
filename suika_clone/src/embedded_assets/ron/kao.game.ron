@@ -141,7 +141,7 @@
         offset: (0.0, -100.0),
     ),
     background: (
-        bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/bg_toriaezu_1280x840.png",
+        bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/bg_aozora_1280x840.png",
         offset: (0.0, 0.0),
     ),
     sounds: (
@@ -152,8 +152,8 @@
     ),
     ui: (
         hold_view: (
-            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
-            border_width: 20.0,
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border2.png",
+            border_width: 32.0,
             font_color: Rgba(
                 red: 0.0,
                 green: 0.0,
@@ -164,8 +164,8 @@
             height: 240.0,
         ),
         score_view: (
-            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
-            border_width: 20.0,
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border2.png",
+            border_width: 32.0,
             font_color: Rgba(
                 red: 0.0,
                 green: 0.0,
@@ -176,8 +176,8 @@
             height: 160.0,
         ),
         manual_view: (
-            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border1.png",
-            border_width: 20.0,
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/border2.png",
+            border_width: 32.0,
             font_color: Rgba(
                 red: 0.0,
                 green: 0.0,
@@ -190,7 +190,7 @@
         view_margin_left: 60.0,
         view_margin_y: 10.0,
         popup: (
-            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/popup2_128x128_32.png",
+            bg_image_asset_path: "embedded://suika_clone/embedded_assets/images/popup3_128x128_32.png",
             border_width: 32.0,
             font_color: Rgba(
                 red: 1.0,
