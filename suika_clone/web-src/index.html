@@ -18,15 +18,23 @@
   <script type="module">
     import init, { start } from './[JS_FILE_NAME].js'
 
-    let wasm = init().catch((error) => {
-      if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
-        throw error;
-      }
-    })
+    async function on_load() {
+        let wasm = await init().catch((error) => {
+            if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+                throw error;
+            }
+        })
+
+        let btn = document.getElementById('open')
+        btn.addEventListener('click', (ev) => {
+            btn.remove()
+            open()
+        })
+        btn.textContent = 'Open suika_clone'
+        btn.disabled = null;
+    }
 
     async function open() {
-        await wasm
-
         let url = new URL(window.location.href)
         let select = url.searchParams.get('select')
         if (select === null) {
@@ -36,14 +44,13 @@
         }
     }
 
-    let btn = document.getElementById('open')
-    btn.addEventListener('click', (ev) => {
-        open()
-        btn.remove()
+    window.addEventListener('load', (e) => {
+        on_load()
     })
+
   </script>
 
-  <button id="open" type="button" class="big">Open suika_clone!</button>
+  <button id="open" type="button" class="big" disabled>Loading...</button>
 
   <p>* Requires Keyboard or Gamepad.</p>
 </body>

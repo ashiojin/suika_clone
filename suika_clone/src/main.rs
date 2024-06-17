@@ -54,6 +54,15 @@ const TITLE: &str = "Suikx clone";
 
 
 fn main() {
+    // not (release & wasm32)
+    #[cfg(
+        not (
+            all(
+                not(debug_assertions), // release
+                target_arch = "wasm32", // wasm32
+            )
+        )
+    )]
     run_app(None);
 }
 

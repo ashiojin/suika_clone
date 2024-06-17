@@ -186,7 +186,7 @@ args = [
 ]
 env = { "DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.sh ${CARGO_MAKE_WORKING_DIRECTORY}"]} }
 install_crate = "wasm-bindgen-cli"
-dependencies = ["build-release-web", "clean-web-out"]
+dependencies = ["clean-web-out"]
 
 [tasks.copy-assets-for-web]
 command = "cp"

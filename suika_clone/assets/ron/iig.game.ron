@@ -60,7 +60,7 @@
             physics_radius: 135.9,
             view_width: 331.33716,
             view_height: 331.33716,
-            image_asset_path: "images/iig/iig_09.png",
+            image_asset_path: "images/iig/iig_09.2.png",
             effect_index: Some(2),
         ),
         (
