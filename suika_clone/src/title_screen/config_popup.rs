@@ -130,10 +130,11 @@ pub fn ui_popup(
             });
 
             ui.separator();
-            let text = "This game was made possible thanks to the following libraries. I deeply appreciate all the developers.";
+            let text = "This game was made possible thanks to the following libraries/fonts. I deeply appreciate all the developers.";
             let list = [
                 ("Bevy", "https://bevyengine.org/", "a game engine"),
                 ("bevy_xpbd", "https://github.com/Jondolf/bevy_xpbd", "a physics engine"),
+                ("x12y12pxMaruMinyaM", "https://hicchicc.github.io/00ff/", "a pixel font"),
             ];
             ui.label(text);
             ui.vertical(|ui| {
