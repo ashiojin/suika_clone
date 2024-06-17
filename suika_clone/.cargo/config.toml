@@ -2,6 +2,9 @@
 #target = "wasm32-unknown-unknown"
 #target = "x86_64-pc-windows-msvc"
 
+[target.x86_63-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"
 rustflags = ["--cfg=web_sys_unstable_apis"]

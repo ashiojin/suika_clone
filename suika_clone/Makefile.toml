@@ -102,7 +102,7 @@ run_task = { name = [
 [tasks.prepare-to-run-msvc]
 command = "cp"
 args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
-dependencies = ["build-win"]
+dependencies = ["build-win-msvc"]
 
 [tasks.run-exe]
 command = "${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"
@@ -121,6 +121,19 @@ run_task = { name = [
     "copy-exe-to-win-out-gnu",
     "copy-assets-to-win-out",
 ]}
+
+[tasks.run-win-gnu]
+run_task = { name = ["prepare-to-run-gnu", "run-exe", "post-run-win"] }
+
+[tasks.build-win-gnu]
+command = "cargo"
+args = ["build", "--target", "x86_64-pc-windows-gnu"]
+dependencies = ["prepare-to-build"]
+
+[tasks.prepare-to-run-gnu]
+command = "cp"
+args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-gnu/debug/suika_clone.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
+dependencies = ["build-win-gnu"]
 
 [tasks.build-release-win-gnu]
 command = "cargo"
