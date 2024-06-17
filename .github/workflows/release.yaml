@@ -38,7 +38,7 @@ jobs:
       - name: Make out
         run: mkdir out
       - name: Move web-build contents
-        run: cp out-web/* ./out/
+        run: cp -r out-web/* ./out/
       - name: Move windows-build
         run: cp suika_clone_x86_64-windows-msvc.zip ./out/
       - uses: actions/upload-artifact@v4
