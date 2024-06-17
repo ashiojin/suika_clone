@@ -51,12 +51,12 @@
 - [x] Pause in playing game
   - [x] Return to Title
   - [x] Restart
-- [ ] Adjust game parameter/physics behavior
-  - [ ] Spawned ball has too much impluse to bounce off the others.
+- [x] Adjust game parameter/physics behavior
+  - [x] Spawned ball has too much impluse to bounce off the others.
     - [x] Add methods to adjust Friction and Restitution of balls/bottle.
-    - [ ] Add methods to limit velocity that is too large for a ball
+    - [x] Add methods to limit velocity that is too large for a ball
       - Idea: Air friction
-    - [ ] Adjust parameters
+    - [x] Adjust parameters
   - [x] Player should be able to get more higher y-position.
   - [x] The radius of the puppetter's shape-cast should be equal to the radius of the next ball.
 - [x] Gamepad supports
@@ -68,7 +68,7 @@
 - [ ] Ball Samples View
 - [ ] Refine the game over popup to show how the player played.
   - show the numbers of balls combined
-- [ ] Refine title screen
+- [x] Refine title screen
   - [x] Show credits (on config popup?). Then link to their websites using [Hyperlink](https://docs.rs/egui/latest/egui/widgets/struct.Hyperlink.html).
 - [ ] Refine loading screen
 - Effect
@@ -79,6 +79,7 @@
       application state (pre-load/title/config/loading/in-game) and
       in-game state (playing/pausing/gameover)
 - [ ] New game mode: ex) Mode where the objective is to flood a lot of balls.
+- [ ] Touch controls.
 
 
 
@@ -97,9 +98,9 @@
                - Or create [custom AssertReader](https://bevyengine.org/examples/Assets/custom-asset-reader/) that appends `?v=xxx` to any pathes.
       - [x] Use [AssetMetaCheck::Never](https://github.com/bevyengine/bevy/pull/10623) to remove requests for `.meta` files of assets
         - [ ] There are still Requests for .meta.
-    - [ ] Windows
+    - [x] Windows
       - [x] release task
-      - [ ] github workflow
+      - [x] github workflow
     - [ ] Linux
     - [ ] macOS ?
   - Make [App Bundle](https://github.com/burtonageo/cargo-bundle)
