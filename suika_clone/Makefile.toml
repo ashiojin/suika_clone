@@ -11,6 +11,7 @@ args = [
 ]
 
 
+
 [tasks.prepare-to-build]
 run_task = { name = ["copy-src", "copy-assets", "bundle-licenses"] }
 
@@ -38,19 +39,31 @@ args = ["--update",
 ]
 dependencies = ["prepare-directories-assets"]
 
-
-
-[tasks.build]
+[tasks.license]
 command = "cargo"
-args = ["build"]
+args = ["license"]
+install_crate = "cargo-license"
+
+[tasks.bundle-licenses]
+command = "cargo"
+args = ["bundle-licenses", "--format", "yaml", "--output", "${CARGO_MAKE_WORKING_DIRECTORY}/src/title_screen/licenses.yml"]
+install_crate = "cargo-bundle-licenses"
+
+###################################
+## Windows (MSVC)
+
+[tasks.build-win-msvc]
+command = "cargo"
+args = ["build", "--target", "x86_64-pc-windows-msvc"]
 dependencies = ["prepare-to-build"]
 
-[tasks.run]
-run_task = { name = ["prepare-to-run", "run-exe", "post-run"] }
+[tasks.run-win-msvc]
+run_task = { name = ["prepare-to-run-msvc", "run-exe", "post-run-win"] }
 
-[tasks.build-release]
+[tasks.build-release-win-msvc]
 command = "cargo"
-args = ["build", "--release"]
+args = ["build", "--release", "--target", "x86_64-pc-windows-msvc"]
+dependencies = ["prepare-to-build"]
 
 [tasks.clear-win-out]
 command = "rm"
@@ -60,13 +73,13 @@ args = ["-rf", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/"]
 command = "mkdir"
 args = ["-p", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/"]
 
-[tasks.copy-exe-to-win-out]
+[tasks.copy-exe-to-win-out-msvc]
 command = "cp"
 args = [
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/release/suika_clone.exe",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/",
 ]
-dependencies = ["build-release"]
+dependencies = ["build-release-win-msvc"]
 
 [tasks.copy-assets-to-win-out]
 command = "cp"
@@ -76,28 +89,53 @@ args = [
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/",
 ]
 
-[tasks.release]
+[tasks.release-win-msvc]
 run_task = { name = [
     "clear-win-out",
     "prepare-win-out",
-    "build-release",
-    "copy-exe-to-win-out",
+    "build-release-win-msvc",
+    "copy-exe-to-win-out-msvc",
     "copy-assets-to-win-out",
 ]}
 
 
-[tasks.prepare-to-run]
+[tasks.prepare-to-run-msvc]
 command = "cp"
 args = ["${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-msvc/debug/suika_clone.exe", "${CARGO_MAKE_WORKING_DIRECTORY}/"]
-dependencies = ["build"]
+dependencies = ["build-win"]
 
 [tasks.run-exe]
 command = "${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"
 
-[tasks.post-run]
+[tasks.post-run-win]
 command = "rm"
 args = ["${CARGO_MAKE_WORKING_DIRECTORY}/suika_clone.exe"]
 
+###################################
+### Widnows (GNU)
+[tasks.release-win-gnu]
+run_task = { name = [
+    "clear-win-out",
+    "prepare-win-out",
+    "build-release-win-gnu",
+    "copy-exe-to-win-out-gnu",
+    "copy-assets-to-win-out",
+]}
+
+[tasks.build-release-win-gnu]
+command = "cargo"
+args = ["build", "--release", "--target", "x86_64-pc-windows-gnu"]
+dependencies = ["prepare-to-build"]
+
+[tasks.copy-exe-to-win-out-gnu]
+command = "cp"
+args = [
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/x86_64-pc-windows-gnu/release/suika_clone.exe",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-win/",
+]
+dependencies = ["build-release-win-gnu"]
+###################################
+### Wasm
 
 [tasks.build-web]
 command = "cargo"
@@ -170,13 +208,3 @@ run_task = { name = [
     "copy-assets-for-web",
     "make-index",
 ] }
-
-[tasks.license]
-command = "cargo"
-args = ["license"]
-install_crate = "cargo-license"
-
-[tasks.bundle-licenses]
-command = "cargo"
-args = ["bundle-licenses", "--format", "yaml", "--output", "${CARGO_MAKE_WORKING_DIRECTORY}/src/title_screen/licenses.yml"]
-install_crate = "cargo-bundle-licenses"

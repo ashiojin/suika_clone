@@ -22,16 +22,18 @@ jobs:
           toolchain: stable
           override: true
       - uses: davidB/rust-cargo-make@v1
-      - name: Build release(wasm32)
-        run: cargo make --cwd suika_clone/ release-web
-      - name: Build release(windows)
-        run: cargo make --cwd suika_clone/ release
+      - name: Get mingw
+        uses: egor-tensin/setup-mingw@v2
+      - name: Build release(windows-gnu)
+        run: cargo make --cwd suika_clone/ release-win-gnu
       - name: Zip windows build
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: 'zip'
           filename: 'suika_clone_x86_64-windows-msvc.zip'
           path: out-win
+      - name: Build release(wasm32)
+        run: cargo make --cwd suika_clone/ release-web
       - name: Make out
         run: mkdir out
       - name: Move web-build contents

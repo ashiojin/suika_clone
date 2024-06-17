@@ -1,6 +1,6 @@
-[build]
+#[build]
 #target = "wasm32-unknown-unknown"
-target = "x86_64-pc-windows-msvc"
+#target = "x86_64-pc-windows-msvc"
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"
