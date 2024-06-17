@@ -18,13 +18,13 @@ jobs:
       - name: Get rust toolchain for windows(msvc)
         uses: actions-rs/toolchain@v1
         with:
-          target: x86_64-pc-windows-msvc
+          target: x86_64-pc-windows-gnu
           toolchain: stable
           override: true
       - uses: davidB/rust-cargo-make@v1
       - name: Get mingw
-        #        uses: egor-tensin/setup-mingw@v2
-        run: sudo apt install -y gcc-mingw-w64-x86-64 mingw-w64-x86-64-dev
+        uses: egor-tensin/setup-mingw@v2
+        # run: sudo apt install -y gcc-mingw-w64-x86-64 mingw-w64-x86-64-dev
       - name: Build release(windows-gnu)
         run: cargo make --cwd suika_clone/ release-win-gnu
       - name: Zip windows build
