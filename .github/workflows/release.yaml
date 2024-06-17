@@ -1,4 +1,4 @@
-name: release-web
+name: build-recent
 on:
   push:
     branches: [ "main" ]
@@ -15,7 +15,7 @@ jobs:
           target: wasm32-unknown-unknown
           toolchain: stable
           override: true
-      - name: Get rust toolchain for windows(msvc)
+      - name: Get rust toolchain for windows(gnu)
         uses: actions-rs/toolchain@v1
         with:
           target: x86_64-pc-windows-gnu
@@ -31,7 +31,7 @@ jobs:
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: 'zip'
-          filename: 'suika_clone_x86_64-windows-msvc.zip'
+          filename: 'suika_clone_x86_64-windows-gnu.zip'
           path: out-win
       - name: Build release(wasm32)
         run: cargo make --cwd suika_clone/ release-web
@@ -40,7 +40,7 @@ jobs:
       - name: Move web-build contents
         run: cp -r out-web/* ./out/
       - name: Move windows-build
-        run: cp suika_clone_x86_64-windows-msvc.zip ./out/
+        run: cp suika_clone_x86_64-windows-gnu.zip ./out/
       - uses: actions/upload-artifact@v4
         with:
           name: suika_clone
