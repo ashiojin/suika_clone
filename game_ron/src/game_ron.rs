@@ -179,24 +179,71 @@ pub struct RestitutionRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
-pub struct PhysicsRon {
+pub struct RigitBodyRon {
     pub friction: FrictionRon,
     pub restitution: RestitutionRon,
 }
 
+#[derive(Reflect, Debug, Clone)]
+#[derive(Deserialize, Serialize)]
+pub struct Area {
+    pub min_x: f32,
+    pub max_x: f32,
+    pub min_y: f32,
+    pub max_y: f32,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
-pub struct PhysicsCommonRon {
+pub struct OtherParamRon {
+    #[serde(default = "OtherParamRon::get_default_graviry")]
     pub gravity: f32,
+    #[serde(default = "OtherParamRon::get_default_air_damping_coef")]
     pub air_damping_coef: f32,
+    #[serde(default = "OtherParamRon::get_default_ball_grow_time")]
+    pub ball_grow_time: f32,
+    #[serde(default = "OtherParamRon::get_default_area")]
+    pub area: Area,
+    #[serde(default = "OtherParamRon::get_default_max_velocity")]
+    pub max_velocity: f32,
+    #[serde(default = "OtherParamRon::get_default_shake_k")]
+    pub shake_k: f32, // max move is about 0.4 * shake_k
+    #[serde(default = "OtherParamRon::get_default_playing_cam_offset")]
+    pub playing_cam_offset: Vec2,
 }
-impl Default for PhysicsCommonRon {
+impl Default for OtherParamRon {
     fn default() -> Self {
         Self {
-            gravity: 9.81 * 100.,
+            gravity: 9.81 * 200.,
             air_damping_coef: 0.000005,
+            ball_grow_time: 0.8,
+            area: Area {
+                min_x: -700.0,
+                max_x: 700.0,
+                min_y: -500.0,
+                max_y: 10000.0,
+            },
+            max_velocity: 3000.,
+            shake_k: 24. / 0.4,
+            playing_cam_offset: Vec2::new(100., 0.),
         }
     }
+}
+impl OtherParamRon {
+    fn get_default_graviry() -> f32 { 9.81 * 200. }
+    fn get_default_air_damping_coef() -> f32 { 0.000005 }
+    fn get_default_ball_grow_time() -> f32 { 0.8 }
+    fn get_default_area() -> Area {
+        Area {
+                min_x: -700.0,
+                max_x: 700.0,
+                min_y: -500.0,
+                max_y: 10000.0,
+        }
+    }
+    fn get_default_max_velocity() -> f32 { 3000. }
+    fn get_default_shake_k() -> f32 { 24. / 0.4 }
+    fn get_default_playing_cam_offset() -> Vec2 { Vec2::new(100., 0.) }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -212,8 +259,8 @@ pub struct GameRon {
     pub background: BackgroundRon,
     pub sounds: SoundRon,
     pub ui: UiRon,
-    pub ball_physics: PhysicsRon,
-    pub bottle_physics: PhysicsRon,
+    pub ball_physics: RigitBodyRon,
+    pub bottle_physics: RigitBodyRon,
     #[serde(default)]
-    pub physics: PhysicsCommonRon,
+    pub physics: OtherParamRon,
 }

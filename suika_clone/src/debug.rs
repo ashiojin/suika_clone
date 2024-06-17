@@ -95,11 +95,11 @@ struct GrowCommand {
 fn command_grow(
     mut log: ConsoleCommand<GrowCommand>,
 
-    mut config: ResMut<FixedConfig>,
+    mut config: ResMut<GameAssets>,
 ) {
     if let Some(Ok(GrowCommand { tm })) = log.take() {
-        config.grow_time = tm;
-        reply!(log, "{:?}", config.grow_time);
+        config.physics.ball_grow_time = tm;
+        reply!(log, "{:?}", config.physics.ball_grow_time);
     }
 }
 
@@ -112,11 +112,11 @@ struct MaxVelCommand {
 fn command_max_vel(
     mut log: ConsoleCommand<MaxVelCommand>,
 
-    mut config: ResMut<FixedConfig>,
+    mut config: ResMut<GameAssets>,
 ) {
     if let Some(Ok(MaxVelCommand { max })) = log.take() {
-        config.max_velocity = max;
-        reply!(log, "{:?}", config.max_velocity);
+        config.physics.max_velocity = max;
+        reply!(log, "{:?}", config.physics.max_velocity);
     }
 }
 
@@ -145,9 +145,9 @@ fn run_condition_for_display_area(
 
 fn display_area(
     mut gizmos: Gizmos<DefaultGizmoConfigGroup>,
-    config: Res<FixedConfig>,
+    config: Res<GameAssets>,
 ) {
-    let Area { min_x, max_x, min_y, max_y } = config.area;
+    let game_ron::Area { min_x, max_x, min_y, max_y } = config.physics.area;
 
     gizmos.rect_2d(
         Vec2::new((max_x+min_x)/2., (max_y+min_y)/2.),

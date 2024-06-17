@@ -400,9 +400,8 @@ fn spawn_bottle(
 fn spawn_background(
     mut commands: Commands,
     assets: Res<GameAssets>,
-    config: Res<FixedConfig>,
 ) {
-    let center_xy = config.playing_cam_offset;
+    let center_xy = assets.physics.playing_cam_offset;
     let offset = center_xy + assets.background.offset;
     // BACK
     commands.spawn((
@@ -558,9 +557,9 @@ fn check_game_over(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameScreenState>>,
     q_balls: Query<(Entity, &Transform), With<Ball>>,
-    config: Res<FixedConfig>,
+    assets: Res<GameAssets>,
 ) {
-    let Area { min_x, max_x, min_y, max_y } = config.area;
+    let game_ron::Area { min_x, max_x, min_y, max_y } = assets.physics.area;
     if let Some((entity, ball)) = q_balls.iter().find(|(_, t)| {
         let t = t.translation;
         let x = t.x;
@@ -568,7 +567,7 @@ fn check_game_over(
         !(min_x..=max_x).contains(&x) ||
             !(min_y..=max_y).contains(&y)
     }) {
-        info!("Game over: {:?} / {:?}", ball, config.area);
+        info!("Game over: {:?} / {:?}", ball, assets.physics.area);
         commands.entity(entity)
             .insert(AreaProtruded);
         next_state.set(GameScreenState::GameOver);
@@ -931,7 +930,7 @@ fn shake_bottle(
     mut q_bottle: Query<(Entity, &Bottle, &mut Transform, Option<&mut Shaking>)>,
     mut ev_player_act: EventReader<PlayerInputEvent>,
     time: Res<Time>,
-    config: Res<FixedConfig>,
+    assets: Res<GameAssets>,
 ) {
     let delta = time.delta();
     let new_shakes = ev_player_act.read()
@@ -956,7 +955,7 @@ fn shake_bottle(
             shakes
         };
 
-        let max_y = config.shake_k * iter.iter().map(|(v,t)| shake_y(v.y * t.elapsed_secs())).reduce(f32::max).unwrap_or(0.);
+        let max_y = assets.physics.shake_k * iter.iter().map(|(v,t)| shake_y(v.y * t.elapsed_secs())).reduce(f32::max).unwrap_or(0.);
 
         bottle_trans.translation.y = bottle.origin.y - max_y;
     }
@@ -1450,7 +1449,6 @@ fn spawn_ball(
 
     mut ev_ball_spawn: EventReader<BallSpawnEvent>,
     my_assets: Res<GameAssets>,
-    config: Res<FixedConfig>,
 ) {
     for ev in ev_ball_spawn.read() {
         use BallSpawnEvent::*;
@@ -1486,7 +1484,7 @@ fn spawn_ball(
                     Ball::new(level),
                     RigidBody::Dynamic,
                     Collider::circle(ball_r_start),
-                    BallGrowing::new(config.grow_time),
+                    BallGrowing::new(my_assets.physics.ball_grow_time),
                     physics_param,
                     ball_view,
                 ));

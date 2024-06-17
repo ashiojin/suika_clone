@@ -126,7 +126,6 @@ fn run_app(arg: Option<&str>) {
     app.insert_resource(AssetMetaCheck::Never);
 
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
-    app.insert_resource(FixedConfig::default());
     app.insert_resource(Config::default());
     app.insert_resource(Scores::default());
 

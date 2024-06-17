@@ -129,9 +129,9 @@ fn load_assets_game_assets(
     let background = BackgroundDef::create_with_loading(&from_ron.background, &asset_server);
     let ui = UiDef::create_with_loading(&from_ron.ui, &asset_server);
     let sound = SoundDef::create_with_loading(&from_ron.sounds, &asset_server);
-    let ball_physics = PhysicsDef::from_ron(&from_ron.ball_physics);
-    let bottle_physics = PhysicsDef::from_ron(&from_ron.bottle_physics);
-    let physics = PhysicsCommonDef::from_ron(&from_ron.physics);
+    let ball_physics = RigitBodyDef::from_ron(&from_ron.ball_physics);
+    let bottle_physics = RigitBodyDef::from_ron(&from_ron.bottle_physics);
+    let physics = OtherParamDef::from_ron(&from_ron.physics);
 
     commands.insert_resource(
         GameAssets::new(

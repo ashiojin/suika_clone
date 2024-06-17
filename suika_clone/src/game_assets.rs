@@ -372,12 +372,12 @@ pub struct RestitutionDef {
 }
 
 #[derive(Debug)]
-pub struct PhysicsDef {
+pub struct RigitBodyDef {
     pub friction: FrictionDef,
     pub restitution: RestitutionDef,
 }
-impl PhysicsDef {
-    pub fn from_ron(ron: &PhysicsRon) -> Self {
+impl RigitBodyDef {
+    pub fn from_ron(ron: &RigitBodyRon) -> Self {
         Self {
             friction: FrictionDef {
                 dynamic_coef: ron.friction.dynamic_coef,
@@ -390,15 +390,25 @@ impl PhysicsDef {
     }
 }
 #[derive(Debug)]
-pub struct PhysicsCommonDef {
+pub struct OtherParamDef {
     pub gravity: f32,
     pub air_damping_coef: f32,
+    pub ball_grow_time: f32,
+    pub area: game_ron::Area,
+    pub max_velocity: f32,
+    pub shake_k: f32, // max move is about 0.4 * shake_k
+    pub playing_cam_offset: Vec2,
 }
-impl PhysicsCommonDef {
-    pub fn from_ron(ron: &PhysicsCommonRon) -> Self {
+impl OtherParamDef {
+    pub fn from_ron(ron: &OtherParamRon) -> Self {
         Self {
             gravity: ron.gravity,
             air_damping_coef: ron.air_damping_coef,
+            ball_grow_time: ron.ball_grow_time,
+            area: ron.area.clone(),
+            max_velocity: ron.max_velocity,
+            shake_k: ron.shake_k,
+            playing_cam_offset: ron.playing_cam_offset,
         }
     }
 }
@@ -419,9 +429,9 @@ pub struct GameAssets {
 
     pub sound: SoundDef,
 
-    pub ball_physics: PhysicsDef,
-    pub bottle_physics: PhysicsDef,
-    pub physics: PhysicsCommonDef,
+    pub ball_physics: RigitBodyDef,
+    pub bottle_physics: RigitBodyDef,
+    pub physics: OtherParamDef,
 }
 impl Loadable for GameAssets {
     fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
@@ -482,9 +492,9 @@ impl GameAssets {
         h_font: Handle<Font>,
         sound: SoundDef,
 
-        ball_physics: PhysicsDef,
-        bottle_physics: PhysicsDef,
-        physics: PhysicsCommonDef,
+        ball_physics: RigitBodyDef,
+        bottle_physics: RigitBodyDef,
+        physics: OtherParamDef,
 
     ) -> Self {
         Self {

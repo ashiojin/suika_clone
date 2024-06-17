@@ -54,15 +54,15 @@ pub struct DisabledByPlayingCamera;
 pub fn spawn_camera(
     mut commands: Commands,
     mut q_other: Query<(Entity, &mut Camera), Without<PlayCamera>>,
-    config: Res<FixedConfig>,
+    assets: Res<GameAssets>,
 ) {
     let mut camera_bundle = Camera2dBundle::default();
     camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(LOGICAL_HEIGHT);
     camera_bundle.camera.order = CAM_ORDER_PLAYING;
-    camera_bundle.transform.translation.x = config.playing_cam_offset.x;
-    camera_bundle.transform.translation.y = config.playing_cam_offset.y;
+    camera_bundle.transform.translation.x = assets.physics.playing_cam_offset.x;
+    camera_bundle.transform.translation.y = assets.physics.playing_cam_offset.y;
     commands.spawn((
-        PlayCamera::new(config.playing_cam_offset),
+        PlayCamera::new(assets.physics.playing_cam_offset),
         camera_bundle,
     ));
 

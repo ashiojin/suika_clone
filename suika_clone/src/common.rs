@@ -36,43 +36,6 @@ pub struct AppArgs {
 }
 
 
-#[derive(Reflect, Debug, Clone)]
-#[derive(Deserialize, Serialize)]
-pub struct Area {
-    pub min_x: f32,
-    pub max_x: f32,
-    pub min_y: f32,
-    pub max_y: f32,
-}
-impl Area {
-    fn new(min_x: f32, max_x: f32, min_y: f32, max_y: f32) -> Self {
-        Self { min_x, max_x, min_y, max_y, }
-    }
-}
-const AREA_X_MIN: f32 = -700.0;
-const AREA_X_MAX: f32 =  700.0;
-const AREA_Y_MIN: f32 = -600.0;
-const AREA_Y_MAX: f32 =  500.0 + 9999.0;
-
-#[derive(Resource, Debug, Clone)]
-pub struct FixedConfig {
-    pub grow_time: f32,
-    pub area: Area,
-    pub max_velocity: f32,
-    pub shake_k: f32, // max move is about 0.4 * shake_k
-    pub playing_cam_offset: Vec2,
-}
-impl Default for FixedConfig {
-    fn default() -> Self {
-        Self {
-            grow_time: 0.9,
-            area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
-            max_velocity: 3000.,
-            shake_k: 24. / 0.4,
-            playing_cam_offset: Vec2::new(100., 0.),
-        }
-    }
-}
 
 #[derive(Resource, Debug, Clone)]
 #[derive(Reflect)]
