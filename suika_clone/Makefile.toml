@@ -121,7 +121,7 @@ dependencies = ["prepare-to-build"]
 command = "rm"
 args = [
     "-rf",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-web",
 ]
 
 [tasks.wasm-bindgen]
@@ -129,7 +129,7 @@ command = "wasm-bindgen"
 args = [
     "--no-typescript",
     "--target", "web",
-    "--out-dir", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
+    "--out-dir", "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-web/",
     "--out-name", "suika_clone_${DIR_HASH}",
     "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/wasm32-unknown-unknown/release/suika_clone.wasm",
 ]
@@ -143,14 +143,14 @@ args = [
     "--update",
     "-r",
     "${CARGO_MAKE_WORKING_DIRECTORY}/assets",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-web/",
 ]
 
 [tasks.copy-index]
 command = "cp"
 args = [
     "${CARGO_MAKE_WORKING_DIRECTORY}/web-src/index.html",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-web/",
 ]
 
 [tasks.make-index]
@@ -159,7 +159,7 @@ env = { "DIR_HASH" = { script = ["${CARGO_MAKE_WORKING_DIRECTORY}/scripts/hash.s
 args = [
     "-i",
     "s/\\[JS_FILE_NAME\\]/suika_clone_${DIR_HASH}/g",
-    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out/index.html",
+    "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/out-web/index.html",
 ]
 dependencies = ["copy-index"]
 
