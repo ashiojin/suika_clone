@@ -282,8 +282,8 @@ fn load_args(
             .expect("list.ron is not loaded yet.");
 
         if let Some(item) = list_ron.list.iter().find(|&x| x.name == ron_name) {
-            config.game_ron_name = item.name.clone();
-            config.game_ron_asset_path = item.path.clone();
+            config.game_ron_name.clone_from(&item.name);
+            config.game_ron_asset_path.clone_from(&item.path);
         }
     }
 }

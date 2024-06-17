@@ -21,14 +21,6 @@ impl Plugin for LimitVelocityPlugin {
     }
 }
 
-#[inline]
-fn _damping(x: f32) -> f32 {
-    let k = 0.0001;
-    let c = 1.0 / k;
-
-    c - (1.0 / (k * std::f32::consts::E.powf(k * x)))
-}
-
 fn limit_velocity_of_ball(
     mut q_ball: Query<&mut LinearVelocity>,
     config: Res<FixedConfig>,

@@ -47,7 +47,7 @@ pub mod effects {
         pub rotation: RandRange<f32>,
         /// px/sec * 2
         pub accelation: RandRange<Vec2>,
-        ///
+        /// num of spawn
         pub num: RandRange<usize>,
         /// sec
         pub time: RandRange<f32>,
@@ -186,6 +186,21 @@ pub struct PhysicsRon {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[derive(Reflect)]
+pub struct PhysicsCommonRon {
+    pub gravity: f32,
+    pub air_damping_coef: f32,
+}
+impl Default for PhysicsCommonRon {
+    fn default() -> Self {
+        Self {
+            gravity: 9.81 * 100.,
+            air_damping_coef: 0.000005,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Reflect)]
 #[derive(Asset)]
 pub struct GameRon {
     pub balls: Vec<BallLevelSettingRon>,
@@ -199,4 +214,6 @@ pub struct GameRon {
     pub ui: UiRon,
     pub ball_physics: PhysicsRon,
     pub bottle_physics: PhysicsRon,
+    #[serde(default)]
+    pub physics: PhysicsCommonRon,
 }

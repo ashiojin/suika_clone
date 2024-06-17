@@ -131,6 +131,7 @@ fn load_assets_game_assets(
     let sound = SoundDef::create_with_loading(&from_ron.sounds, &asset_server);
     let ball_physics = PhysicsDef::from_ron(&from_ron.ball_physics);
     let bottle_physics = PhysicsDef::from_ron(&from_ron.bottle_physics);
+    let physics = PhysicsCommonDef::from_ron(&from_ron.physics);
 
     commands.insert_resource(
         GameAssets::new(
@@ -145,6 +146,7 @@ fn load_assets_game_assets(
             sound,
             ball_physics,
             bottle_physics,
+            physics,
         )
     );
 }

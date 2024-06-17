@@ -65,9 +65,9 @@ pub struct FixedConfig {
 impl Default for FixedConfig {
     fn default() -> Self {
         Self {
-            grow_time: 1.0,
+            grow_time: 0.9,
             area: Area::new(AREA_X_MIN, AREA_X_MAX, AREA_Y_MIN, AREA_Y_MAX,),
-            max_velocity: 60. * 32. * (30./(2. + 2.)),
+            max_velocity: 3000.,
             shake_k: 24. / 0.4,
             playing_cam_offset: Vec2::new(100., 0.),
         }

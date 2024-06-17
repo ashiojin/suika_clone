@@ -43,13 +43,13 @@ pub mod effects {
     }
     impl RandRange<f32> {
         pub fn rand(&self, rnd: &mut EntropyComponent<ChaCha8Rng>) -> f32 {
-            let t = rnd.next_u32() as f32 / std::u32::MAX as f32;
+            let t = rnd.next_u32() as f32 / u32::MAX as f32;
             (self.1 - self.0) * t + self.0
         }
     }
     impl RandRange<Vec2> {
         pub fn rand(&self, rnd: &mut EntropyComponent<ChaCha8Rng>) -> Vec2 {
-            let t = rnd.next_u32() as f32 / std::u32::MAX as f32;
+            let t = rnd.next_u32() as f32 / u32::MAX as f32;
             self.0.lerp(self.1, t)
         }
     }
@@ -389,6 +389,19 @@ impl PhysicsDef {
         }
     }
 }
+#[derive(Debug)]
+pub struct PhysicsCommonDef {
+    pub gravity: f32,
+    pub air_damping_coef: f32,
+}
+impl PhysicsCommonDef {
+    pub fn from_ron(ron: &PhysicsCommonRon) -> Self {
+        Self {
+            gravity: ron.gravity,
+            air_damping_coef: ron.air_damping_coef,
+        }
+    }
+}
 
 
 #[derive(Resource, Debug)]
@@ -408,6 +421,7 @@ pub struct GameAssets {
 
     pub ball_physics: PhysicsDef,
     pub bottle_physics: PhysicsDef,
+    pub physics: PhysicsCommonDef,
 }
 impl Loadable for GameAssets {
     fn get_untyped_handles(&self) -> Vec<UntypedHandle> {
@@ -470,6 +484,7 @@ impl GameAssets {
 
         ball_physics: PhysicsDef,
         bottle_physics: PhysicsDef,
+        physics: PhysicsCommonDef,
 
     ) -> Self {
         Self {
@@ -484,6 +499,7 @@ impl GameAssets {
             sound,
             ball_physics,
             bottle_physics,
+            physics,
         }
     }
     pub fn get_ball_image(&self, level: BallLevel) -> &Handle<Image> {

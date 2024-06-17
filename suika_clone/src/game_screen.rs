@@ -61,6 +61,7 @@ impl Plugin for ScGameScreenPlugin {
 
         // GameScreenState :: Init
         app.add_systems(OnEnter(GameScreenState::Init), (
+            setup_physics_param,
             effects::spawn_effect_manager, // FIXME: can i initialize in building app ?
             spawn_background,
             spawn_bottle,
@@ -112,6 +113,9 @@ impl Plugin for ScGameScreenPlugin {
             spwan_effects_balls_touched
                 .after(check_ball_collisions),
             effects::update_effect,
+        ).run_if(in_state(GameScreenState::Playing)));
+        app.add_systems(Update, (
+            air_damping_balls,
         ).run_if(in_state(GameScreenState::Playing)));
 
         // GameScreenState :: GameOver
@@ -182,6 +186,13 @@ fn inactivate_game_screen(
     mut next_state: ResMut<NextState<GameScreenState>>
 ) {
     next_state.set(GameScreenState::Inactive);
+}
+
+fn setup_physics_param(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+) {
+    commands.insert_resource(Gravity(Vec2::NEG_Y * assets.physics.gravity));
 }
 
 fn record_score(
@@ -877,7 +888,7 @@ fn action_player(
 
                         // Dropping balls in the same position makes them a "totem".
                         // Therefore, we add a small random value to the drop position x.
-                        let jitter = -0.5 + rng.next_u32() as f32 / std::u32::MAX as f32;
+                        let jitter = -0.5 + rng.next_u32() as f32 / u32::MAX as f32;
 
                         ev_ball_spawn.send(BallSpawnEvent::Drop(pos + Vec2::X * jitter, lv));
 
@@ -1550,6 +1561,20 @@ fn grow_ball_spawned(
     }
 }
 
+fn air_damping_balls(
+    mut q_balls: Query<(&mut LinearVelocity, &Ball)>,
+    assets: Res<GameAssets>,
+    time: Res<Time>,
+) {
+    let delta_sec = time.delta_seconds();
+    let d_coef = assets.physics.air_damping_coef;
+
+    for (mut vel, _ball) in q_balls.iter_mut() {
+        let vv = vel.length_squared();
+        vel.0 *= 1. - vv * d_coef * delta_sec;
+    }
+}
+
 #[allow(clippy::complexity)]
 fn cleanup_ingame_entites(
     mut commands: Commands,
@@ -1601,7 +1626,4 @@ fn pause_game(
         }
     }
 }
-
-
-
 
