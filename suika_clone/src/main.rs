@@ -54,7 +54,6 @@ const TITLE: &str = "Suikx clone";
 
 
 fn main() {
-    #[cfg(not(target_arch = "wasm32"))]
     run_app(None);
 }
 

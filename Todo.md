@@ -105,6 +105,7 @@
   - Make [App Bundle](https://github.com/burtonageo/cargo-bundle)
 - [x] Github Actions
   - check: https://github.com/davidB/rust-cargo-make
+- [x] Fix `makers run-web`
 - [ ] Refactoring Makefile.toml
 - ...
 
