@@ -710,7 +710,7 @@ fn spawn_player(
             Collider::circle(10.),
             Vec2::ZERO,
             0.,
-            Direction2d::NEG_Y
+            Dir2::NEG_Y
         ),
     ));
 

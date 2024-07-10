@@ -14,7 +14,7 @@ opt-level = 3
 
 
 [workspace.dependencies]
-bevy = { version = "0.13", features = [] }
+bevy = { version = "0.14", features = [] }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 

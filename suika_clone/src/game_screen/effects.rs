@@ -57,7 +57,7 @@ fn make_scattering_effect(
         let red = effect.red.clone();
         let green = effect.green.clone();
         let blue = effect.blue.clone();
-        let init_color = Color::rgba(
+        let init_color = Color::srgba(
             red.get(0.),
             green.get(0.),
             blue.get(0.),
@@ -171,7 +171,7 @@ pub fn update_effect(
             let cur_pos = trans.translation.xy();
             let next_pos = cur_pos + velocity.0;
 
-            sprite.color = Color::rgba(red, green, blue, alpha);
+            sprite.color = Color::srgba(red, green, blue, alpha);
 
             trans.translation.x = next_pos.x;
             trans.translation.y = next_pos.y;

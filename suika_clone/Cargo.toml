@@ -1,6 +1,6 @@
 [package]
 name = "suika_clone"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["MORI, Yuji <ashiojin@gmail.com>"]
 license = "MIT"
@@ -10,7 +10,7 @@ game_ron = { path = "../game_ron" }
 bevy = { workspace = true }
 
 ##### Custom Asset Reader
-bevy_asset = { version = "0.13", features = [] }
+bevy_asset = { version = "0.14", features = [] }
 wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = ["Request", "Window", "Response"] }
 wasm-bindgen-futures = "0.4"
@@ -20,26 +20,26 @@ futures-lite = "2.0.1"
 ##### Custom Asset Reader
 
 
-bevy_common_assets = { version = "0.10", features = ["ron"] }
+bevy_common_assets = { version = "0.11", features = ["ron"] }
 
-bevy_xpbd_2d = "0.4" # Physics engine
+bevy_xpbd_2d = "0.5" # Physics engine
 
 egui = "0.13"
-bevy_egui = "0.25" # bevy_console depend on 0.25
-bevy-egui-kbgp = "0.17" # Keyboard/Gamepad support for bevy_egui
+bevy_egui = "0.28" # bevy_console depend on 0.25
+bevy-egui-kbgp = "0.20" # Keyboard/Gamepad support for bevy_egui
 
-bevy_pkv = "0.10"
+#bevy_pkv = "0.10"
+bevy_pkv = { git = "https://github.com/ashiojin/bevy_pkv.git", branch="bevy0_14" }
 
 #bevy_hanabi = "0.10" # Particle system
 #noise = "0.8"
 
 auto_ops = "0.3" # for generate operator overloading
 rand_core = "0.6"
-bevy_rand = "0.5"
-bevy_prng = { version = "0.5", features = ["rand_chacha"] }
+bevy_rand = "0.7"
+bevy_prng = { version = "0.7", features = ["rand_chacha"] }
 
-bevy-debug-text-overlay = "8.1"
-bevy_console = "0.11"
+##bevy_console = "0.11"
 clap = { workspace = true }
 
 ron = { workspace = true }

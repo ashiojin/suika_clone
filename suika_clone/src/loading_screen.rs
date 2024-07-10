@@ -1,6 +1,7 @@
 use std::f32::consts::TAU;
 use crate::prelude::*;
 use bevy::prelude::*;
+use bevy::color::palettes::css;
 
 use game_ron::*;
 
@@ -226,7 +227,7 @@ fn update_loading_screen(
     gizmos.arrow_2d(
         Vec2::ZERO,
         Vec2::from_angle(second_hand) * 100.,
-        Color::YELLOW,
+        css::YELLOW,
     );
 }
 

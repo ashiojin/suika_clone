@@ -14,7 +14,7 @@ pub trait Loadable : Resource{
         .fold(LoadingState::Completed, |a, s| {
             let s = match s {
                 LoadState::Loaded => LoadingState::Completed,
-                LoadState::Failed => LoadingState::Error,
+                LoadState::Failed(_) => LoadingState::Error,
                 _ => LoadingState::Loading,
             };
             LoadingState::max(a, s)

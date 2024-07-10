@@ -3,9 +3,11 @@
 use crate::prelude::*;
 
 use bevy::prelude::*;
-use bevy_xpbd_2d::prelude::*;
-use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
-use clap::Parser;
+//use bevy_xpbd_2d::prelude::*;
+//use bevy_console::{reply, AddConsoleCommand, ConsoleCommand, ConsoleConfiguration, ConsolePlugin};
+//use clap::Parser;
+
+use bevy::color::palettes::css;
 
 use bevy_xpbd_2d::prelude::PhysicsDebugPlugin;
 
@@ -42,6 +44,7 @@ impl Plugin for ScDebugPlugin {
             ));
         }
         if self.console {
+            /*
             app.add_plugins((
                 ConsolePlugin,
             ));
@@ -60,6 +63,7 @@ impl Plugin for ScDebugPlugin {
             app.add_console_command::<RestitutionCommand, _>(command_restitution);
             app.add_console_command::<FrictionDynamicCommand, _>(command_friction_dynamic);
             app.add_console_command::<FrictionStaticCommand, _>(command_friction_static);
+            */
 
             app.insert_resource(DebugConfig {
                 display_area: true,
@@ -73,7 +77,7 @@ impl Plugin for ScDebugPlugin {
     }
 }
 
-
+/*
 #[derive(Parser, ConsoleCommand)]
 #[command(name = "print_config")]
 struct PrintConfigCommand {
@@ -136,25 +140,6 @@ fn command_disp_area(
     }
 }
 
-
-fn run_condition_for_display_area(
-    debug_config: Res<DebugConfig>,
-) -> bool {
-    debug_config.display_area
-}
-
-fn display_area(
-    mut gizmos: Gizmos<DefaultGizmoConfigGroup>,
-    config: Res<GameAssets>,
-) {
-    let game_ron::Area { min_x, max_x, min_y, max_y } = config.physics.area;
-
-    gizmos.rect_2d(
-        Vec2::new((max_x+min_x)/2., (max_y+min_y)/2.),
-        0.,
-        Vec2::new(max_x-min_x, max_y-min_y),
-        Color::RED);
-}
 
 #[derive(Parser, ConsoleCommand, Default)]
 #[command(name = "restitution")]
@@ -226,4 +211,24 @@ fn command_friction_static(
             reply!(log, "ERROR: This command is available only during playing a game");
         }
     }
+}
+*/
+
+fn run_condition_for_display_area(
+    debug_config: Res<DebugConfig>,
+) -> bool {
+    debug_config.display_area
+}
+
+fn display_area(
+    mut gizmos: Gizmos<DefaultGizmoConfigGroup>,
+    config: Res<GameAssets>,
+) {
+    let game_ron::Area { min_x, max_x, min_y, max_y } = config.physics.area;
+
+    gizmos.rect_2d(
+        Vec2::new((max_x+min_x)/2., (max_y+min_y)/2.),
+        0.,
+        Vec2::new(max_x-min_x, max_y-min_y),
+        css::RED);
 }

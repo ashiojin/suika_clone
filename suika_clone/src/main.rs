@@ -74,7 +74,7 @@ pub fn start(arg: &str) {
 
 fn run_app(arg: Option<&str>) {
     #[cfg(target_family = "windows")]
-    std::env::set_var("RUST_BACKTRACE", "1"); // Can't read env values when running on WSL
+    std::env::set_var("RUST_BACKTRACE", "full"); // Can't read env values when running on WSL
 
     let mut app = App::new();
 
@@ -98,6 +98,10 @@ fn run_app(arg: Option<&str>) {
                 },
                 ..default()
             }),
+            ..default()
+        })
+        .set(AssetPlugin {
+            meta_check: AssetMetaCheck::Never,
             ..default()
         }),
 
@@ -132,7 +136,6 @@ fn run_app(arg: Option<&str>) {
         allow_mouse_wheel_sideways: true,
     });
 
-    app.insert_resource(AssetMetaCheck::Never);
 
     app.insert_resource(PkvStore::new("ashiojin.com", "suika_clone"));
     app.insert_resource(Config::default());
