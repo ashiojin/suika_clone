@@ -151,43 +151,39 @@ impl HttpWithVersionQueryStringWasmAssetReader {
 }
 
 impl AssetReader for HttpWithVersionQueryStringWasmAssetReader {
-    fn read<'a>(
+    async fn read<'a>(
         &'a self,
         path: &'a Path,
-    ) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
-        Box::pin(async move {
-            let path = self.root_path.join(path);
-            let path = self.get_path_with_v(path.as_path());
-            self.fetch_bytes(path).await
-        })
+    ) -> Result<Box<Reader<'a>>, AssetReaderError> {
+        let path = self.root_path.join(path);
+        let path = self.get_path_with_v(path.as_path());
+        self.fetch_bytes(path).await
     }
 
-    fn read_meta<'a>(
+    async fn read_meta<'a>(
         &'a self,
         path: &'a Path,
-    ) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
-        Box::pin(async move {
-            let meta_path = get_meta_path(&self.root_path.join(path));
-            let meta_path = self.get_path_with_v(meta_path.as_path());
-            Ok(self.fetch_bytes(meta_path).await?)
-        })
+    ) -> Result<Box<Reader<'a>>, AssetReaderError> {
+        let meta_path = get_meta_path(&self.root_path.join(path));
+        let meta_path = self.get_path_with_v(meta_path.as_path());
+        Ok(self.fetch_bytes(meta_path).await?)
     }
 
-    fn read_directory<'a>(
+    async fn read_directory<'a>(
         &'a self,
         _path: &'a Path,
-    ) -> BoxedFuture<'a, Result<Box<PathStream>, AssetReaderError>> {
+    ) -> Result<Box<PathStream>, AssetReaderError> {
         let stream: Box<PathStream> = Box::new(EmptyPathStream);
         error!("Reading directories is not supported with the HttpWithVersionQueryStringWasmAssetReader");
-        Box::pin(async move { Ok(stream) })
+        Ok(stream)
     }
 
-    fn is_directory<'a>(
+    async fn is_directory<'a>(
         &'a self,
         _path: &'a Path,
-    ) -> BoxedFuture<'a, std::result::Result<bool, AssetReaderError>> {
+    ) -> std::result::Result<bool, AssetReaderError> {
         error!("Reading directories is not supported with the HttpWithVersionQueryStringWasmAssetReader");
-        Box::pin(async move { Ok(false) })
+        Ok(false)
     }
 }
 
